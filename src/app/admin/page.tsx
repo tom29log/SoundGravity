@@ -122,7 +122,22 @@ export default function AdminPage() {
 
                 {previewId && (
                     <div className="mb-8 p-6 bg-zinc-900/50 rounded-2xl border border-zinc-800">
-                        <h2 className="text-xl font-semibold mb-4">Live Preview</h2>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-4">
+                                <h2 className="text-xl font-semibold">Live Preview</h2>
+                                <span className="px-2 py-1 bg-zinc-800 rounded text-xs text-zinc-400 font-mono border border-zinc-700">
+                                    ID: {previewId}
+                                </span>
+                            </div>
+                            <a
+                                href={previewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-400 hover:text-blue-300 underline"
+                            >
+                                Open in New Tab ↗
+                            </a>
+                        </div>
                         <DevicePreview url={previewUrl} />
                     </div>
                 )}

@@ -42,6 +42,10 @@ export default function ProjectList({ onSelect, selectedId }: ProjectListProps) 
             console.error('Error fetching projects:', error)
         } else {
             setProjects(data || [])
+            // Auto-select first project if none selected
+            if (data && data.length > 0 && !selectedId && onSelect) {
+                onSelect(data[0].id)
+            }
         }
         setLoading(false)
     }

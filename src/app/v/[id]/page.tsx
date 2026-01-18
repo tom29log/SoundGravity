@@ -10,29 +10,27 @@ import { cookies } from 'next/headers'
 // Note: We need a server-side client creator.
 
 async function getProject(id: string) {
-    const cookieStore = await cookies()
-
-    // Create a temporary client for fetching public data
+    // Create a plain client for public data fetching
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
-                getAll() {
-                    return cookieStore.getAll()
-                },
-                setAll(cookiesToSet) {
-                    // No-op for read-only
-                },
+                getAll() { return [] },
+                setAll() { }
             },
         }
     )
 
-    const { data: project } = await supabase
+    const { data: project, error } = await supabase
         .from('projects')
         .select('*')
         .eq('id', id)
         .single()
+
+    if (error) {
+        console.error("Error fetching project:", error)
+    }
 
     return project
 }
