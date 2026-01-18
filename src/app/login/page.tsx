@@ -34,7 +34,7 @@ export default function LoginPage() {
             if (error) {
                 setError(error.message)
             } else {
-                router.push('/admin')
+                router.push('/')
             }
         } else {
             // Sign Up Logic
@@ -65,7 +65,7 @@ export default function LoginPage() {
                 if (data.user && !data.session) {
                     setMessage("Check your email for the confirmation link.")
                 } else {
-                    router.push('/admin') // If auto-confirm is on
+                    router.push('/') // If auto-confirm is on
                 }
             }
         }

@@ -1,5 +1,9 @@
-import { redirect } from 'next/navigation'
+import GlobalFeed from '@/components/feed/GlobalFeed'
 
 export default function Home() {
-  redirect('/login')
+  return (
+    <main className="min-h-screen bg-black text-white">
+      <GlobalFeed />
+    </main>
+  )
 }

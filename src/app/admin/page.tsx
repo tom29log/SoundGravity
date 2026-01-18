@@ -4,9 +4,11 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import ProjectList from '@/components/ProjectList'
 import UploadForm from '@/components/UploadForm'
 import DevicePreview from '@/components/DevicePreview'
+import KnobButton from '@/components/ui/KnobButton'
 
 export default function AdminPage() {
     const router = useRouter()
@@ -82,10 +84,10 @@ export default function AdminPage() {
     return (
         <div className="min-h-screen bg-black text-white p-8">
             <div className="max-w-7xl mx-auto space-y-8">
-                <header className="flex justify-between items-center border-b border-zinc-800 pb-6">
-                    <h1 className="text-3xl font-bold">Dashboard</h1>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-3">
+                <header className="flex flex-col md:flex-row justify-between items-center border-b border-zinc-800 pb-6 gap-4">
+                    <h1 className="text-xl md:text-3xl font-bold self-start md:self-center">Dashboard</h1>
+                    <div className="flex flex-wrap items-center gap-4 w-full md:w-auto justify-end">
+                        <div className="flex items-center gap-3 mr-auto md:mr-0">
                             <div className="relative w-10 h-10 rounded-full overflow-hidden bg-zinc-800 cursor-pointer group flex items-center justify-center border border-zinc-700">
                                 {profile?.avatar_url ? (
                                     <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
@@ -110,25 +112,23 @@ export default function AdminPage() {
                                 <span className="text-xs text-zinc-500">Artist</span>
                             </div>
                         </div>
-                        <div className="h-8 w-px bg-zinc-800 mx-2" />
-                        <button
-                            onClick={handleLogout}
-                            className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-sm transition-colors text-zinc-400 hover:text-white"
-                        >
-                            Sign Out
-                        </button>
+
+                        <div className="flex items-center gap-4">
+                            <KnobButton href="/" size="md">
+                                <span className="leading-none">GO TO<br />FEED</span>
+                            </KnobButton>
+                            <KnobButton onClick={handleLogout} size="md">
+                                <span className="leading-none">SIGN<br />OUT</span>
+                            </KnobButton>
+
+                        </div>
                     </div>
                 </header>
 
                 {previewId && (
                     <div className="mb-8 p-6 bg-zinc-900/50 rounded-2xl border border-zinc-800">
                         <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-4">
-                                <h2 className="text-xl font-semibold">Live Preview</h2>
-                                <span className="px-2 py-1 bg-zinc-800 rounded text-xs text-zinc-400 font-mono border border-zinc-700">
-                                    ID: {previewId}
-                                </span>
-                            </div>
+                            <h2 className="text-xl font-semibold">Live Preview</h2>
                             <a
                                 href={previewUrl}
                                 target="_blank"

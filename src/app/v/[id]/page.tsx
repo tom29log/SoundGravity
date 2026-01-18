@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase'
 import InteractiveViewer from '@/components/InteractiveViewer'
+import ProjectDetailView from '@/components/ProjectDetailView'
 import { Metadata } from 'next'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
@@ -76,5 +77,5 @@ export default async function Page({ params }: Props) {
         return <div className="h-screen bg-black flex items-center justify-center text-white">Project not found</div>
     }
 
-    return <InteractiveViewer project={project} />
+    return <ProjectDetailView project={project} />
 }
