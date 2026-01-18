@@ -182,7 +182,7 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                 </div>
                 <input
                     type="file"
-                    accept="audio/*"
+                    accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
                     ref={audioInputRef}
                     onChange={handleAudioChange}
                     className="hidden"
