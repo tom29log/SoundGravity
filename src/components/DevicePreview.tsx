@@ -15,10 +15,7 @@ export default function DevicePreview({ url }: DevicePreviewProps) {
 
     return (
         <div className="flex gap-8 items-start overflow-x-auto pb-4 relative">
-            {/* Debug Info */}
-            <div className="absolute top-0 right-0 p-2 bg-red-600 text-white text-xs font-bold pointer-events-none z-50 rounded shadow-lg border border-white">
-                DEBUG URL: [{url || 'EMPTY'}]
-            </div>
+
 
             {/* Empty State */}
             {!hasUrl && (
