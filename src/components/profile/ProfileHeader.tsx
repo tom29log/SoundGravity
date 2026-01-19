@@ -13,7 +13,6 @@ interface ProfileHeaderProps {
 
 export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProps) {
     const socialLinks = profile.social_links || {}
-    const hasAnySocialLink = socialLinks.instagram || socialLinks.soundcloud || socialLinks.website
 
     return (
         <div className="flex flex-col items-center justify-center space-y-6 py-12 relative">
@@ -25,8 +24,8 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                 <Image
                     src="/icons/turntable-icon.png"
                     alt="Back to Feed"
-                    width={28}
-                    height={28}
+                    width={40}
+                    height={40}
                     className="object-contain"
                 />
             </Link>
@@ -59,44 +58,59 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                 </p>
             )}
 
-            {/* Social Links - Simple Icons */}
-            {hasAnySocialLink && (
-                <div className="flex items-center gap-6 mt-2">
-                    {socialLinks.instagram && (
-                        <a
-                            href={socialLinks.instagram}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-zinc-400 hover:text-pink-500 transition-colors"
-                            title="Instagram"
-                        >
-                            <Instagram size={24} />
-                        </a>
-                    )}
-                    {socialLinks.soundcloud && (
-                        <a
-                            href={socialLinks.soundcloud}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-zinc-400 hover:text-[#ff7700] transition-colors"
-                            title="SoundCloud"
-                        >
-                            <Music size={24} />
-                        </a>
-                    )}
-                    {socialLinks.website && (
-                        <a
-                            href={socialLinks.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-zinc-400 hover:text-white transition-colors"
-                            title="Website"
-                        >
-                            <Globe size={24} />
-                        </a>
-                    )}
-                </div>
-            )}
+            {/* Social Links - Always Show 3 Icons */}
+            <div className="flex items-center gap-8 mt-4">
+                {/* Instagram */}
+                {socialLinks.instagram ? (
+                    <a
+                        href={socialLinks.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-zinc-400 hover:text-pink-500 transition-colors"
+                        title="Instagram"
+                    >
+                        <Instagram size={28} />
+                    </a>
+                ) : (
+                    <div className="text-zinc-800 cursor-not-allowed" title="Instagram not linked">
+                        <Instagram size={28} />
+                    </div>
+                )}
+
+                {/* SoundCloud */}
+                {socialLinks.soundcloud ? (
+                    <a
+                        href={socialLinks.soundcloud}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-zinc-400 hover:text-[#ff7700] transition-colors"
+                        title="SoundCloud"
+                    >
+                        <Music size={28} />
+                    </a>
+                ) : (
+                    <div className="text-zinc-800 cursor-not-allowed" title="SoundCloud not linked">
+                        <Music size={28} />
+                    </div>
+                )}
+
+                {/* Website */}
+                {socialLinks.website ? (
+                    <a
+                        href={socialLinks.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-zinc-400 hover:text-white transition-colors"
+                        title="Website"
+                    >
+                        <Globe size={28} />
+                    </a>
+                ) : (
+                    <div className="text-zinc-800 cursor-not-allowed" title="Website not linked">
+                        <Globe size={28} />
+                    </div>
+                )}
+            </div>
 
             {/* Stats Graph */}
             <div className="flex items-center gap-12 mt-4">
