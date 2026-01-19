@@ -308,8 +308,7 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
 
                     {/* Right: Actions */}
                     <div className="flex flex-col items-end gap-3">
-                        <KnobButton href="/" size="md" className="shadow-lg group">
-                            <span className="group-hover:-translate-x-1 transition-transform text-lg mb-0.5">←</span>
+                        <KnobButton href="/" size="md" className="group">
                             <span className="leading-none text-[9px]">BACK<br />FEED</span>
                         </KnobButton>
 

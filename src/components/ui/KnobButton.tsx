@@ -1,73 +1,111 @@
-import Link from 'next/link'
-import { ReactNode } from 'react'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface KnobButtonProps {
     onClick?: () => void
     href?: string
-    children: ReactNode
+    children?: React.ReactNode
     className?: string
     size?: 'sm' | 'md' | 'lg'
 }
 
 export default function KnobButton({ onClick, href, children, className = '', size = 'md' }: KnobButtonProps) {
-    // Sizes
-    const sizeClasses = {
-        sm: 'w-12 h-12 text-[10px]',
-        md: 'w-20 h-20 text-xs',
-        lg: 'w-24 h-24 text-sm'
-    }
+    const router = useRouter()
+    const [rotation, setRotation] = useState(-135) // Start at MIN (approx -135deg)
+    const [isAnimating, setIsAnimating] = useState(false)
 
-    const baseClasses = `
-        relative rounded-full flex items-center justify-center text-center font-bold
-        bg-gradient-to-br from-zinc-300 via-zinc-100 to-zinc-400
-        shadow-[4px_4px_10px_rgba(0,0,0,0.5),-2px_-2px_5px_rgba(255,255,255,0.1)]
-        border-2 border-zinc-400
-        transition-transform active:scale-95 group
-        ${sizeClasses[size]}
-        ${className}
-    `
+    // Sizes (Diameter)
+    const pixelSize = {
+        sm: 50,
+        md: 80,
+        lg: 100
+    }[size]
 
-    // Inner Face (Brushed Metal look)
-    const innerFace = (
-        <div className="absolute inset-1 rounded-full bg-[conic-gradient(from_0deg,#e5e7eb,#9ca3af,#e5e7eb,#9ca3af,#e5e7eb)] opacity-80 flex items-center justify-center border border-zinc-500/30">
-            {/* Center Indent/Cap */}
-            <div className="absolute inset-[15%] rounded-full bg-gradient-to-tl from-zinc-200 to-zinc-50 shadow-inner flex items-center justify-center">
-                {/* Content */}
-                <div className="text-black/80 drop-shadow-sm font-black tracking-tight leading-none z-10 p-1 flex flex-col items-center justify-center">
-                    {children}
-                </div>
-            </div>
+    const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault()
+        if (isAnimating) return
 
-            {/* Ridges (Dashed border simulation or separate elements) */}
-            {/* We simulate ridges on the very outer edge container instead */}
-        </div>
-    )
+        setIsAnimating(true)
+        setRotation(135) // Rotate to MAX (approx +135deg)
 
-    // Outer Ridged Ring
-    const outerRing = (
-        <div className="absolute inset-0 rounded-full border-[3px] border-dashed border-zinc-500/40 opacity-50" />
-    )
+        // Wait for animation to finish before navigation
+        setTimeout(() => {
+            if (onClick) onClick()
+            if (href) router.push(href)
 
-    const content = (
-        <>
-            {outerRing}
-            {innerFace}
-            {/* Highlight/Glint */}
-            <div className="absolute top-1 left-2 w-1/3 h-1/3 bg-gradient-to-br from-white to-transparent opacity-60 rounded-full blur-[2px]" />
-        </>
-    )
-
-    if (href) {
-        return (
-            <Link href={href} className={baseClasses}>
-                {content}
-            </Link>
-        )
+            // Optional: Reset after navigation (though page might unload)
+            setTimeout(() => {
+                setIsAnimating(false)
+                setRotation(-135)
+            }, 500)
+        }, 600) // Duration slightly longer than transition
     }
 
     return (
-        <button onClick={onClick} className={baseClasses}>
-            {content}
+        <button
+            onClick={handleClick}
+            className={`relative flex flex-col items-center justify-center group ${className}`}
+            style={{ width: pixelSize, height: pixelSize }}
+        >
+            {/* SVG Knob */}
+            <svg
+                width="100%"
+                height="100%"
+                viewBox="0 0 100 100"
+                className="w-full h-full overflow-visible"
+            >
+                {/* Tick Marks (Static) */}
+                {Array.from({ length: 25 }).map((_, i) => {
+                    const angle = -135 + (i * (270 / 24)) // Spread 270 degrees
+                    const isMin = i === 0
+                    const isMax = i === 24
+                    return (
+                        <line
+                            key={i}
+                            x1="50" y1="50"
+                            x2="50" y2="10"
+                            transform={`rotate(${angle} 50 50)`}
+                            stroke="currentColor"
+                            strokeWidth={isMin || isMax ? "3" : "2"}
+                            strokeLinecap="round"
+                            className="text-white group-hover:text-[#39FF14] transition-colors"
+                            strokeDasharray="10 100" // Only show the tip? No, solid line
+                            strokeDashoffset="0"
+                        />
+                    )
+                })}
+
+                {/* Labels MIN / MAX */}
+                <text x="20" y="90" fontSize="10" textAnchor="middle" fill="currentColor" className="text-white font-mono text-[8px]">MIN</text>
+                <text x="80" y="90" fontSize="10" textAnchor="middle" fill="currentColor" className="text-white font-mono text-[8px]">MAX</text>
+
+                {/* Inner Knob Circle (Rotatable) */}
+                <g
+                    transform={`rotate(${rotation} 50 50)`}
+                    style={{ transition: 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)' }}
+                >
+                    {/* Ring */}
+                    <circle cx="50" cy="50" r="30" fill="transparent" stroke="currentColor" strokeWidth="2.5" className="text-white" />
+
+                    {/* Triangle Indicator */}
+                    <path d="M 50 25 L 53 32 L 47 32 Z" fill="currentColor" className="text-white" />
+                </g>
+            </svg>
+
+            {/* Content (Label) - Positioned in center or below? 
+                The user image has a clean center.
+                Original usage had text passed as children.
+                Let's overlay it in the center for now, or below if it's large.
+                Given the usage examples ("BACK FEED"), text is often 2 lines. 
+                Let's put it in absolute center.
+            */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-white/80 font-bold tracking-tighter text-center leading-none mt-1 group-hover:text-[#39FF14] transition-colors mix-blend-difference">
+                    {children}
+                </div>
+            </div>
         </button>
     )
 }
