@@ -60,20 +60,18 @@ export default function StatGraph({ label, value, className = '' }: StatGraphPro
 
     return (
         <div className={`flex flex-col items-center group cursor-help ${className}`}>
-            {/* Canvas for Visual */}
-            <div className="relative w-24 h-12 mb-2">
-                <canvas ref={canvasRef} className="w-full h-full" />
-
-                {/* Tooltip on Hover */}
-                <div className="absolute inset-x-0 -top-8 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="bg-white/10 backdrop-blur-md px-2 py-1 rounded text-xs text-white font-mono">
-                        {value.toLocaleString()}
-                    </span>
-                </div>
+            {/* Canvas for Visual (Abstract Flower/Cloud) */}
+            <div className="relative w-24 h-12 mb-1">
+                <canvas ref={canvasRef} className="w-full h-full opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
             </div>
 
+            {/* Value (Always Visible) */}
+            <span className="text-sm font-bold text-white mb-0.5 font-mono tracking-tighter">
+                {value.toLocaleString()}
+            </span>
+
             {/* Minimal Label */}
-            <span className="text-[10px] tracking-widest text-zinc-500 uppercase">{label}</span>
+            <span className="text-[9px] tracking-widest text-zinc-500 uppercase">{label}</span>
         </div>
     )
 }
