@@ -335,17 +335,21 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                         <h1 className="text-white font-bold text-3xl drop-shadow-lg mix-blend-difference">{project.title}</h1>
                     </div>
                     <div className="flex flex-col items-end gap-3 z-50">
-                        <div className="bg-black/20 backdrop-blur-md rounded-full p-1 shadow-lg">
-                            <KnobButton href="/" size="md" className="group">
-                                <span className="leading-none text-[9px]">BACK<br />FEED</span>
-                            </KnobButton>
-                        </div>
+                        {/* Back Feed Button with Squircle Backdrop */}
+                        <KnobButton
+                            href="/"
+                            size="md"
+                            className="group !bg-black/40 !backdrop-blur-md !border-white/20 hover:!bg-black/60 shadow-lg"
+                        >
+                            <span className="leading-none text-[9px]">BACK<br />FEED</span>
+                        </KnobButton>
+
                         {project.target_url && (
                             <a
                                 href={project.target_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-white text-xs hover:bg-black/60 transition-colors border border-white/10 shadow-lg"
+                                className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-white text-xs hover:bg-black/60 transition-colors border border-white/20 shadow-lg"
                             >
                                 Visit Link ↗
                             </a>
