@@ -21,8 +21,8 @@ interface EditProfileModalProps {
 export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }: EditProfileModalProps) {
     const supabase = createClient()
     const [loading, setLoading] = useState(false)
-    const artistTypes = ['DJ', 'Producer', 'Creator', 'Celebrity', 'Other']
-    const genres = ['Hip-hop', 'EDM', 'Pop', 'R&B', 'Jazz', 'Rock', 'Classical', 'Other']
+    const artistTypes = ['DJ', 'Producer', 'Player', 'Singer', 'Creator', 'Celebrity', 'Other']
+    const genres = ['Hip-hop', 'EDM', 'Electronic', 'Pop', 'R&B', 'Lo-fi', 'Jazz', 'Rock', 'Classical', 'Other']
 
     const [formData, setFormData] = useState({
         username: profile.username || '',
