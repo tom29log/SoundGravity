@@ -210,16 +210,19 @@ export default function FeedCard({ project }: FeedCardProps) {
             <div className="mt-2 text-white">
                 <h3 className="font-semibold text-sm truncate leading-tight">{project.title}</h3>
                 <div className="flex items-center justify-between mt-1 text-xs text-zinc-400">
-                    <div className="flex items-center gap-1.5 overflow-hidden">
+                    <Link
+                        href={`/profile/${project.profiles?.username || '#'}`}
+                        className="flex items-center gap-1.5 overflow-hidden hover:text-white transition-colors cursor-pointer group/author"
+                    >
                         {project.profiles?.avatar_url ? (
                             <img src={project.profiles.avatar_url} alt="" className="w-4 h-4 rounded-full flex-shrink-0 bg-zinc-800" />
                         ) : (
                             <div className="w-4 h-4 rounded-full bg-zinc-800 flex-shrink-0" />
                         )}
-                        <span className="truncate hover:text-white transition-colors cursor-pointer">
+                        <span className="truncate">
                             {project.profiles?.username || 'Artist'}
                         </span>
-                    </div>
+                    </Link>
 
                     <button
                         onClick={toggleLike}
