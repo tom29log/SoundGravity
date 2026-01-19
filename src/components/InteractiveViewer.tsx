@@ -42,10 +42,57 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
     const gainNodeRef = useRef<GainNode | null>(null)
     const pannerNodeRef = useRef<StereoPannerNode | null>(null)
     const filterNodeRef = useRef<BiquadFilterNode | null>(null)
+    const analyserNodeRef = useRef<AnalyserNode | null>(null)
     const audioRef = useRef<HTMLAudioElement | null>(null)
+    const canvasRef = useRef<HTMLCanvasElement | null>(null)
+    const animationFrameRef = useRef<number | null>(null)
 
     // Current Audio State Tracker (for Pin Capture)
     const audioState = useRef<AudioState>({ pan: 0, frequency: 20000 })
+
+    // Visualizer Drawer
+    const drawVisualizer = () => {
+        if (!canvasRef.current || !analyserNodeRef.current) return
+
+        const canvas = canvasRef.current
+        const ctx = canvas.getContext('2d')
+        const analyser = analyserNodeRef.current
+
+        if (!ctx) return
+
+        const bufferLength = analyser.frequencyBinCount
+        const dataArray = new Uint8Array(bufferLength)
+
+        const draw = () => {
+            animationFrameRef.current = requestAnimationFrame(draw)
+            analyser.getByteFrequencyData(dataArray)
+
+            const width = canvas.width
+            const height = canvas.height
+
+            ctx.clearRect(0, 0, width, height)
+
+            const barWidth = (width / bufferLength) * 2.5
+            let barHeight
+            let x = 0
+
+            for (let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] / 2 // Scale down
+
+                // Color calculation based on height/frequency
+                const r = barHeight + (25 * (i / bufferLength))
+                const g = 250 * (i / bufferLength)
+                const b = 50
+
+                ctx.fillStyle = `rgb(${r},${g},${b})`
+                // Draw bars at the bottom
+                ctx.fillRect(x, height - barHeight, barWidth, barHeight)
+
+                x += barWidth + 1
+            }
+        }
+        draw()
+    }
 
     // Time Update Handler
     useEffect(() => {
@@ -64,43 +111,11 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
     useEffect(() => {
         if (!audioRef.current) return
 
-        const initAudio = () => {
-            if (!audioContextRef.current) {
-                const AudioContext = window.AudioContext || (window as any).webkitAudioContext
-                audioContextRef.current = new AudioContext()
-
-                const audio = audioRef.current!
-                audio.crossOrigin = "anonymous"
-
-                const source = audioContextRef.current.createMediaElementSource(audio)
-                const gain = audioContextRef.current.createGain()
-                const panner = audioContextRef.current.createStereoPanner()
-                const filter = audioContextRef.current.createBiquadFilter()
-
-                // Filter setup
-                filter.type = 'lowpass'
-                filter.frequency.value = 20000 // Start open
-                filter.Q.value = 1
-
-                // Connect graph
-                source.connect(filter)
-                filter.connect(panner)
-                panner.connect(gain)
-                gain.connect(audioContextRef.current.destination)
-
-                audioSourceRef.current = source
-                gainNodeRef.current = gain
-                pannerNodeRef.current = panner
-                filterNodeRef.current = filter
-            }
-        }
-
-        // We init on user interaction usually, but let's try to init eagerly if allowed, 
-        // or just wait for play.
-        // Actually, initAudio inside useEffect might run before user interaction -> warning.
-        // Better to init on Play.
-
+        // Cleanup function for visualizer
         return () => {
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current)
+            }
             if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
                 audioContextRef.current.close()
                 audioContextRef.current = null
@@ -115,23 +130,33 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
 
             const audio = audioRef.current!
             audio.crossOrigin = "anonymous"
+
+            // Create Nodes
             const source = audioContextRef.current.createMediaElementSource(audio)
             const filter = audioContextRef.current.createBiquadFilter()
             const panner = audioContextRef.current.createStereoPanner()
+            const analyser = audioContextRef.current.createAnalyser()
             const gain = audioContextRef.current.createGain()
 
+            // Configure Nodes
             filter.type = 'lowpass'
             filter.frequency.value = 20000
             filter.Q.value = 1
 
+            analyser.fftSize = 256 // Resolution of visualizer
+
+            // Connect Graph: Source -> Filter -> Panner -> Analyser -> Gain -> Dest
             source.connect(filter)
             filter.connect(panner)
-            panner.connect(gain)
+            panner.connect(analyser)
+            analyser.connect(gain)
             gain.connect(audioContextRef.current.destination)
 
+            // Store Refs
             audioSourceRef.current = source
             pannerNodeRef.current = panner
             filterNodeRef.current = filter
+            analyserNodeRef.current = analyser
             gainNodeRef.current = gain
         }
     }
@@ -140,14 +165,24 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
         if (!audioRef.current) return
         ensureAudioContext()
 
-        if (audioContextRef.current?.state === 'suspended') {
-            await audioContextRef.current.resume()
-        }
-
         if (isPlaying) {
+            // Pause
             audioRef.current.pause()
+            // Suspend context to stop any glitching audio processing
+            if (audioContextRef.current?.state === 'running') {
+                await audioContextRef.current.suspend()
+            }
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current)
+            }
         } else {
+            // Play
+            if (audioContextRef.current?.state === 'suspended') {
+                await audioContextRef.current.resume()
+            }
             audioRef.current.play().catch(e => console.error("Play failed", e))
+            // Start Visualizer
+            drawVisualizer()
         }
         setIsPlaying(!isPlaying)
     }
@@ -177,25 +212,20 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
     const restoreAudioState = (state: AudioState) => {
         if (!audioContextRef.current || !pannerNodeRef.current || !filterNodeRef.current) return
 
-        pannerNodeRef.current.pan.setTargetAtTime(state.pan, audioContextRef.current.currentTime, 0.5)
-        filterNodeRef.current.frequency.setTargetAtTime(state.frequency, audioContextRef.current.currentTime, 0.5)
-
-        // Visual feedback? 
-        // We might want to animate the view to match, but that's complex without canvas/webgl.
+        if (state.pan !== undefined) pannerNodeRef.current.pan.setTargetAtTime(state.pan, audioContextRef.current.currentTime, 0.5)
+        if (state.frequency !== undefined) filterNodeRef.current.frequency.setTargetAtTime(state.frequency, audioContextRef.current.currentTime, 0.5)
     }
 
     const handleCanvasClick = (e: React.MouseEvent) => {
         // If Pin Mode is ON, create a pin
         if (pinMode && onPinCreate) {
-            const rect = (e.target as HTMLElement).getBoundingClientRect();
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect(); // Use currentTarget for the container
             const x = ((e.clientX - rect.left) / rect.width) * 100;
             const y = ((e.clientY - rect.top) / rect.height) * 100;
 
             // Capture current audio state
             onPinCreate(x, y, audioState.current)
         } else {
-            // Normal mode: Toggle Play
-            // But we already have onClick handler.. lets move it here.
             if ((e.target as HTMLElement).tagName === 'BUTTON' || (e.target as HTMLElement).tagName === 'A') return
             togglePlay()
         }
@@ -219,7 +249,6 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
             onMouseDown={() => !pinMode && setIsInteracting(true)}
             onMouseUp={() => setIsInteracting(false)}
             onClick={(e) => {
-                // Clear active pin if clicking elsewhere
                 if (!pinMode && activePinId) setActivePinId(null)
                 handleCanvasClick(e)
             }}
@@ -246,17 +275,20 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                     }}
                     priority
                 />
-
-                {isInteracting && !pinMode && (
-                    <>
-                        <div className="absolute inset-0 bg-red-500/10 mix-blend-color-dodge translate-x-1" />
-                        <div className="absolute inset-0 bg-blue-500/10 mix-blend-color-dodge -translate-x-1" />
-                    </>
-                )}
             </div>
 
-            {/* Pins Layer */}
-            {comments.map((comment) => {
+            {/* Visualizer Layer (Bottom Overlay) */}
+            <div className="absolute inset-x-0 bottom-0 h-32 z-10 pointer-events-none opacity-80 mix-blend-screen">
+                <canvas
+                    ref={canvasRef}
+                    className="w-full h-full"
+                    width={1000}
+                    height={200}
+                />
+            </div>
+
+            {/* Pins Layer (Only Visible if FileMode is TRUE) */}
+            {pinMode && comments.map((comment) => {
                 const x = comment.meta?.x
                 const y = comment.meta?.y
                 const audioState = comment.meta?.audioState
@@ -274,19 +306,17 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                         <div
                             className="w-4 h-4 -ml-2 -mt-2 rounded-full border-2 border-[#39FF14] bg-[#39FF14]/20 shadow-[0_0_10px_#39FF14] cursor-pointer hover:scale-125 transition-transform animate-pulse"
                             onClick={(e) => {
-                                e.stopPropagation() // Prevent creating new pin / toggling play
-                                // Toggle active state (for mobile)
+                                e.stopPropagation()
                                 if (isActive) {
                                     setActivePinId(null)
                                 } else {
                                     setActivePinId(comment.id)
                                 }
-
                                 if (audioState) restoreAudioState(audioState)
                             }}
                         />
 
-                        {/* Tooltip - Visible on Hover OR if Active (Click/Tap) */}
+                        {/* Tooltip */}
                         <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 transition-opacity pointer-events-none ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                             <div className="bg-black/80 backdrop-blur-md border border-[#39FF14]/50 rounded p-2 text-xs text-white">
                                 <p className="font-bold text-[#39FF14] mb-1">{comment.profiles?.username}</p>
@@ -301,17 +331,13 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
             <div className="absolute inset-0 z-20 flex flex-col justify-between p-6 pointer-events-none">
                 {/* Top Info */}
                 <div className="flex justify-between items-start pointer-events-auto w-full">
-                    {/* Left: Title */}
                     <div className="flex flex-col gap-1 mt-2">
                         <h1 className="text-white font-bold text-3xl drop-shadow-lg mix-blend-difference">{project.title}</h1>
                     </div>
-
-                    {/* Right: Actions */}
                     <div className="flex flex-col items-end gap-3">
                         <KnobButton href="/" size="md" className="group">
                             <span className="leading-none text-[9px]">BACK<br />FEED</span>
                         </KnobButton>
-
                         {project.target_url && (
                             <a
                                 href={project.target_url}
@@ -325,7 +351,7 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                     </div>
                 </div>
 
-                {/* Center CTA - Play Button (Only show if not playing AND not pin mode) */}
+                {/* Center CTA - Play Button */}
                 {!isPlaying && !pinMode && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
                         <button
@@ -340,13 +366,13 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                 {/* Pin Mode Indicator */}
                 {pinMode && (
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                        <div className="px-6 py-3 bg-black/80 border border-[#39FF14] rounded-full text-[#39FF14] font-mono animate-bounce">
-                            CLICK TO PIN
+                        <div className="px-6 py-3 bg-black/80 border border-[#39FF14] rounded-full text-[#39FF14] font-mono animate-bounce shadow-[0_0_15px_#39FF14]">
+                            PIN MODE ON
                         </div>
                     </div>
                 )}
 
-                {/* Bottom Control (Stop/Info) */}
+                {/* Bottom Control (Stop) */}
                 {isPlaying && !pinMode && (
                     <div className="self-center pointer-events-auto mb-16">
                         <button onClick={(e) => { e.stopPropagation(); togglePlay() }} className="p-4 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors">
@@ -356,18 +382,17 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                 )}
             </div>
 
-            {/* Floating CTA */}
             <FloatingCTA title={project.title} url={typeof window !== 'undefined' ? window.location.href : ''} />
 
             <style jsx global>{`
-        @keyframes pulse-fast {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.8; transform: skewX(-2deg); }
-        }
-        .animate-pulse-fast {
-          animation: pulse-fast 0.2s infinite;
-        }
-      `}</style>
+                @keyframes pulse-fast {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.8; transform: skewX(-2deg); }
+                }
+                .animate-pulse-fast {
+                    animation: pulse-fast 0.2s infinite;
+                }
+            `}</style>
         </div>
     )
 }
