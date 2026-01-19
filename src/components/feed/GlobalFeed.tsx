@@ -196,7 +196,7 @@ export default function GlobalFeed() {
                                     </div>
                                 </Link>
                                 <div className="h-8 w-px bg-zinc-800 mx-2" />
-                                <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity mr-4 md:mr-0">
+                                <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity mr-6 md:mr-0">
                                     <Image
                                         src="/icons/mypage-icon.png"
                                         alt="My Page"
@@ -216,7 +216,7 @@ export default function GlobalFeed() {
                         )}
 
                         {/* Mobile Logo Position (Right top) */}
-                        <div className="md:hidden">
+                        <div className="md:hidden transform scale-[0.98] origin-right">
                             <AnimatedLogo_v2 />
                         </div>
                     </div>
