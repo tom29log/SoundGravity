@@ -25,6 +25,9 @@ export function useRealtimeComments(projectId: string) {
 
             if (error) {
                 console.error('Error fetching comments:', error)
+                // ALERT for debugging - remove after fix
+                // alert(`Comment Error: ${error.message}`) 
+                // Only log for now, as alerts are intrusive.
             } else {
                 setComments((data as unknown) as Comment[] || [])
             }
