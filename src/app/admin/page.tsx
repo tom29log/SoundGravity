@@ -1,7 +1,7 @@
 'use plain'
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -9,27 +9,34 @@ import ProjectList from '@/components/ProjectList'
 import UploadForm from '@/components/UploadForm'
 import DevicePreview from '@/components/DevicePreview'
 import KnobButton from '@/components/ui/KnobButton'
+import EditProfileModal from '@/components/profile/EditProfileModal'
 
 export default function AdminPage() {
     const router = useRouter()
     const supabase = createClient()
-    const [profile, setProfile] = useState<{ username: string | null, avatar_url: string | null } | null>(null)
+    const [profile, setProfile] = useState<{ id: string, username: string | null, avatar_url: string | null, social_links: any } | null>(null)
+    const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
 
     // Load Profile
-    useEffect(() => {
-        const getProfile = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-                const { data } = await supabase
-                    .from('profiles')
-                    .select('username, avatar_url')
-                    .eq('id', user.id)
-                    .single()
-                setProfile(data)
-            }
+    const getProfile = useCallback(async () => {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+            const { data } = await supabase
+                .from('profiles')
+                .select('id, username, avatar_url, social_links')
+                .eq('id', user.id)
+                .single()
+            setProfile(data)
         }
+    }, [supabase])
+
+    useEffect(() => {
         getProfile()
-    }, [])
+    }, [getProfile])
+
+    const handleProfileUpdate = () => {
+        getProfile() // Refresh profile data
+    }
 
     // Upload Avatar
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +116,12 @@ export default function AdminPage() {
                             </div>
                             <div className="flex flex-col">
                                 <span className="font-semibold text-sm">{profile?.username || 'User'}</span>
-                                <span className="text-xs text-zinc-500">Artist</span>
+                                <button
+                                    onClick={() => setIsEditProfileOpen(true)}
+                                    className="text-xs text-zinc-500 hover:text-white transition-colors text-left"
+                                >
+                                    Edit Profile
+                                </button>
                             </div>
                         </div>
 
@@ -120,7 +132,6 @@ export default function AdminPage() {
                             <KnobButton onClick={handleLogout} size="md">
                                 <span className="leading-none">SIGN<br />OUT</span>
                             </KnobButton>
-
                         </div>
                     </div>
                 </header>
@@ -164,6 +175,15 @@ export default function AdminPage() {
                     </div>
                 </div>
             </div>
+
+            {profile && (
+                <EditProfileModal
+                    isOpen={isEditProfileOpen}
+                    onClose={() => setIsEditProfileOpen(false)}
+                    profile={profile}
+                    onUpdate={handleProfileUpdate}
+                />
+            )}
         </div>
     )
 }

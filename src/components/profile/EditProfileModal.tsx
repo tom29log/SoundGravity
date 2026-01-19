@@ -1,0 +1,133 @@
+'use client'
+
+import { useState } from 'react'
+import { X } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
+
+interface EditProfileModalProps {
+    isOpen: boolean
+    onClose: () => void
+    profile: {
+        id: string
+        username: string | null
+        social_links: any
+    }
+    onUpdate: () => void
+}
+
+export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }: EditProfileModalProps) {
+    const supabase = createClient()
+    const [loading, setLoading] = useState(false)
+    const [formData, setFormData] = useState({
+        username: profile.username || '',
+        instagram: profile.social_links?.instagram || '',
+        soundcloud: profile.social_links?.soundcloud || '',
+        website: profile.social_links?.website || ''
+    })
+
+    if (!isOpen) return null
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+
+        try {
+            const social_links = {
+                instagram: formData.instagram,
+                soundcloud: formData.soundcloud,
+                website: formData.website
+            }
+
+            const { error } = await supabase
+                .from('profiles')
+                .update({
+                    username: formData.username,
+                    social_links
+                })
+                .eq('id', profile.id)
+
+            if (error) throw error
+
+            onUpdate()
+            onClose()
+        } catch (error) {
+            console.error('Error updating profile:', error)
+            alert('Failed to update profile')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
+                >
+                    <X size={20} />
+                </button>
+
+                <h2 className="text-xl font-bold mb-6 text-white">Edit Profile</h2>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Username</label>
+                        <input
+                            type="text"
+                            value={formData.username}
+                            onChange={e => setFormData({ ...formData, username: e.target.value })}
+                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
+                            placeholder="Display Name"
+                        />
+                    </div>
+
+                    <div className="space-y-3 pt-4 border-t border-zinc-800">
+                        <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider">Social Links</label>
+
+                        <div className="flex items-center gap-3">
+                            <span className="text-zinc-500 text-sm w-24">Instagram</span>
+                            <input
+                                type="text"
+                                value={formData.instagram}
+                                onChange={e => setFormData({ ...formData, instagram: e.target.value })}
+                                className="flex-1 bg-black/50 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white transition-colors"
+                                placeholder="https://instagram.com/..."
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <span className="text-zinc-500 text-sm w-24">SoundCloud</span>
+                            <input
+                                type="text"
+                                value={formData.soundcloud}
+                                onChange={e => setFormData({ ...formData, soundcloud: e.target.value })}
+                                className="flex-1 bg-black/50 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white transition-colors"
+                                placeholder="https://soundcloud.com/..."
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <span className="text-zinc-500 text-sm w-24">Website</span>
+                            <input
+                                type="text"
+                                value={formData.website}
+                                onChange={e => setFormData({ ...formData, website: e.target.value })}
+                                className="flex-1 bg-black/50 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white transition-colors"
+                                placeholder="Your personal site..."
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full mt-6 bg-white text-black font-bold py-3 rounded-xl hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                    >
+                        {loading ? 'Saving...' : 'Save Changes'}
+                    </button>
+                </form>
+            </div>
+        </div>
+    )
+}
