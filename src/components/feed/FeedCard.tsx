@@ -182,7 +182,7 @@ export default function FeedCard({ project }: FeedCardProps) {
                         />
 
                         {/* Dark Overlay on Hover/Play */}
-                        <div className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-0'}`} />
+                        <div className={`absolute inset-0 bg-black/40 transition-opacity duration-300 pointer-events-none ${isPlaying ? 'opacity-100' : 'opacity-0'}`} />
 
                         {/* Visualizer / Play Indicator */}
                         <div className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-0'}`}>
@@ -209,7 +209,7 @@ export default function FeedCard({ project }: FeedCardProps) {
             </Link>
 
             {/* Info Section Below Image */}
-            <div className="mt-2 text-white">
+            <div className="mt-2 text-white relative z-50">
                 <h3 className="font-semibold text-sm truncate leading-tight">{project.title}</h3>
                 <div className="flex items-center justify-between mt-1 text-xs text-zinc-400">
                     <div
@@ -224,7 +224,7 @@ export default function FeedCard({ project }: FeedCardProps) {
                                 alert("이 아티스트의 프로필 정보를 불러올 수 없습니다.")
                             }
                         }}
-                        className="relative z-10 flex items-center gap-1.5 overflow-hidden hover:text-white transition-colors cursor-pointer group/author"
+                        className="relative z-50 flex items-center gap-1.5 overflow-hidden hover:text-white transition-colors cursor-pointer group/author"
                     >
                         {project.profiles?.avatar_url ? (
                             <img src={project.profiles.avatar_url} alt="" className="w-4 h-4 rounded-full flex-shrink-0 bg-zinc-800" />
