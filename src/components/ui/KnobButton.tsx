@@ -43,7 +43,7 @@ export default function KnobButton({ onClick, href, children, className = '', si
                 {/* Image Only - No Filters, No Background, No Text */}
                 <div className="absolute inset-0">
                     <Image
-                        src="/images/mypage_vinyl.png?v=2"
+                        src="/images/mypage_v3.png"
                         alt="My Page"
                         fill
                         className="object-contain drop-shadow-md"
