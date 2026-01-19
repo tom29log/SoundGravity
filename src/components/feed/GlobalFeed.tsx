@@ -148,100 +148,114 @@ export default function GlobalFeed() {
     return (
         <div className="max-w-7xl mx-auto px-4 py-8 pb-24">
             {/* Header */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 sticky top-0 bg-black/80 backdrop-blur-md z-40 py-4 -mx-4 px-4 border-b border-zinc-900/50">
+            <div className="flex flex-col gap-6 mb-8 sticky top-0 bg-black/80 backdrop-blur-md z-40 py-4 -mx-4 px-4 border-b border-zinc-900/50">
 
-                {/* User Info & Navigation */}
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    {userProfile ? (
-                        <div className="flex items-center gap-3">
-                            <Link href={`/profile/${userProfile.username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
-                                <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 overflow-hidden relative group-hover:border-white transition-colors">
-                                    {userProfile.avatar_url ? (
-                                        <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-zinc-500 font-bold bg-zinc-900">
-                                            {userProfile.username?.[0]?.toUpperCase() || 'U'}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4">{userProfile.username || 'User'}</span>
-                                    <span className="text-xs text-zinc-500 font-mono">ONLINE</span>
-                                </div>
-                            </Link>
-                            <div className="h-8 w-px bg-zinc-800 mx-2" />
-                            <KnobButton href="/admin" size="sm" className="shrink-0">
-                                <span className="leading-tight text-[9px]">MY<br />PAGE</span>
-                            </KnobButton>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-500">
-                                Discovery
-                            </h1>
-                            <a href="/login" className="text-sm text-zinc-400 hover:text-white underline">Login</a>
-                        </div>
-                    )}
-                </div>
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    {/* User Info & Navigation */}
+                    <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                        {userProfile ? (
+                            <div className="flex items-center gap-3">
+                                <Link href={`/profile/${userProfile.username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
+                                    <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 overflow-hidden relative group-hover:border-white transition-colors">
+                                        {userProfile.avatar_url ? (
+                                            <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-zinc-500 font-bold bg-zinc-900">
+                                                {userProfile.username?.[0]?.toUpperCase() || 'U'}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4">{userProfile.username || 'User'}</span>
+                                        <span className="text-xs text-zinc-500 font-mono">ONLINE</span>
+                                    </div>
+                                </Link>
+                                <div className="h-8 w-px bg-zinc-800 mx-2" />
+                                <KnobButton href="/admin" size="sm" className="shrink-0">
+                                    <span className="leading-tight text-[9px]">MY<br />PAGE</span>
+                                </KnobButton>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-500">
+                                    Discovery
+                                </h1>
+                                <a href="/login" className="text-sm text-zinc-400 hover:text-white underline">Login</a>
+                            </div>
+                        )}
 
-                {/* Right Side: Logo & Filters */}
-                <div className="flex flex-col items-end gap-3 w-full md:w-auto">
-                    <div className="flex items-center gap-6 justify-end w-full">
-                        <AnimatedLogo_v2 />
-
-                        <div className="hidden sm:flex bg-zinc-900 rounded-lg p-1 border border-zinc-800">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'text-white bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300'}`}
-                            >
-                                <LayoutGrid size={18} />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'text-white bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300'}`}
-                            >
-                                <ListIcon size={18} />
-                            </button>
+                        {/* Mobile Logo Position (Right top) */}
+                        <div className="md:hidden">
+                            <AnimatedLogo_v2 />
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 md:pb-0 scrollbar-hide">
-                        {/* AI Filter */}
-                        <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800 shrink-0">
-                            <button
-                                onClick={() => setAiFilter('all')}
-                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${aiFilter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
-                            >
-                                All
-                            </button>
-                            <button
-                                onClick={() => setAiFilter('human')}
-                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${aiFilter === 'human' ? 'bg-zinc-800 text-green-400' : 'text-zinc-500 hover:text-green-400'}`}
-                            >
-                                Human Only
-                            </button>
-                            <button
-                                onClick={() => setAiFilter('ai')}
-                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${aiFilter === 'ai' ? 'bg-zinc-800 text-purple-400' : 'text-zinc-500 hover:text-purple-400'}`}
-                            >
-                                AI Collab
-                            </button>
+                    {/* Desktop Logo & Filters & View Mode */}
+                    <div className="flex flex-col md:flex-row items-end md:items-center gap-4 w-full md:w-auto">
+
+                        {/* Desktop Logo */}
+                        <div className="hidden md:block">
+                            <AnimatedLogo_v2 />
                         </div>
 
-                        {/* Sort Filter */}
-                        <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800 shrink-0">
-                            <button
-                                onClick={() => setFilter('latest')}
-                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${filter === 'latest' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
-                            >
-                                Latest
-                            </button>
-                            <button
-                                onClick={() => setFilter('popular')}
-                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${filter === 'popular' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
-                            >
-                                Popular
-                            </button>
+                        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+
+                            {/* Filter Groups */}
+                            <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 md:pb-0 scrollbar-hide">
+                                {/* AI Filter */}
+                                <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800 shrink-0">
+                                    <button
+                                        onClick={() => setAiFilter('all')}
+                                        className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all ${aiFilter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                    >
+                                        All
+                                    </button>
+                                    <button
+                                        onClick={() => setAiFilter('human')}
+                                        className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all ${aiFilter === 'human' ? 'bg-zinc-800 text-green-400' : 'text-zinc-500 hover:text-green-400'}`}
+                                    >
+                                        Human
+                                    </button>
+                                    <button
+                                        onClick={() => setAiFilter('ai')}
+                                        className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all ${aiFilter === 'ai' ? 'bg-zinc-800 text-purple-400' : 'text-zinc-500 hover:text-purple-400'}`}
+                                    >
+                                        AI
+                                    </button>
+                                </div>
+
+                                {/* Sort Filter */}
+                                <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800 shrink-0">
+                                    <button
+                                        onClick={() => setFilter('latest')}
+                                        className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all ${filter === 'latest' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                    >
+                                        Latest
+                                    </button>
+                                    <button
+                                        onClick={() => setFilter('popular')}
+                                        className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all ${filter === 'popular' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                    >
+                                        Popular
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* View Mode (Hidden on mobile usually, or keep compact) */}
+                            <div className="hidden sm:flex bg-zinc-900 rounded-lg p-1 border border-zinc-800 shrink-0">
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'text-white bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                >
+                                    <LayoutGrid size={18} />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'text-white bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                >
+                                    <ListIcon size={18} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
