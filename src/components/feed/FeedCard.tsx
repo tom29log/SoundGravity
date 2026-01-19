@@ -210,9 +210,13 @@ export default function FeedCard({ project }: FeedCardProps) {
             <div className="mt-2 text-white">
                 <h3 className="font-semibold text-sm truncate leading-tight">{project.title}</h3>
                 <div className="flex items-center justify-between mt-1 text-xs text-zinc-400">
-                    <Link
-                        href={`/profile/${project.profiles?.username || ''}`}
-                        onClick={(e) => e.stopPropagation()}
+                    <div
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            e.preventDefault()
+                            const username = project.profiles?.username
+                            if (username) router.push(`/profile/${username}`)
+                        }}
                         className="relative z-10 flex items-center gap-1.5 overflow-hidden hover:text-white transition-colors cursor-pointer group/author"
                     >
                         {project.profiles?.avatar_url ? (
@@ -223,7 +227,7 @@ export default function FeedCard({ project }: FeedCardProps) {
                         <span className="truncate">
                             {project.profiles?.username || 'Artist'}
                         </span>
-                    </Link>
+                    </div>
 
                     <button
                         onClick={toggleLike}
