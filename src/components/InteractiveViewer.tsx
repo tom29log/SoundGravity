@@ -34,6 +34,7 @@ import { Comment } from '@/types' // Need to ensure Comment type is imported
 export default function InteractiveViewer({ project, onTimeUpdate, pinMode = false, comments = [], onPinCreate }: InteractiveViewerProps) {
     const [isPlaying, setIsPlaying] = useState(false)
     const [isInteracting, setIsInteracting] = useState(false)
+    const [activePinId, setActivePinId] = useState<string | null>(null)
 
     // Audio Context Refs
     const audioContextRef = useRef<AudioContext | null>(null)
@@ -217,7 +218,11 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
             onTouchEnd={() => setIsInteracting(false)}
             onMouseDown={() => !pinMode && setIsInteracting(true)}
             onMouseUp={() => setIsInteracting(false)}
-            onClick={handleCanvasClick}
+            onClick={(e) => {
+                // Clear active pin if clicking elsewhere
+                if (!pinMode && activePinId) setActivePinId(null)
+                handleCanvasClick(e)
+            }}
         >
             <audio
                 ref={audioRef}
@@ -255,6 +260,7 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                 const x = comment.meta?.x
                 const y = comment.meta?.y
                 const audioState = comment.meta?.audioState
+                const isActive = activePinId === comment.id
 
                 if (x === undefined || y === undefined) return null
 
@@ -269,12 +275,19 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                             className="w-4 h-4 -ml-2 -mt-2 rounded-full border-2 border-[#39FF14] bg-[#39FF14]/20 shadow-[0_0_10px_#39FF14] cursor-pointer hover:scale-125 transition-transform animate-pulse"
                             onClick={(e) => {
                                 e.stopPropagation() // Prevent creating new pin / toggling play
+                                // Toggle active state (for mobile)
+                                if (isActive) {
+                                    setActivePinId(null)
+                                } else {
+                                    setActivePinId(comment.id)
+                                }
+
                                 if (audioState) restoreAudioState(audioState)
                             }}
                         />
 
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        {/* Tooltip - Visible on Hover OR if Active (Click/Tap) */}
+                        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 transition-opacity pointer-events-none ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                             <div className="bg-black/80 backdrop-blur-md border border-[#39FF14]/50 rounded p-2 text-xs text-white">
                                 <p className="font-bold text-[#39FF14] mb-1">{comment.profiles?.username}</p>
                                 <p>{comment.content}</p>

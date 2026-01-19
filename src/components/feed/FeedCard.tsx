@@ -15,11 +15,34 @@ interface FeedCardProps {
 export default function FeedCard({ project }: FeedCardProps) {
     const [isPlaying, setIsPlaying] = useState(false)
     const [liked, setLiked] = useState(false)
-    const [likeCount, setLikeCount] = useState(0) // Todo: init (count) from prop if available
+    const [likeCount, setLikeCount] = useState(project.views || 0) // Initialize with passed count
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const fadeInterval = useRef<NodeJS.Timeout | null>(null)
     const touchTimer = useRef<NodeJS.Timeout | null>(null)
     const supabase = createClient()
+
+    // Fetch initial like status
+    useEffect(() => {
+        const checkLikeStatus = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
+            const { data } = await supabase
+                .from('likes')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('project_id', project.id)
+                .single()
+
+            if (data) {
+                setLiked(true)
+            }
+        }
+
+        // Also ensure accurate count? 
+        // For MVP, we rely on props or realtime, but let's stick to props + local optimistic update.
+        checkLikeStatus()
+    }, [project.id])
 
     // Initialize audio
     useEffect(() => {
@@ -100,17 +123,32 @@ export default function FeedCard({ project }: FeedCardProps) {
         e.stopPropagation()
         e.preventDefault()
 
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+            alert("로그인이 필요합니다.") // TODO: Replace with Toast if available
+            return
+        }
+
         const newLiked = !liked
         setLiked(newLiked)
         setLikeCount(prev => newLiked ? prev + 1 : prev - 1)
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-
         if (newLiked) {
-            await supabase.from('likes').insert({ user_id: user.id, project_id: project.id })
+            const { error } = await supabase.from('likes').upsert({ user_id: user.id, project_id: project.id }, { onConflict: 'user_id, project_id' })
+            if (error) {
+                console.error("Like failed:", error)
+                // Revert state on error
+                setLiked(false)
+                setLikeCount(prev => prev - 1)
+            }
         } else {
-            await supabase.from('likes').delete().eq('user_id', user.id).eq('project_id', project.id)
+            const { error } = await supabase.from('likes').delete().eq('user_id', user.id).eq('project_id', project.id)
+            if (error) {
+                console.error("Unlike failed:", error)
+                // Revert state on error
+                setLiked(true)
+                setLikeCount(prev => prev + 1)
+            }
         }
     }
 
