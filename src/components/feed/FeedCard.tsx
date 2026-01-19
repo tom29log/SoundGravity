@@ -211,8 +211,9 @@ export default function FeedCard({ project }: FeedCardProps) {
                 <h3 className="font-semibold text-sm truncate leading-tight">{project.title}</h3>
                 <div className="flex items-center justify-between mt-1 text-xs text-zinc-400">
                     <Link
-                        href={`/profile/${project.profiles?.username || '#'}`}
-                        className="flex items-center gap-1.5 overflow-hidden hover:text-white transition-colors cursor-pointer group/author"
+                        href={`/profile/${project.profiles?.username || ''}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="relative z-10 flex items-center gap-1.5 overflow-hidden hover:text-white transition-colors cursor-pointer group/author"
                     >
                         {project.profiles?.avatar_url ? (
                             <img src={project.profiles.avatar_url} alt="" className="w-4 h-4 rounded-full flex-shrink-0 bg-zinc-800" />
