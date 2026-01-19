@@ -196,7 +196,7 @@ export default function GlobalFeed() {
                                     </div>
                                 </Link>
                                 <div className="h-8 w-px bg-zinc-800 mx-2" />
-                                <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity">
+                                <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity mr-4 md:mr-0">
                                     <Image
                                         src="/icons/mypage-icon.png"
                                         alt="My Page"
