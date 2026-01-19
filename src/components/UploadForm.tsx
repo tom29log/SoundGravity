@@ -18,6 +18,11 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
     const [title, setTitle] = useState('')
     const [targetUrl, setTargetUrl] = useState('')
 
+    // New validation states
+    const [copyrightConfirmed, setCopyrightConfirmed] = useState(false)
+    const [isAiGenerated, setIsAiGenerated] = useState(false)
+    const [aiTool, setAiTool] = useState('')
+
     const imageInputRef = useRef<HTMLInputElement>(null)
     const audioInputRef = useRef<HTMLInputElement>(null)
     const supabase = createClient()
@@ -60,6 +65,11 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
             return
         }
 
+        if (!copyrightConfirmed) {
+            alert('Please confirm the copyright declaration.')
+            return
+        }
+
         setLoading(true)
         try {
             // 1. Upload Image
@@ -77,6 +87,9 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                 audio_url: audioUrl,
                 target_url: targetUrl || null,
                 user_id: user?.id, // Link to current user
+                is_ai_generated: isAiGenerated,
+                ai_tool_used: isAiGenerated ? aiTool : null,
+                copyright_confirmed: copyrightConfirmed
             })
 
             if (error) throw error
@@ -87,6 +100,10 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
             setImageFile(null)
             setAudioFile(null)
             setImagePreview(null)
+            setCopyrightConfirmed(false)
+            setIsAiGenerated(false)
+            setAiTool('')
+
             if (imageInputRef.current) imageInputRef.current.value = ''
             if (audioInputRef.current) audioInputRef.current.value = ''
 
@@ -107,94 +124,169 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title Input */}
             <div>
-                <label className="block text-sm font-medium mb-1">Project Title</label>
+                <label className="block text-sm font-medium mb-1 text-zinc-300">Project Title <span className="text-red-500">*</span></label>
                 <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g., Summer Vibes"
-                    className="w-full bg-zinc-800 border-zinc-700 rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-white focus:outline-none"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-white focus:outline-none transition-colors"
                     required
                 />
             </div>
 
             {/* Target URL Input */}
             <div>
-                <label className="block text-sm font-medium mb-1">Link URL (Optional)</label>
+                <label className="block text-sm font-medium mb-1 text-zinc-300">Link URL (Optional)</label>
                 <input
                     type="url"
                     value={targetUrl}
                     onChange={(e) => setTargetUrl(e.target.value)}
                     placeholder="https://..."
-                    className="w-full bg-zinc-800 border-zinc-700 rounded-lg p-2.5 text-sm focus:ring-1 focus:ring-white focus:outline-none"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-white focus:outline-none transition-colors"
                 />
             </div>
 
-            {/* Image Upload */}
-            <div>
-                <label className="block text-sm font-medium mb-1">Cover Image</label>
-                {!imagePreview ? (
-                    <div
-                        onClick={() => imageInputRef.current?.click()}
-                        className="w-full aspect-video bg-zinc-800 border-2 border-dashed border-zinc-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-800/80 transition-colors"
-                    >
-                        <ImageIcon className="w-8 h-8 text-zinc-500 mb-2" />
-                        <span className="text-xs text-zinc-500">Click to upload image</span>
-                    </div>
-                ) : (
-                    <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-zinc-700 group">
-                        <Image src={imagePreview} alt="Preview" fill className="object-cover" />
-                        <button
-                            type="button"
-                            onClick={clearImage}
-                            className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Image Upload */}
+                <div>
+                    <label className="block text-sm font-medium mb-1 text-zinc-300">Cover Image <span className="text-red-500">*</span></label>
+                    {!imagePreview ? (
+                        <div
+                            onClick={() => imageInputRef.current?.click()}
+                            className="w-full aspect-video bg-zinc-800 border-2 border-dashed border-zinc-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-800/80 hover:border-zinc-500 transition-all group"
                         >
-                            <X size={16} />
-                        </button>
+                            <ImageIcon className="w-8 h-8 text-zinc-500 group-hover:text-zinc-400 mb-2 transition-colors" />
+                            <span className="text-xs text-zinc-500 group-hover:text-zinc-400">Click to upload image</span>
+                        </div>
+                    ) : (
+                        <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-zinc-700 group">
+                            <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                            <button
+                                type="button"
+                                onClick={clearImage}
+                                className="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:bg-black/80"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    )}
+                    <input
+                        type="file"
+                        accept="image/*"
+                        ref={imageInputRef}
+                        onChange={handleImageChange}
+                        className="hidden"
+                    />
+                </div>
+
+                {/* Audio Upload */}
+                <div>
+                    <label className="block text-sm font-medium mb-1 text-zinc-300">Audio File <span className="text-red-500">*</span></label>
+                    <div
+                        onClick={() => audioInputRef.current?.click()}
+                        className={`w-full h-[calc(100%-1.6rem)] min-h-[140px] p-4 bg-zinc-800 border border-zinc-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-800/80 hover:border-zinc-500 transition-all gap-3 ${audioFile ? 'border-green-500/30 bg-green-500/5' : ''}`}
+                    >
+                        {audioFile ? (
+                            <>
+                                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                                    <Music className="w-5 h-5 text-green-500" />
+                                </div>
+                                <span className="text-sm text-green-400 font-medium truncate max-w-[200px] text-center">
+                                    {audioFile.name}
+                                </span>
+                                <span className="text-xs text-zinc-500">Click to change</span>
+                            </>
+                        ) : (
+                            <>
+                                <Music className="w-8 h-8 text-zinc-500" />
+                                <span className="text-xs text-zinc-500">Select audio file...</span>
+                            </>
+                        )}
+                        <input
+                            type="file"
+                            accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
+                            ref={audioInputRef}
+                            onChange={handleAudioChange}
+                            className="hidden"
+                        />
                     </div>
-                )}
-                <input
-                    type="file"
-                    accept="image/*"
-                    ref={imageInputRef}
-                    onChange={handleImageChange}
-                    className="hidden"
-                />
+                </div>
             </div>
 
-            {/* Audio Upload */}
-            <div>
-                <label className="block text-sm font-medium mb-1">Audio File</label>
-                <div
-                    onClick={() => audioInputRef.current?.click()}
-                    className="w-full p-4 bg-zinc-800 border border-zinc-700 rounded-lg flex items-center justify-between cursor-pointer hover:bg-zinc-800/80 transition-colors"
-                >
-                    <div className="flex items-center gap-3">
-                        <Music className="w-5 h-5 text-zinc-400" />
-                        <span className="text-sm text-zinc-300 truncate max-w-[200px]">
-                            {audioFile ? audioFile.name : 'Select audio file...'}
-                        </span>
+            {/* AI & Copyright Section - Grouped with a border */}
+            <div className="border border-zinc-800 bg-zinc-900/50 rounded-lg p-5 space-y-5">
+                {/* AI Declaration Toggle */}
+                <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <span className="block text-sm font-medium text-white">AI Creation Tool Usage</span>
+                            <span className="text-xs text-zinc-500">Did you use AI tools (e.g. Udio, Suno) to create this track?</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                className="sr-only peer"
+                                checked={isAiGenerated}
+                                onChange={(e) => setIsAiGenerated(e.target.checked)}
+                            />
+                            <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
                     </div>
-                    <Upload size={16} className="text-zinc-500" />
+
+                    {/* Conditional Input for AI Tools */}
+                    {isAiGenerated && (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                            <label className="block text-xs font-medium mb-1.5 text-blue-400">Which AI tools did you use?</label>
+                            <input
+                                type="text"
+                                value={aiTool}
+                                onChange={(e) => setAiTool(e.target.value)}
+                                placeholder="e.g., Udio, Suno, Ableton AI..."
+                                className="w-full bg-zinc-950 border border-zinc-700 rounded-md p-2.5 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder:text-zinc-600 transition-all"
+                            />
+                        </div>
+                    )}
                 </div>
-                <input
-                    type="file"
-                    accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
-                    ref={audioInputRef}
-                    onChange={handleAudioChange}
-                    className="hidden"
-                />
+
+                <div className="h-px bg-zinc-800/50"></div>
+
+                {/* Copyright Checkbox */}
+                <div className="flex items-start gap-3">
+                    <div className="flex items-center h-5">
+                        <input
+                            id="copyright"
+                            type="checkbox"
+                            checked={copyrightConfirmed}
+                            onChange={(e) => setCopyrightConfirmed(e.target.checked)}
+                            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-zinc-900"
+                            required
+                        />
+                    </div>
+                    <label htmlFor="copyright" className="text-sm text-zinc-300 cursor-pointer select-none">
+                        <span className="font-medium text-white">Copyright Confirmation</span>
+                        <p className="text-xs text-zinc-500 mt-0.5">
+                            I confirm that I created this original work and have the right to distribute it.
+                            I understand that I am responsible for any copyright violations.
+                        </p>
+                    </label>
+                </div>
             </div>
 
             <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-white text-black font-semibold py-3 rounded-lg hover:bg-zinc-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white text-black font-bold py-3.5 rounded-lg hover:bg-zinc-200 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg shadow-white/5"
             >
-                {loading ? 'Uploading...' : 'Create Project'}
+                {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
+                        Uploading...
+                    </span>
+                ) : 'Create Project'}
             </button>
         </form>
     )

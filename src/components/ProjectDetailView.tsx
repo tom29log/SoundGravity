@@ -67,6 +67,21 @@ export default function ProjectDetailView({ project }: { project: Project }) {
                     />
                 </div>
             </div>
+
+            {/* Disclaimer & AI Info (Bottom Left) */}
+            <div className="absolute bottom-4 left-4 z-30 pointer-events-none text-[10px] text-zinc-600 font-mono space-y-1">
+                {project.is_ai_generated && (
+                    <div className="text-purple-400/70 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                        <span className="font-bold">AI COLLAB</span>
+                        <span className="text-zinc-500">|</span>
+                        <span>Used: {project.ai_tool_used || 'Unknown Tool'}</span>
+                    </div>
+                )}
+                <div className="opacity-70">
+                    © Content responsibility lies with the creator.
+                </div>
+            </div>
         </div>
     )
 }

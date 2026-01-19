@@ -41,6 +41,7 @@ export default function GlobalFeed() {
     }, [])
     const [filter, setFilter] = useState<'latest' | 'popular'>('latest')
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+    const [aiFilter, setAiFilter] = useState<'all' | 'human' | 'ai'>('all')
 
     // Pagination / Infinite Scroll
     const [page, setPage] = useState(0)
@@ -81,6 +82,13 @@ export default function GlobalFeed() {
             `)
             .range(from, to)
 
+        // Apply AI Filter
+        if (aiFilter === 'human') {
+            query = query.eq('is_ai_generated', false)
+        } else if (aiFilter === 'ai') {
+            query = query.eq('is_ai_generated', true)
+        }
+
         if (filter === 'latest') {
             query = query.order('created_at', { ascending: false })
         } else {
@@ -112,29 +120,14 @@ export default function GlobalFeed() {
         setPage(0)
         setHasMore(true)
         setProjects([]) // clear current
-    }, [filter])
+    }, [filter, aiFilter])
 
     // Fetch on page change (includes initial 0)
     useEffect(() => {
-        // Debounce or just relying on effect dependency is fine for simple infinite scroll
-        // but we need to verify we don't double fetch on filter change.
-        // Effect [filter] resets page to 0. This effect [page] runs.
-        // We might want to separate the "Reset" logic.
-
-        // Actually, let's just call fetchProjects here.
-        // We need to know if it's a reset or append.
-        // Determine based on page number or projects length logic
         const isLoadMore = page > 0
         fetchProjects(isLoadMore)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, filter])
-    // ^ Adding filter ensures it refetches when filter changes (after page reset)
-    // BUT we need to be careful of race condition where setPage(0) triggers fetch(0) AND changed filter triggers fetch(0)?
-    // Strict mode runs twice. Simpler: Effect 1 [filter] -> setPage(0), setHasMore(true), setProjects([]).
-    // Effect 2 [page] -> fetchProjects. If page is 0, fetches.
-    // If filter changes, page is set to 0. Effect 2 runs. Perfect.
-    // Wait, if page is ALREADY 0? and we setPage(0)? Effect won't run.
-    // So we need [page, filter] dependency. 
+    }, [page, filter, aiFilter])
 
     // Handle Masonry Columns
     const width = useWindowWidth()
@@ -192,25 +185,9 @@ export default function GlobalFeed() {
                 </div>
 
                 {/* Right Side: Logo & Filters */}
-                <div className="flex items-center gap-6">
-                    {/* Glowing Logo */}
-                    <AnimatedLogo_v2 />
-
-                    <div className="flex items-center gap-4">
-                        <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800">
-                            <button
-                                onClick={() => setFilter('latest')}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'latest' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
-                            >
-                                Latest
-                            </button>
-                            <button
-                                onClick={() => setFilter('popular')}
-                                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${filter === 'popular' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
-                            >
-                                Popular
-                            </button>
-                        </div>
+                <div className="flex flex-col items-end gap-3 w-full md:w-auto">
+                    <div className="flex items-center gap-6 justify-end w-full">
+                        <AnimatedLogo_v2 />
 
                         <div className="hidden sm:flex bg-zinc-900 rounded-lg p-1 border border-zinc-800">
                             <button
@@ -224,6 +201,46 @@ export default function GlobalFeed() {
                                 className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'text-white bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300'}`}
                             >
                                 <ListIcon size={18} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 md:pb-0 scrollbar-hide">
+                        {/* AI Filter */}
+                        <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800 shrink-0">
+                            <button
+                                onClick={() => setAiFilter('all')}
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${aiFilter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                            >
+                                All
+                            </button>
+                            <button
+                                onClick={() => setAiFilter('human')}
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${aiFilter === 'human' ? 'bg-zinc-800 text-green-400' : 'text-zinc-500 hover:text-green-400'}`}
+                            >
+                                Human Only
+                            </button>
+                            <button
+                                onClick={() => setAiFilter('ai')}
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${aiFilter === 'ai' ? 'bg-zinc-800 text-purple-400' : 'text-zinc-500 hover:text-purple-400'}`}
+                            >
+                                AI Collab
+                            </button>
+                        </div>
+
+                        {/* Sort Filter */}
+                        <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800 shrink-0">
+                            <button
+                                onClick={() => setFilter('latest')}
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${filter === 'latest' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                            >
+                                Latest
+                            </button>
+                            <button
+                                onClick={() => setFilter('popular')}
+                                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${filter === 'popular' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                            >
+                                Popular
                             </button>
                         </div>
                     </div>

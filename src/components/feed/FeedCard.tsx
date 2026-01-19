@@ -215,6 +215,12 @@ export default function FeedCard({ project }: FeedCardProps) {
                         </div>
                     </div>
                 </div>
+                {/* AI Badge */}
+                {project.is_ai_generated && (
+                    <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded-md border border-purple-500/30">
+                        <span className="text-[9px] font-bold text-purple-200">AI</span>
+                    </div>
+                )}
             </Link>
 
             {/* 3. Bottom Info (Title & Like) */}
@@ -230,7 +236,7 @@ export default function FeedCard({ project }: FeedCardProps) {
                     <Heart size={14} fill={liked ? "currentColor" : "none"} className={`transition-transform duration-200 group-active/like:scale-75 ${liked ? "text-red-500" : ""}`} />
                     <span className="text-xs font-medium">{project.views || likeCount}</span>
                 </button>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }

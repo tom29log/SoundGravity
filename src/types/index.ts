@@ -24,6 +24,9 @@ export interface Project {
     created_at: string
     views: number
     genre: string | null
+    is_ai_generated?: boolean
+    ai_tool_used?: string | null
+    copyright_confirmed?: boolean
     profiles?: Profile // Joined data
 }
 
