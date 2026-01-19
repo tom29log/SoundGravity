@@ -73,7 +73,7 @@ export default function GlobalFeed() {
             .from('projects')
             .select(`
                 *,
-                profiles (
+                profiles:profiles!projects_user_id_fkey_profiles (
                    username,
                    avatar_url
                 )
