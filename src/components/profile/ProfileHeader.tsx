@@ -1,7 +1,7 @@
 'use client'
 
 import { Profile } from '@/types'
-import { Instagram, Cloud, Globe } from 'lucide-react' // Lucide icons for social
+import { Instagram, Globe } from 'lucide-react' // Lucide icons for social
 import Image from 'next/image'
 import Link from 'next/link'
 import StatGraph from './StatGraph'
@@ -77,20 +77,32 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                     </div>
                 )}
 
-                {/* SoundCloud (Cloud Icon) */}
+                {/* SoundCloud (Custom Icon) */}
                 {socialLinks.soundcloud ? (
                     <a
                         href={socialLinks.soundcloud}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-white hover:opacity-70 transition-opacity"
+                        className="hover:opacity-70 transition-opacity"
                         title="SoundCloud"
                     >
-                        <Cloud size={28} fill="currentColor" className="stroke-2" />
+                        <Image
+                            src="/icons/soundcloud.png"
+                            alt="SoundCloud"
+                            width={32}
+                            height={32}
+                            className="object-contain brightness-0 invert"
+                        />
                     </a>
                 ) : (
-                    <div className="text-zinc-800 cursor-not-allowed" title="SoundCloud not linked">
-                        <Cloud size={28} />
+                    <div className="opacity-30 cursor-not-allowed" title="SoundCloud not linked">
+                        <Image
+                            src="/icons/soundcloud.png"
+                            alt="SoundCloud"
+                            width={32}
+                            height={32}
+                            className="object-contain brightness-0 invert"
+                        />
                     </div>
                 )}
 
