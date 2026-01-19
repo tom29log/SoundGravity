@@ -16,12 +16,14 @@ export default async function Image() {
     // Read the logo file from public directory
     const logoPath = join(process.cwd(), 'public', 'og_logo.png')
     const logoData = readFileSync(logoPath)
+    const logoBase64 = logoData.toString('base64')
 
     return new ImageResponse(
         (
             <div
                 style={{
-                    background: 'black',
+                    backgroundColor: '#000000',
+                    background: '#000000',
                     width: '100%',
                     height: '100%',
                     display: 'flex',
@@ -31,7 +33,7 @@ export default async function Image() {
             >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                    src={logoData.buffer as any}
+                    src={`data:image/png;base64,${logoBase64}`}
                     alt="SoundGravity Logo"
                     width="400"
                     height="400"
