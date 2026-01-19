@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { X } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { X, Image as ImageIcon, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 interface EditProfileModalProps {
@@ -14,6 +14,7 @@ interface EditProfileModalProps {
         social_links: any
         artist_type?: string | null
         primary_genre?: string | null
+        header_image_url?: string | null
     }
     onUpdate: () => void
 }
@@ -31,16 +32,55 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
         soundcloud: profile.social_links?.soundcloud || '',
         website: profile.social_links?.website || '',
         artistType: profile.artist_type || '',
-        genre: profile.primary_genre || ''
+        genre: profile.primary_genre || '',
+        headerImageUrl: profile.header_image_url || ''
     })
 
+    const [headerImageFile, setHeaderImageFile] = useState<File | null>(null)
+    const [headerImagePreview, setHeaderImagePreview] = useState<string | null>(profile.header_image_url || null)
+    const headerImageInputRef = useRef<HTMLInputElement>(null)
+
     if (!isOpen) return null
+
+    const handleHeaderImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0]
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                alert('File size too large (Max 10MB)')
+                return
+            }
+            setHeaderImageFile(file)
+            setHeaderImagePreview(URL.createObjectURL(file))
+        }
+    }
+
+    const uploadFile = async (file: File) => {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `header_${profile.id}_${Math.random().toString(36).substring(2)}.${fileExt}`
+        const filePath = `${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+            .from('assets')
+            .upload(filePath, file)
+
+        if (uploadError) throw uploadError
+
+        const { data } = supabase.storage.from('assets').getPublicUrl(filePath)
+        return data.publicUrl
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
 
         try {
+            let headerImageUrl = formData.headerImageUrl
+
+            // Upload new image if selected
+            if (headerImageFile) {
+                headerImageUrl = await uploadFile(headerImageFile)
+            }
+
             const social_links = {
                 instagram: formData.instagram,
                 soundcloud: formData.soundcloud,
@@ -54,7 +94,8 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                     bio: formData.bio,
                     social_links,
                     artist_type: formData.artistType,
-                    primary_genre: formData.genre
+                    primary_genre: formData.genre,
+                    header_image_url: headerImageUrl
                 })
                 .eq('id', profile.id)
 
@@ -83,6 +124,53 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                 <h2 className="text-xl font-bold mb-6 text-white">Edit Profile</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Header Image Upload */}
+                    <div>
+                        <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">Header Image</label>
+                        <div
+                            onClick={() => headerImageInputRef.current?.click()}
+                            className="w-full h-32 bg-zinc-800 border-2 border-dashed border-zinc-700 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-zinc-500 hover:bg-zinc-800/80 transition-all relative overflow-hidden group"
+                        >
+                            {headerImagePreview ? (
+                                <>
+                                    <img src={headerImagePreview} alt="Header Preview" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <div className="bg-black/60 rounded-full p-2 text-white">
+                                            <Upload size={20} />
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center gap-2 text-zinc-500">
+                                    <ImageIcon size={24} />
+                                    <span className="text-xs">Click to upload header image</span>
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                ref={headerImageInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleHeaderImageChange}
+                            />
+                        </div>
+                        {headerImagePreview && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    setHeaderImageFile(null)
+                                    setHeaderImagePreview(null)
+                                    setFormData(prev => ({ ...prev, headerImageUrl: '' }))
+                                    if (headerImageInputRef.current) headerImageInputRef.current.value = ''
+                                }}
+                                className="text-xs text-red-500 mt-2 hover:underline"
+                            >
+                                Remove Header Image
+                            </button>
+                        )}
+                    </div>
+
                     <div>
                         <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Username</label>
                         <input

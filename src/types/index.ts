@@ -5,15 +5,15 @@ export interface Profile {
     bio?: string | null
     followers_count: number
     updated_at: string
+    artist_type?: string | null
+    primary_genre?: string | null
+    header_image_url?: string | null
     social_links?: {
         instagram?: string
         soundcloud?: string
         twitter?: string
         website?: string
-        followers_count?: number
-        artist_type?: string
-        primary_genre?: string
-        [key: string]: string | number | undefined
+        [key: string]: string | number | null | undefined
     } | null
 }
 
