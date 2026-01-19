@@ -14,10 +14,11 @@ interface Props {
 // Generate Metadata for SEO/Sharing
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const supabase = createClient()
+    const username = decodeURIComponent(params.username)
     const { data: profile } = await supabase
         .from('profiles')
         .select('username, avatar_url')
-        .eq('username', params.username)
+        .eq('username', username)
         .single()
 
     if (!profile) return { title: 'User Not Found' }
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProfilePage({ params }: Props) {
     const supabase = createClient()
-    const { username } = params
+    const username = decodeURIComponent(params.username)
 
     // 1. Fetch Profile
     const { data: profile } = await supabase

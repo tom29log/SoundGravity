@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { Project } from '@/types'
 import FeedCard from './FeedCard'
@@ -160,19 +161,21 @@ export default function GlobalFeed() {
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     {userProfile ? (
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 overflow-hidden relative">
-                                {userProfile.avatar_url ? (
-                                    <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-zinc-500 font-bold bg-zinc-900">
-                                        {userProfile.username?.[0]?.toUpperCase() || 'U'}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="font-bold text-white leading-none">{userProfile.username || 'User'}</span>
-                                <span className="text-xs text-zinc-500 font-mono">ONLINE</span>
-                            </div>
+                            <Link href={`/profile/${userProfile.username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
+                                <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 overflow-hidden relative group-hover:border-white transition-colors">
+                                    {userProfile.avatar_url ? (
+                                        <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-zinc-500 font-bold bg-zinc-900">
+                                            {userProfile.username?.[0]?.toUpperCase() || 'U'}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4">{userProfile.username || 'User'}</span>
+                                    <span className="text-xs text-zinc-500 font-mono">ONLINE</span>
+                                </div>
+                            </Link>
                             <div className="h-8 w-px bg-zinc-800 mx-2" />
                             <KnobButton href="/admin" size="sm" className="shrink-0">
                                 <span className="leading-tight text-[9px]">MY<br />PAGE</span>
