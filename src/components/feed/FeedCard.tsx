@@ -16,10 +16,12 @@ export default function FeedCard({ project }: FeedCardProps) {
     const [isPlaying, setIsPlaying] = useState(false)
     const [liked, setLiked] = useState(false)
     const [likeCount, setLikeCount] = useState(0)
+    const [likeCount, setLikeCount] = useState(0)
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const fadeInterval = useRef<NodeJS.Timeout | null>(null)
     const touchTimer = useRef<NodeJS.Timeout | null>(null)
     const supabase = createClient()
+    const router = useRouter()
 
     // Fetch initial like status and count
     useEffect(() => {
