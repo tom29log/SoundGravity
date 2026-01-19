@@ -161,12 +161,12 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
         }
     }
 
-    const togglePlay = async () => {
+    const togglePlay = async (fromStart = false) => {
         if (!audioRef.current) return
         ensureAudioContext()
 
-        if (isPlaying) {
-            // Pause
+        if (isPlaying && !fromStart) {
+            // Pause (Stop)
             audioRef.current.pause()
             // Suspend context to stop any glitching audio processing
             if (audioContextRef.current?.state === 'running') {
@@ -175,17 +175,34 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current)
             }
+            setIsPlaying(false)
         } else {
-            // Play
+            // Play (Restart if requested or toggling from pause -> restart per user request)
             if (audioContextRef.current?.state === 'suspended') {
                 await audioContextRef.current.resume()
             }
+
+            // "다시 화면터치시 첨부터 플레이" -> User requested Restart on Toggle.
+            // So whenever we start playing (from Stopped state), we reset time.
+            audioRef.current.currentTime = 0
+
             audioRef.current.play().catch(e => console.error("Play failed", e))
             // Start Visualizer
             drawVisualizer()
+            setIsPlaying(true)
         }
-        setIsPlaying(!isPlaying)
     }
+
+    // Auto-play on enter
+    useEffect(() => {
+        // Attempt auto-play
+        const timer = setTimeout(() => {
+            if (!isPlaying) {
+                togglePlay(true) // Force start
+            }
+        }, 500) // Small delay to ensure DOM/AudioContext readiness
+        return () => clearTimeout(timer)
+    }, [])
 
     const handleInteraction = (clientX: number, clientY: number) => {
         // Block interaction if in Pin Mode or not ready
