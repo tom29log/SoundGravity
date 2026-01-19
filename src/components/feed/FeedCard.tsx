@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Heart } from 'lucide-react'
 import { Project } from '@/types'
 import { createClient } from '@/lib/supabase'
@@ -21,7 +20,6 @@ export default function FeedCard({ project }: FeedCardProps) {
     const fadeInterval = useRef<NodeJS.Timeout | null>(null)
     const touchTimer = useRef<NodeJS.Timeout | null>(null)
     const supabase = createClient()
-    const router = useRouter()
 
     // Fetch initial like status and count
     useEffect(() => {
@@ -212,18 +210,9 @@ export default function FeedCard({ project }: FeedCardProps) {
             <div className="mt-2 text-white relative z-50">
                 <h3 className="font-semibold text-sm truncate leading-tight">{project.title}</h3>
                 <div className="flex items-center justify-between mt-1 text-xs text-zinc-400">
-                    <div
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            e.preventDefault()
-                            const username = project.profiles?.username
-                            console.log('Profile clicked:', username)
-                            if (username) {
-                                router.push(`/profile/${username}`)
-                            } else {
-                                alert("이 아티스트의 프로필 정보를 불러올 수 없습니다.")
-                            }
-                        }}
+                    <Link
+                        href={project.profiles?.username ? `/profile/${project.profiles.username}` : '#'}
+                        onClick={(e) => e.stopPropagation()}
                         className="relative z-50 flex items-center gap-1.5 overflow-hidden hover:text-white transition-colors cursor-pointer group/author"
                     >
                         {project.profiles?.avatar_url ? (
@@ -234,7 +223,7 @@ export default function FeedCard({ project }: FeedCardProps) {
                         <span className="truncate">
                             {project.profiles?.username || 'Artist'}
                         </span>
-                    </div>
+                    </Link>
 
                     <button
                         onClick={toggleLike}
