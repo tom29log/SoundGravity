@@ -168,23 +168,27 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
         if (isPlaying && !fromStart) {
             // Pause (Stop)
             audioRef.current.pause()
-            // Suspend context to stop any glitching audio processing
-            if (audioContextRef.current?.state === 'running') {
-                await audioContextRef.current.suspend()
-            }
+
+            // Note: Removed context.suspend() to avoid click/pop noises on resume
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current)
             }
             setIsPlaying(false)
         } else {
-            // Play (Restart if requested or toggling from pause -> restart per user request)
-            if (audioContextRef.current?.state === 'suspended') {
-                await audioContextRef.current.resume()
-            }
+            // Play (Restart)
+            // Ensure context is running (usually it is if we don't suspend, but check mostly for initial interaction)
 
-            // "다시 화면터치시 첨부터 플레이" -> User requested Restart on Toggle.
-            // So whenever we start playing (from Stopped state), we reset time.
+            // "다시 화면터치시 첨부터 플레이" -> Restart
             audioRef.current.currentTime = 0
+
+            // Anti-pop: Clear gain ramp and fade-in quickly
+            if (gainNodeRef.current && audioContextRef.current) {
+                const now = audioContextRef.current.currentTime
+                const gain = gainNodeRef.current.gain
+                gain.cancelScheduledValues(now)
+                gain.setValueAtTime(0, now)
+                gain.linearRampToValueAtTime(1, now + 0.02) // 20ms quick fade-in to prevent click
+            }
 
             audioRef.current.play().catch(e => console.error("Play failed", e))
             // Start Visualizer
