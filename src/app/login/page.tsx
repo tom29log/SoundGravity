@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function LoginPage() {
@@ -99,6 +100,16 @@ export default function LoginPage() {
                 transition={{ duration: 0.8, ease: "easeOut" }}
                 className="z-10 w-full max-w-[85%] md:max-w-sm flex flex-col items-center text-center"
             >
+                <div className="relative w-32 h-32 md:w-40 md:h-40 mb-2 mx-auto">
+                    <Image
+                        src="/images/logo_main_white.png"
+                        alt="Logo"
+                        fill
+                        className="object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+                        priority
+                    />
+                </div>
+
                 <h1 className="text-[13vw] md:text-9xl font-bold tracking-tighter mb-8 md:mb-12 drop-shadow-2xl leading-tight py-4 galaxy-text">
                     SoundGravity
                 </h1>
