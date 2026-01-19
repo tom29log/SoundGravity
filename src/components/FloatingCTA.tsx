@@ -26,10 +26,10 @@ export default function FloatingCTA({ title, url }: { title: string, url: string
             <div className="flex justify-center pointer-events-auto">
                 <button
                     onClick={handleShare}
-                    className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-full hover:bg-white/20 transition-all active:scale-95 shadow-lg"
+                    className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full hover:bg-white/20 transition-all active:scale-95 shadow-lg"
                 >
-                    <Share2 size={18} />
-                    <span className="font-medium">Share Experience</span>
+                    <Share2 size={14} />
+                    <span className="font-medium text-xs">Share Experience</span>
                 </button>
             </div>
         </div>
