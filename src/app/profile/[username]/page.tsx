@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
 import ProfileHeader from '@/components/profile/ProfileHeader'
 import ProfileProjectGrid from '@/components/profile/ProfileProjectGrid'
@@ -8,17 +8,17 @@ import { Metadata } from 'next'
 export const revalidate = 60 // Revalidate every minute
 
 interface Props {
-    params: { username: string }
+    params: Promise<{ username: string }>
 }
 
-// Generate Metadata for SEO/Sharing
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const supabase = createClient()
-    const username = decodeURIComponent(params.username)
+    const supabase = await createServerSupabaseClient()
+    const { username } = await params
+    const decodedUsername = decodeURIComponent(username)
     const { data: profile } = await supabase
         .from('profiles')
         .select('username, avatar_url')
-        .eq('username', username)
+        .eq('username', decodedUsername)
         .single()
 
     if (!profile) return { title: 'User Not Found' }
@@ -33,14 +33,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProfilePage({ params }: Props) {
-    const supabase = createClient()
-    const username = decodeURIComponent(params.username)
+    const supabase = await createServerSupabaseClient()
+    const { username } = await params
+    const decodedUsername = decodeURIComponent(username)
 
     // 1. Fetch Profile
     const { data: profile } = await supabase
         .from('profiles')
         .select('*')
-        .eq('username', username)
+        .eq('username', decodedUsername)
         .single()
 
     if (!profile) {
@@ -63,7 +64,7 @@ export default async function ProfilePage({ params }: Props) {
     // Optimization: Add a DB function or view later.
     let totalLikes = 0
     if (projects && projects.length > 0) {
-        const projectIds = projects.map(p => p.id)
+        const projectIds = projects.map((p: { id: string }) => p.id)
         const { count } = await supabase
             .from('likes')
             .select('*', { count: 'exact', head: true })
