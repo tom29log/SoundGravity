@@ -159,7 +159,6 @@ export default function FeedCard({ project }: FeedCardProps) {
     }
 
     return (
-    return (
         <div className="group relative break-inside-avoid mb-6">
             {/* 1. Artist Profile Button (Header Overlay) */}
             <Link
