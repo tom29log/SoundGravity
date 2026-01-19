@@ -217,7 +217,12 @@ export default function FeedCard({ project }: FeedCardProps) {
                             e.stopPropagation()
                             e.preventDefault()
                             const username = project.profiles?.username
-                            if (username) router.push(`/profile/${username}`)
+                            console.log('Profile clicked:', username)
+                            if (username) {
+                                router.push(`/profile/${username}`)
+                            } else {
+                                alert("이 아티스트의 프로필 정보를 불러올 수 없습니다.")
+                            }
                         }}
                         className="relative z-10 flex items-center gap-1.5 overflow-hidden hover:text-white transition-colors cursor-pointer group/author"
                     >
