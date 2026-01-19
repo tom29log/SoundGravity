@@ -334,16 +334,18 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                     <div className="flex flex-col gap-1 mt-2">
                         <h1 className="text-white font-bold text-3xl drop-shadow-lg mix-blend-difference">{project.title}</h1>
                     </div>
-                    <div className="flex flex-col items-end gap-3">
-                        <KnobButton href="/" size="md" className="group">
-                            <span className="leading-none text-[9px]">BACK<br />FEED</span>
-                        </KnobButton>
+                    <div className="flex flex-col items-end gap-3 z-50">
+                        <div className="bg-black/20 backdrop-blur-md rounded-full p-1 shadow-lg">
+                            <KnobButton href="/" size="md" className="group">
+                                <span className="leading-none text-[9px]">BACK<br />FEED</span>
+                            </KnobButton>
+                        </div>
                         {project.target_url && (
                             <a
                                 href={project.target_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-white/80 text-xs hover:bg-white/20 transition-colors"
+                                className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full text-white text-xs hover:bg-black/60 transition-colors border border-white/10 shadow-lg"
                             >
                                 Visit Link ↗
                             </a>
@@ -351,17 +353,7 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                     </div>
                 </div>
 
-                {/* Center CTA - Play Button */}
-                {!isPlaying && !pinMode && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); togglePlay() }}
-                            className="w-20 h-20 bg-white/20 backdrop-blur-lg rounded-full flex items-center justify-center hover:scale-110 transition-transform group"
-                        >
-                            <Play className="w-8 h-8 text-white ml-1 group-hover:text-black transition-colors" fill="currentColor" />
-                        </button>
-                    </div>
-                )}
+                {/* Center CTA - Play Button REMOVED (Invisible Touch Area covers whole screen) */}
 
                 {/* Pin Mode Indicator */}
                 {pinMode && (
@@ -372,14 +364,7 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                     </div>
                 )}
 
-                {/* Bottom Control (Stop) */}
-                {isPlaying && !pinMode && (
-                    <div className="self-center pointer-events-auto mb-16">
-                        <button onClick={(e) => { e.stopPropagation(); togglePlay() }} className="p-4 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors">
-                            <Pause size={24} />
-                        </button>
-                    </div>
-                )}
+                {/* Bottom Control (Stop) REMOVED */}
             </div>
 
             <FloatingCTA title={project.title} url={typeof window !== 'undefined' ? window.location.href : ''} />
