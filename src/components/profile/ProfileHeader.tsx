@@ -1,7 +1,7 @@
 'use client'
 
 import { Profile } from '@/types'
-import { Instagram, Music, Globe } from 'lucide-react' // Lucide icons for social
+import { Instagram, Cloud, Globe } from 'lucide-react' // Lucide icons for social
 import Image from 'next/image'
 import Link from 'next/link'
 import StatGraph from './StatGraph'
@@ -66,7 +66,7 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                         href={socialLinks.instagram}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-zinc-400 hover:text-pink-500 transition-colors"
+                        className="text-white hover:opacity-70 transition-opacity"
                         title="Instagram"
                     >
                         <Instagram size={28} />
@@ -77,20 +77,20 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                     </div>
                 )}
 
-                {/* SoundCloud */}
+                {/* SoundCloud (Cloud Icon) */}
                 {socialLinks.soundcloud ? (
                     <a
                         href={socialLinks.soundcloud}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-zinc-400 hover:text-[#ff7700] transition-colors"
+                        className="text-white hover:opacity-70 transition-opacity"
                         title="SoundCloud"
                     >
-                        <Music size={28} />
+                        <Cloud size={28} fill="currentColor" className="stroke-2" />
                     </a>
                 ) : (
                     <div className="text-zinc-800 cursor-not-allowed" title="SoundCloud not linked">
-                        <Music size={28} />
+                        <Cloud size={28} />
                     </div>
                 )}
 
@@ -100,7 +100,7 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                         href={socialLinks.website}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-zinc-400 hover:text-white transition-colors"
+                        className="text-white hover:opacity-70 transition-opacity"
                         title="Website"
                     >
                         <Globe size={28} />
