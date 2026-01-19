@@ -20,14 +20,6 @@ export const metadata: Metadata = {
     description: "Experience audio in a new dimension.",
     url: "https://sound-gravity.vercel.app",
     siteName: "SoundGravity",
-    images: [
-      {
-        url: "/og_logo.png",
-        width: 1200, // Standard OG size, though image might differ, Next.js handles it or browser scales
-        height: 630,
-        alt: "SoundGravity Logo",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
@@ -35,7 +27,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SoundGravity",
     description: "Experience audio in a new dimension.",
-    images: ["/og_logo.png"],
   },
 };
 
