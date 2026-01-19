@@ -10,7 +10,8 @@ export interface Profile {
         soundcloud?: string
         twitter?: string
         website?: string
-        [key: string]: string | undefined
+        followers_count?: number
+        [key: string]: string | number | undefined
     } | null
 }
 
