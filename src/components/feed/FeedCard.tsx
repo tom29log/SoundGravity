@@ -91,6 +91,8 @@ export default function FeedCard({ project }: FeedCardProps) {
 
     const startPlaying = () => {
         if (!audioRef.current) return
+        // Always start from beginning
+        audioRef.current.currentTime = 0
         audioRef.current.play().catch(() => { })
         fadeAudio(0.5) // Max volume 0.5 for preview
         setIsPlaying(true)
@@ -101,29 +103,34 @@ export default function FeedCard({ project }: FeedCardProps) {
         setIsPlaying(false)
     }
 
-    const handleMouseEnter = () => {
-        // Desktop: Hover to play
-        if (window.matchMedia('(hover: hover)').matches) {
+    const handlePlayToggle = (e: React.MouseEvent | React.TouchEvent) => {
+        // Prevent default behavior to avoid double firing on some devices if mixed
+        // But for onClick it's fine.
+        if (isPlaying) {
+            stopPlaying()
+        } else {
             startPlaying()
         }
     }
 
+    const handleMouseEnter = () => {
+        // Desktop: Keep hover to play behavior if desired, OR sync with click?
+        // User said "Unconditionally music play on touch, touch again off".
+        // Let's keep hover for desktop as strictly separate bonus, OR disable it to match strictly.
+        // Given the request "In feed page... unconditionally touch to play", it implies replacing the behavior.
+        // Let's disable hover play to avoid conflict with toggle logic.
+        // If we keep hover, hovering might start it, then clicking might stop it? Confusing.
+        // Let's Comment out hover logic for now or make it purely visual (scale effect is already bound to isPlaying).
+        // Update: User request is specific about "Touch". Let's assume Desktop click is same.
+    }
+
     const handleMouseLeave = () => {
-        if (touchTimer.current) clearTimeout(touchTimer.current)
-        stopPlaying()
+        // If we rely on toggle, leaving shouldn't stop it automatically unless intended.
+        // But typical feed behavior: scroll away -> stop?
+        // Let's stick to explicit toggle requested.
     }
 
-    // Mobile: Long press logic
-    const handleTouchStart = () => {
-        touchTimer.current = setTimeout(() => {
-            startPlaying()
-        }, 800) // 0.8s effectively feels like "hold"
-    }
 
-    const handleTouchEnd = () => {
-        if (touchTimer.current) clearTimeout(touchTimer.current)
-        stopPlaying()
-    }
 
     const toggleLike = async (e: React.MouseEvent) => {
         e.stopPropagation()
@@ -181,12 +188,8 @@ export default function FeedCard({ project }: FeedCardProps) {
             {/* 2. Project Link (Image) */}
             <Link href={`/v/${project.id}`} className="block relative rounded-2xl overflow-hidden bg-zinc-900 shadow-lg select-none">
                 <div
-                    className="relative w-full aspect-square bg-zinc-800"
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
-                    onTouchCancel={handleTouchEnd}
+                    className="relative w-full aspect-square bg-zinc-800 cursor-pointer"
+                    onClick={handlePlayToggle}
                 >
                     <Image
                         src={project.image_url}
