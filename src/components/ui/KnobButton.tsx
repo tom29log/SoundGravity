@@ -33,31 +33,21 @@ export default function KnobButton({ onClick, href, children, className = '', si
             <button
                 onClick={handleClick}
                 className={`
-                    relative flex items-center justify-center rounded-full
-                    shadow-[0_4px_10px_rgba(0,0,0,0.5)]
+                    relative flex items-center justify-center
                     transition-transform active:scale-95 duration-200
-                    group
-                    border-[1.5px] border-white/20
-                    bg-black/80
+                    hover:scale-105
                     ${className}
                 `}
                 style={{ width: pixelSize, height: pixelSize }}
             >
-                {/* Image Base */}
-                <div className="absolute inset-0 rounded-full overflow-hidden">
+                {/* Image Only - No Filters, No Background, No Text */}
+                <div className="absolute inset-0">
                     <Image
                         src="/images/mypage_vinyl.png"
                         alt="My Page"
                         fill
-                        className="object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                        className="object-contain drop-shadow-md"
                     />
-                </div>
-
-                {/* Content */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                    <div className="text-white font-medium text-center leading-tight text-[10px] md:text-xs tracking-wider drop-shadow-md mix-blend-difference">
-                        {children}
-                    </div>
                 </div>
             </button>
         )
