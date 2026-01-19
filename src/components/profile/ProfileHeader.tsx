@@ -24,8 +24,8 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                 <Image
                     src="/icons/turntable-icon.png"
                     alt="Back to Feed"
-                    width={40}
-                    height={40}
+                    width={52}
+                    height={52}
                     className="object-contain"
                 />
             </Link>
