@@ -368,6 +368,40 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                     </div>
                 )}
 
+                {/* Audio Control Map (Guide) - Bottom Left */}
+                {!pinMode && (
+                    <div className="absolute bottom-8 left-6 text-[10px] text-white/50 pointer-events-none select-none">
+                        <div className="relative w-24 h-24 border-l border-b border-white/30">
+                            {/* Y Axis Label */}
+                            <div className="absolute -left-5 top-0 flex flex-col items-center h-full justify-between py-1">
+                                <span>High</span>
+                                <span className="rotate-[-90deg] origin-center text-[8px] tracking-widest opacity-70">FILTER</span>
+                                <span>Low</span>
+                            </div>
+
+                            {/* X Axis Label */}
+                            <div className="absolute -bottom-5 left-0 w-full flex justify-between px-1">
+                                <span>L</span>
+                                <span className="text-[8px] tracking-widest opacity-70">PAN</span>
+                                <span>R</span>
+                            </div>
+
+                            {/* Touch Indicator - Center Dot */}
+                            {isInteracting && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="w-full h-full border border-dashed border-white/10 rounded-full animate-pulse" />
+                                </div>
+                            )}
+
+                            {/* Guide Arrows */}
+                            <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 100 100">
+                                <path d="M50 95 L50 5" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
+                                <path d="M5 50 L95 50" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
+                            </svg>
+                        </div>
+                    </div>
+                )}
+
                 {/* Bottom Control (Stop) REMOVED */}
             </div>
 
