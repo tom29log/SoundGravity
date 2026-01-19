@@ -10,6 +10,7 @@ interface EditProfileModalProps {
     profile: {
         id: string
         username: string | null
+        bio?: string | null
         social_links: any
     }
     onUpdate: () => void
@@ -20,6 +21,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         username: profile.username || '',
+        bio: profile.bio || '',
         instagram: profile.social_links?.instagram || '',
         soundcloud: profile.social_links?.soundcloud || '',
         website: profile.social_links?.website || ''
@@ -42,6 +44,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                 .from('profiles')
                 .update({
                     username: formData.username,
+                    bio: formData.bio,
                     social_links
                 })
                 .eq('id', profile.id)
@@ -60,7 +63,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors"
@@ -80,6 +83,19 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                             className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
                             placeholder="Display Name"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Bio</label>
+                        <input
+                            type="text"
+                            value={formData.bio}
+                            onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
+                            placeholder="한줄 소개를 입력하세요"
+                            maxLength={100}
+                        />
+                        <p className="text-xs text-zinc-600 mt-1">{formData.bio.length}/100</p>
                     </div>
 
                     <div className="space-y-3 pt-4 border-t border-zinc-800">
@@ -131,3 +147,4 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
         </div>
     )
 }
+

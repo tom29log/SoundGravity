@@ -2,12 +2,14 @@ export interface Profile {
     id: string
     username: string | null
     avatar_url: string | null
+    bio?: string | null
     followers_count: number
     updated_at: string
     social_links?: {
         instagram?: string
         soundcloud?: string
         twitter?: string
+        website?: string
         [key: string]: string | undefined
     } | null
 }

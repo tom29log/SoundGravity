@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Trash2, ExternalLink } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import Image from 'next/image'
 
 interface Project {
@@ -115,7 +115,7 @@ export default function ProjectList({ onSelect, selectedId }: ProjectListProps) 
                                     onClick={(e) => e.stopPropagation()}
                                     className="flex items-center gap-1 hover:text-white"
                                 >
-                                    <ExternalLink size={12} />
+                                    <img src="/icons/link-icon.png" alt="Link" className="w-3 h-3 invert" />
                                     Link
                                 </a>
                             )}
