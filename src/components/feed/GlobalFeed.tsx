@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase'
 import { Project } from '@/types'
 import FeedCard from './FeedCard'
@@ -171,9 +172,15 @@ export default function GlobalFeed() {
                                     </div>
                                 </Link>
                                 <div className="h-8 w-px bg-zinc-800 mx-2" />
-                                <KnobButton href="/admin" size="sm" className="shrink-0">
-                                    <span className="leading-tight text-[9px]">MY<br />PAGE</span>
-                                </KnobButton>
+                                <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity">
+                                    <Image
+                                        src="/icons/mypage-icon.png"
+                                        alt="My Page"
+                                        width={40}
+                                        height={40}
+                                        className="object-contain brightness-0 invert"
+                                    />
+                                </Link>
                             </div>
                         ) : (
                             <div className="flex items-center gap-3">
