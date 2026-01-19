@@ -15,33 +15,39 @@ interface FeedCardProps {
 export default function FeedCard({ project }: FeedCardProps) {
     const [isPlaying, setIsPlaying] = useState(false)
     const [liked, setLiked] = useState(false)
-    const [likeCount, setLikeCount] = useState(project.views || 0) // Initialize with passed count
+    const [likeCount, setLikeCount] = useState(0)
     const audioRef = useRef<HTMLAudioElement | null>(null)
     const fadeInterval = useRef<NodeJS.Timeout | null>(null)
     const touchTimer = useRef<NodeJS.Timeout | null>(null)
     const supabase = createClient()
 
-    // Fetch initial like status
+    // Fetch initial like status and count
     useEffect(() => {
-        const checkLikeStatus = async () => {
+        const fetchLikeData = async () => {
             const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
 
-            const { data } = await supabase
-                .from('likes')
-                .select('*')
-                .eq('user_id', user.id)
-                .eq('project_id', project.id)
-                .single()
+            // 1. Check if user liked this project
+            if (user) {
+                const { data } = await supabase
+                    .from('likes')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('project_id', project.id)
+                    .single()
 
-            if (data) {
-                setLiked(true)
+                if (data) setLiked(true)
             }
+
+            // 2. Get total like count
+            const { count } = await supabase
+                .from('likes')
+                .select('*', { count: 'exact', head: true })
+                .eq('project_id', project.id)
+
+            if (count !== null) setLikeCount(count)
         }
 
-        // Also ensure accurate count? 
-        // For MVP, we rely on props or realtime, but let's stick to props + local optimistic update.
-        checkLikeStatus()
+        fetchLikeData()
     }, [project.id])
 
     // Initialize audio
