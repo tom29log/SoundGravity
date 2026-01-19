@@ -233,5 +233,4 @@ export default function FeedCard({ project }: FeedCardProps) {
             </div>
         </div>
     )
-    )
 }
