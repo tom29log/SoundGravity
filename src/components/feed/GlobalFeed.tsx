@@ -28,13 +28,22 @@ export default function GlobalFeed() {
     const [projects, setProjects] = useState<Project[]>([])
     const [loading, setLoading] = useState(true)
     // User Profile Data
-    const [userProfile, setUserProfile] = useState<{ username: string | null, avatar_url: string | null } | null>(null)
+    const [userProfile, setUserProfile] = useState<{
+        username: string | null,
+        avatar_url: string | null,
+        artist_type?: string | null,
+        primary_genre?: string | null
+    } | null>(null)
 
     useEffect(() => {
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
-                const { data } = await supabase.from('profiles').select('username, avatar_url').eq('id', user.id).single()
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('username, avatar_url, artist_type, primary_genre')
+                    .eq('id', user.id)
+                    .single()
                 if (data) setUserProfile(data)
             }
         }
@@ -168,7 +177,22 @@ export default function GlobalFeed() {
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4">{userProfile.username || 'User'}</span>
-                                        <span className="text-xs text-zinc-500 font-mono">ONLINE</span>
+                                        {(userProfile.artist_type || userProfile.primary_genre) ? (
+                                            <div className="flex items-center gap-1.5 mt-1">
+                                                {userProfile.artist_type && (
+                                                    <span className="text-[10px] uppercase font-bold text-black bg-white px-1.5 py-0.5 rounded-full leading-none">
+                                                        {userProfile.artist_type}
+                                                    </span>
+                                                )}
+                                                {userProfile.primary_genre && (
+                                                    <span className="text-[10px] text-zinc-400 font-medium leading-none border border-zinc-800 px-1.5 py-0.5 rounded-full">
+                                                        {userProfile.primary_genre}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-zinc-500 font-mono mt-0.5">ONLINE</span>
+                                        )}
                                     </div>
                                 </Link>
                                 <div className="h-8 w-px bg-zinc-800 mx-2" />

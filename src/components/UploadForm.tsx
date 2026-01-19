@@ -37,7 +37,16 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
 
     const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setAudioFile(e.target.files[0])
+            const file = e.target.files[0]
+
+            // Limit audio file size to 50MB
+            if (file.size > 50 * 1024 * 1024) {
+                alert('File size exceeds the 50MB limit. Please upload a smaller file.')
+                if (audioInputRef.current) audioInputRef.current.value = ''
+                return
+            }
+
+            setAudioFile(file)
         }
     }
 

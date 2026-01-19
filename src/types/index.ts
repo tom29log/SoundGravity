@@ -11,6 +11,8 @@ export interface Profile {
         twitter?: string
         website?: string
         followers_count?: number
+        artist_type?: string
+        primary_genre?: string
         [key: string]: string | number | undefined
     } | null
 }

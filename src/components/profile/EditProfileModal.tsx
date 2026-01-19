@@ -12,6 +12,8 @@ interface EditProfileModalProps {
         username: string | null
         bio?: string | null
         social_links: any
+        artist_type?: string | null
+        primary_genre?: string | null
     }
     onUpdate: () => void
 }
@@ -19,12 +21,17 @@ interface EditProfileModalProps {
 export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }: EditProfileModalProps) {
     const supabase = createClient()
     const [loading, setLoading] = useState(false)
+    const artistTypes = ['DJ', 'Producer', 'Creator', 'Celebrity', 'Other']
+    const genres = ['Hip-hop', 'EDM', 'Pop', 'R&B', 'Jazz', 'Rock', 'Classical', 'Other']
+
     const [formData, setFormData] = useState({
         username: profile.username || '',
         bio: profile.bio || '',
         instagram: profile.social_links?.instagram || '',
         soundcloud: profile.social_links?.soundcloud || '',
-        website: profile.social_links?.website || ''
+        website: profile.social_links?.website || '',
+        artistType: profile.artist_type || '',
+        genre: profile.primary_genre || ''
     })
 
     if (!isOpen) return null
@@ -45,7 +52,9 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                 .update({
                     username: formData.username,
                     bio: formData.bio,
-                    social_links
+                    social_links,
+                    artist_type: formData.artistType,
+                    primary_genre: formData.genre
                 })
                 .eq('id', profile.id)
 
@@ -83,6 +92,35 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                             className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
                             placeholder="Display Name"
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Artist Type</label>
+                            <select
+                                value={formData.artistType}
+                                onChange={e => setFormData({ ...formData, artistType: e.target.value })}
+                                className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors appearance-none"
+                            >
+                                <option value="" disabled>Select Type</option>
+                                {artistTypes.map(type => (
+                                    <option key={type} value={type} className="bg-zinc-900">{type}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Main Genre</label>
+                            <select
+                                value={formData.genre}
+                                onChange={e => setFormData({ ...formData, genre: e.target.value })}
+                                className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors appearance-none"
+                            >
+                                <option value="" disabled>Select Genre</option>
+                                {genres.map(genre => (
+                                    <option key={genre} value={genre} className="bg-zinc-900">{genre}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <div>
