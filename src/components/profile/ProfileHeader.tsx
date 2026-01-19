@@ -20,16 +20,15 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
             {/* Back to Feed Button - Top Left */}
             <Link
                 href="/"
-                className="absolute top-4 left-0 md:left-4 flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md hover:bg-white/10 hover:border-white/30 transition-all group"
+                className="absolute top-4 left-0 md:left-4 flex items-center gap-2 group opacity-70 hover:opacity-100 transition-opacity"
             >
                 <Image
-                    src="/icons/back-arrow.png"
-                    alt="Back"
-                    width={20}
-                    height={20}
-                    className="opacity-70 group-hover:opacity-100 transition-opacity invert"
+                    src="/icons/turntable-icon.png"
+                    alt="Back to Feed"
+                    width={28}
+                    height={28}
+                    className="object-contain"
                 />
-                <span className="text-xs text-zinc-400 group-hover:text-white transition-colors hidden sm:inline">FEED</span>
             </Link>
 
             {/* Avatar - Large Circle */}
@@ -60,18 +59,18 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                 </p>
             )}
 
-            {/* Social Links - Icon Buttons */}
+            {/* Social Links - Simple Icons */}
             {hasAnySocialLink && (
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-6 mt-2">
                     {socialLinks.instagram && (
                         <a
                             href={socialLinks.instagram}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-zinc-400 hover:text-pink-500 hover:border-pink-500/50 hover:bg-pink-500/10 transition-all"
+                            className="text-zinc-400 hover:text-pink-500 transition-colors"
                             title="Instagram"
                         >
-                            <Instagram size={18} />
+                            <Instagram size={24} />
                         </a>
                     )}
                     {socialLinks.soundcloud && (
@@ -79,10 +78,10 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                             href={socialLinks.soundcloud}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-zinc-400 hover:text-[#ff7700] hover:border-[#ff7700]/50 hover:bg-[#ff7700]/10 transition-all"
+                            className="text-zinc-400 hover:text-[#ff7700] transition-colors"
                             title="SoundCloud"
                         >
-                            <Music size={18} />
+                            <Music size={24} />
                         </a>
                     )}
                     {socialLinks.website && (
@@ -90,10 +89,10 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                             href={socialLinks.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-zinc-400 hover:text-white hover:border-white/50 hover:bg-white/10 transition-all"
+                            className="text-zinc-400 hover:text-white transition-colors"
                             title="Website"
                         >
-                            <Globe size={18} />
+                            <Globe size={24} />
                         </a>
                     )}
                 </div>
