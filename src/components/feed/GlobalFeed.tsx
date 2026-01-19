@@ -174,7 +174,7 @@ export default function GlobalFeed() {
                                 <span className="text-xs text-zinc-500 font-mono">ONLINE</span>
                             </div>
                             <div className="h-8 w-px bg-zinc-800 mx-2" />
-                            <KnobButton href="/admin" size="sm" className="shrink-0" variant="vinyl">
+                            <KnobButton href="/admin" size="sm" className="shrink-0">
                                 <span className="leading-tight text-[9px]">MY<br />PAGE</span>
                             </KnobButton>
                         </div>

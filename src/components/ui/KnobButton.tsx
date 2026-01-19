@@ -1,7 +1,6 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 
 interface KnobButtonProps {
     onClick?: () => void
@@ -9,10 +8,9 @@ interface KnobButtonProps {
     children?: React.ReactNode
     className?: string
     size?: 'sm' | 'md' | 'lg'
-    variant?: 'default' | 'vinyl'
 }
 
-export default function KnobButton({ onClick, href, children, className = '', size = 'md', variant = 'default' }: KnobButtonProps) {
+export default function KnobButton({ onClick, href, children, className = '', size = 'md' }: KnobButtonProps) {
     const router = useRouter()
 
     // Sizes (Diameter)
@@ -26,32 +24,6 @@ export default function KnobButton({ onClick, href, children, className = '', si
         e.preventDefault()
         if (onClick) onClick()
         if (href) router.push(href)
-    }
-
-    if (variant === 'vinyl') {
-        return (
-            <button
-                onClick={handleClick}
-                className={`
-                    relative flex items-center justify-center
-                    transition-transform active:scale-95 duration-200
-                    hover:scale-105
-                    ${className}
-                `}
-                style={{ width: pixelSize, height: pixelSize }}
-            >
-                {/* Image Only - No Filters, No Background, No Text */}
-                <div className="absolute inset-0">
-                    <Image
-                        src="/images/mypage_v3.png"
-                        alt="My Page"
-                        fill
-                        className="object-contain drop-shadow-md"
-                        priority
-                    />
-                </div>
-            </button>
-        )
     }
 
     return (
