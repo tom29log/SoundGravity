@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Heart } from 'lucide-react'
 import { Project } from '@/types'
 import { createClient } from '@/lib/supabase'
