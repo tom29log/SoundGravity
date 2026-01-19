@@ -1,4 +1,4 @@
-import { createClient, createAdminClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase'
 import { notFound } from 'next/navigation'
 import ProfileHeader from '@/components/profile/ProfileHeader'
 import ProfileProjectGrid from '@/components/profile/ProfileProjectGrid'
@@ -13,7 +13,7 @@ interface Props {
 
 // Generate Metadata for SEO/Sharing
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const supabase = createAdminClient()
+    const supabase = createClient()
     const username = decodeURIComponent(params.username)
     const { data: profile } = await supabase
         .from('profiles')
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProfilePage({ params }: Props) {
-    const supabase = createAdminClient()
+    const supabase = createClient()
     const username = decodeURIComponent(params.username)
 
     // 1. Fetch Profile
