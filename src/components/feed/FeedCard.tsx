@@ -170,13 +170,13 @@ export default function FeedCard({ project }: FeedCardProps) {
                     onTouchCancel={handleTouchEnd}
                 >
                     {/* Image with Aspect Ratio */}
-                    <div className="relative w-full">
+                    <div className="relative w-full aspect-square bg-zinc-800">
                         <Image
                             src={project.image_url}
                             alt={project.title}
-                            width={500}
-                            height={500}
-                            className={`w-full h-auto object-cover transition-transform duration-700 ${isPlaying ? 'scale-105' : 'scale-100'}`}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            className={`object-cover transition-transform duration-700 ${isPlaying ? 'scale-105' : 'scale-100'}`}
                         />
 
                         {/* Dark Overlay on Hover/Play */}
