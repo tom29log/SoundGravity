@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 interface KnobButtonProps {
     onClick?: () => void
@@ -36,25 +37,25 @@ export default function KnobButton({ onClick, href, children, className = '', si
                     shadow-[0_4px_10px_rgba(0,0,0,0.5)]
                     transition-transform active:scale-95 duration-200
                     group
+                    border-[1.5px] border-white/20
+                    bg-black/80
                     ${className}
                 `}
                 style={{ width: pixelSize, height: pixelSize }}
             >
-                {/* Vinyl Grooves Texture */}
-                <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                        background: 'repeating-radial-gradient(#181818 0, #181818 2px, #282828 3px, #282828 4px)'
-                    }}
-                />
+                {/* Image Base */}
+                <div className="absolute inset-0 rounded-full overflow-hidden">
+                    <Image
+                        src="/images/mypage_vinyl.png"
+                        alt="My Page"
+                        fill
+                        className="object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                    />
+                </div>
 
-                {/* Vinyl Label (Center) */}
-                <div className="absolute inset-[25%] bg-gradient-to-tr from-red-600 to-orange-500 rounded-full shadow-inner flex items-center justify-center border-2 border-black/20 group-hover:brightness-110 transition-all">
-                    {/* Center Hole */}
-                    <div className="w-1.5 h-1.5 bg-black rounded-full absolute" />
-
-                    {/* Content */}
-                    <div className="text-white font-bold text-center leading-tight text-[8px] md:text-[10px] z-10 drop-shadow-md">
+                {/* Content */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <div className="text-white font-medium text-center leading-tight text-[10px] md:text-xs tracking-wider drop-shadow-md mix-blend-difference">
                         {children}
                     </div>
                 </div>
