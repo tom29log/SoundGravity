@@ -6,6 +6,7 @@ import { Project } from '@/types'
 import FeedCard from './FeedCard'
 import CommentDrawer from '../social/CommentDrawer'
 import KnobButton from '@/components/ui/KnobButton'
+import AnimatedLogo_v2 from '@/components/ui/AnimatedLogo_v2'
 import { LayoutGrid, List as ListIcon, Loader2 } from 'lucide-react'
 
 // Hook for window resize to adjust columns
@@ -190,11 +191,7 @@ export default function GlobalFeed() {
                 {/* Right Side: Logo & Filters */}
                 <div className="flex items-center gap-6">
                     {/* Glowing Logo */}
-                    <img
-                        src="/images/logo_header.png"
-                        alt="SoundGravity"
-                        className="h-10 sm:h-14 md:h-16 w-auto object-contain drop-shadow-[0_0_15px_#39FF14] select-none filter brightness-150"
-                    />
+                    <AnimatedLogo_v2 />
 
                     <div className="flex items-center gap-4">
                         <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800">
