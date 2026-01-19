@@ -4,6 +4,12 @@ export interface Profile {
     avatar_url: string | null
     followers_count: number
     updated_at: string
+    social_links?: {
+        instagram?: string
+        soundcloud?: string
+        twitter?: string
+        [key: string]: string | undefined
+    } | null
 }
 
 export interface Project {
