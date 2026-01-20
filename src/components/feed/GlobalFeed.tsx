@@ -166,7 +166,7 @@ export default function GlobalFeed() {
                     <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
                         {userProfile ? (
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <Link href={`/profile/${userProfile.username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity group min-w-0">
+                                <Link href={`/profile/${userProfile.username}`} className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group min-w-0">
                                     <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 overflow-hidden relative group-hover:border-white transition-colors shrink-0">
                                         {userProfile.avatar_url ? (
                                             <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
@@ -176,8 +176,8 @@ export default function GlobalFeed() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex flex-col min-w-0">
-                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 truncate text-lg">{userProfile.username || 'User'}</span>
+                                    <div className="flex flex-col min-w-0 items-center">
+                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 text-xs text-center break-words max-w-[120px]">{userProfile.username || 'User'}</span>
                                     </div>
                                 </Link>
                                 <div className="h-8 w-px bg-zinc-800 mx-2 shrink-0" />
