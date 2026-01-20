@@ -24,6 +24,11 @@ export const metadata: Metadata = {
     locale: "en_US",
     type: "website",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "SoundGravity",
+  },
   twitter: {
     card: "summary_large_image",
     title: "SoundGravity",
