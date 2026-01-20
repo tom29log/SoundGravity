@@ -31,8 +31,9 @@ export default function GlobalFeed() {
     const [userProfile, setUserProfile] = useState<{
         username: string | null,
         avatar_url: string | null,
-        artist_type?: string | null,
-        primary_genre?: string | null
+        artist_type?: string[] | null,
+        primary_genre?: string[] | null
+        id?: string
     } | null>(null)
 
     useEffect(() => {
@@ -41,7 +42,7 @@ export default function GlobalFeed() {
             if (user) {
                 const { data } = await supabase
                     .from('profiles')
-                    .select('username, avatar_url, artist_type, primary_genre')
+                    .select('id, username, avatar_url, artist_type, primary_genre')
                     .eq('id', user.id)
                     .single()
                 if (data) setUserProfile(data)
@@ -164,9 +165,9 @@ export default function GlobalFeed() {
                     {/* User Info & Navigation */}
                     <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
                         {userProfile ? (
-                            <div className="flex items-center gap-3">
-                                <Link href={`/profile/${userProfile.username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
-                                    <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 overflow-hidden relative group-hover:border-white transition-colors">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <Link href={`/profile/${userProfile.username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity group min-w-0">
+                                    <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 overflow-hidden relative group-hover:border-white transition-colors shrink-0">
                                         {userProfile.avatar_url ? (
                                             <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                                         ) : (
@@ -175,27 +176,27 @@ export default function GlobalFeed() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4">{userProfile.username || 'User'}</span>
-                                        {(userProfile.artist_type || userProfile.primary_genre) ? (
-                                            <div className="flex items-center gap-1.5 mt-1">
-                                                {userProfile.artist_type && (
-                                                    <span className="text-[10px] uppercase font-bold text-black bg-white px-1.5 py-0.5 rounded-full leading-none">
-                                                        {userProfile.artist_type}
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 truncate">{userProfile.username || 'User'}</span>
+                                        {(userProfile.artist_type?.length || userProfile.primary_genre?.length) ? (
+                                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                                {userProfile.artist_type?.map((type, i) => (
+                                                    <span key={`at-${i}`} className="text-[10px] uppercase font-bold text-black bg-white px-1.5 py-0.5 rounded-full leading-none whitespace-nowrap">
+                                                        {type}
                                                     </span>
-                                                )}
-                                                {userProfile.primary_genre && (
-                                                    <span className="text-[10px] text-zinc-400 font-medium leading-none border border-zinc-800 px-1.5 py-0.5 rounded-full">
-                                                        {userProfile.primary_genre}
+                                                ))}
+                                                {userProfile.primary_genre?.map((genre, i) => (
+                                                    <span key={`pg-${i}`} className="text-[10px] text-zinc-400 font-medium leading-none border border-zinc-800 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                                        {genre}
                                                     </span>
-                                                )}
+                                                ))}
                                             </div>
                                         ) : (
                                             <span className="text-xs text-zinc-500 font-mono mt-0.5">ONLINE</span>
                                         )}
                                     </div>
                                 </Link>
-                                <div className="h-8 w-px bg-zinc-800 mx-2" />
+                                <div className="h-8 w-px bg-zinc-800 mx-2 shrink-0" />
                                 <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity mr-6 md:mr-0">
                                     <Image
                                         src="/icons/mypage-icon.png"
@@ -216,7 +217,7 @@ export default function GlobalFeed() {
                         )}
 
                         {/* Mobile Logo Position (Right top) */}
-                        <div className="md:hidden transform scale-[0.98] origin-right">
+                        <div className="md:hidden transform scale-[0.98] origin-right shrink-0">
                             <AnimatedLogo_v2 />
                         </div>
                     </div>
@@ -293,33 +294,35 @@ export default function GlobalFeed() {
             </div>
 
             {/* Content */}
-            {viewMode === 'list' ? (
-                <div className="flex flex-col gap-8 max-w-2xl mx-auto">
-                    {projects.map((project, index) => {
-                        // Ref on last element
-                        if (projects.length === index + 1) {
-                            return <div ref={lastElementRef} key={project.id}><FeedCard project={project} /></div>
-                        }
-                        return <FeedCard key={project.id} project={project} />
-                    })}
-                </div>
-            ) : (
-                // Masonry Grid
-                <div className="flex gap-6">
-                    {masonryColumns.map((colProjects, colIndex) => (
-                        <div key={colIndex} className="flex-1 flex flex-col gap-6">
-                            {colProjects.map((project, index) => {
-                                // We need to attach the ref to the actual last element in the DOM
-                                // But finding which column has the last element is tricky.
-                                // Actually, we can just attach ref to a dummy element at bottom of container
-                                // OR attach to the last item rendered in the last column?
-                                // Let's simplify: Put a sentinel div below the grid.
-                                return <FeedCard key={project.id} project={project} />
-                            })}
-                        </div>
-                    ))}
-                </div>
-            )}
+            {
+                viewMode === 'list' ? (
+                    <div className="flex flex-col gap-8 max-w-2xl mx-auto">
+                        {projects.map((project, index) => {
+                            // Ref on last element
+                            if (projects.length === index + 1) {
+                                return <div ref={lastElementRef} key={project.id}><FeedCard project={project} /></div>
+                            }
+                            return <FeedCard key={project.id} project={project} />
+                        })}
+                    </div>
+                ) : (
+                    // Masonry Grid
+                    <div className="flex gap-6">
+                        {masonryColumns.map((colProjects, colIndex) => (
+                            <div key={colIndex} className="flex-1 flex flex-col gap-6">
+                                {colProjects.map((project, index) => {
+                                    // We need to attach the ref to the actual last element in the DOM
+                                    // But finding which column has the last element is tricky.
+                                    // Actually, we can just attach ref to a dummy element at bottom of container
+                                    // OR attach to the last item rendered in the last column?
+                                    // Let's simplify: Put a sentinel div below the grid.
+                                    return <FeedCard key={project.id} project={project} />
+                                })}
+                            </div>
+                        ))}
+                    </div>
+                )
+            }
 
             {/* Loading Indicator / Sentinel */}
             <div ref={lastElementRef} className="py-12 flex justify-center w-full">
@@ -337,6 +340,6 @@ export default function GlobalFeed() {
                 isOpen={isCommentDrawerOpen}
                 onClose={() => setIsCommentDrawerOpen(false)}
             />
-        </div>
+        </div >
     )
 }

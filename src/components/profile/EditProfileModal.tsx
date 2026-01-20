@@ -12,8 +12,8 @@ interface EditProfileModalProps {
         username: string | null
         bio?: string | null
         social_links: any
-        artist_type?: string | null
-        primary_genre?: string | null
+        artist_type?: string[] | null // Updated to array
+        primary_genre?: string[] | null // Updated to array
         header_image_url?: string | null
     }
     onUpdate: () => void
@@ -31,8 +31,8 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
         instagram: profile.social_links?.instagram || '',
         soundcloud: profile.social_links?.soundcloud || '',
         website: profile.social_links?.website || '',
-        artistType: profile.artist_type || '',
-        genre: profile.primary_genre || '',
+        artistType: profile.artist_type || [], // Default to empty array
+        genre: profile.primary_genre || [], // Default to empty array
         headerImageUrl: profile.header_image_url || ''
     })
 
@@ -182,32 +182,71 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Artist Type</label>
-                            <select
-                                value={formData.artistType}
-                                onChange={e => setFormData({ ...formData, artistType: e.target.value })}
-                                className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors appearance-none"
-                            >
-                                <option value="" disabled>Select Type</option>
-                                {artistTypes.map(type => (
-                                    <option key={type} value={type} className="bg-zinc-900">{type}</option>
-                                ))}
-                            </select>
+                    {/* Multi-Select for Artist Type */}
+                    <div>
+                        <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">
+                            Artist Type (Max 2)
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {artistTypes.map(type => {
+                                const isSelected = formData.artistType.includes(type)
+                                return (
+                                    <button
+                                        key={type}
+                                        type="button"
+                                        onClick={() => {
+                                            let newTypes = [...formData.artistType]
+                                            if (isSelected) {
+                                                newTypes = newTypes.filter(t => t !== type)
+                                            } else {
+                                                if (newTypes.length >= 2) return // Max 2
+                                                newTypes.push(type)
+                                            }
+                                            setFormData({ ...formData, artistType: newTypes })
+                                        }}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${isSelected
+                                                ? 'bg-white text-black font-bold'
+                                                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                            }`}
+                                    >
+                                        {type}
+                                    </button>
+                                )
+                            })}
                         </div>
-                        <div>
-                            <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Main Genre</label>
-                            <select
-                                value={formData.genre}
-                                onChange={e => setFormData({ ...formData, genre: e.target.value })}
-                                className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors appearance-none"
-                            >
-                                <option value="" disabled>Select Genre</option>
-                                {genres.map(genre => (
-                                    <option key={genre} value={genre} className="bg-zinc-900">{genre}</option>
-                                ))}
-                            </select>
+                    </div>
+
+                    {/* Multi-Select for Genre */}
+                    <div>
+                        <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">
+                            Main Genre (Max 2)
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                            {genres.map(genre => {
+                                const isSelected = formData.genre.includes(genre)
+                                return (
+                                    <button
+                                        key={genre}
+                                        type="button"
+                                        onClick={() => {
+                                            let newGenres = [...formData.genre]
+                                            if (isSelected) {
+                                                newGenres = newGenres.filter(g => g !== genre)
+                                            } else {
+                                                if (newGenres.length >= 2) return // Max 2
+                                                newGenres.push(genre)
+                                            }
+                                            setFormData({ ...formData, genre: newGenres })
+                                        }}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${isSelected
+                                                ? 'bg-white text-black font-bold'
+                                                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                            }`}
+                                    >
+                                        {genre}
+                                    </button>
+                                )
+                            })}
                         </div>
                     </div>
 

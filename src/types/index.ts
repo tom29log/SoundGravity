@@ -5,8 +5,8 @@ export interface Profile {
     bio?: string | null
     followers_count: number
     updated_at: string
-    artist_type?: string | null
-    primary_genre?: string | null
+    artist_type?: string[] | null
+    primary_genre?: string[] | null
     header_image_url?: string | null
     social_links?: {
         instagram?: string
