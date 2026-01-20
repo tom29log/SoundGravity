@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  manifest: "/manifest.json",
   title: "SoundGravity",
   description: "Experience audio in a new dimension.",
   openGraph: {

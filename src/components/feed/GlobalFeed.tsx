@@ -176,24 +176,8 @@ export default function GlobalFeed() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex flex-col min-w-0">
-                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 break-words">{userProfile.username || 'User'}</span>
-                                        {(userProfile.artist_type?.length || userProfile.primary_genre?.length) ? (
-                                            <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                                {userProfile.artist_type?.map((type, i) => (
-                                                    <span key={`at-${i}`} className="text-[10px] uppercase font-bold text-black bg-white px-1.5 py-0.5 rounded-full leading-none whitespace-nowrap">
-                                                        {type}
-                                                    </span>
-                                                ))}
-                                                {userProfile.primary_genre?.map((genre, i) => (
-                                                    <span key={`pg-${i}`} className="text-[10px] text-zinc-400 font-medium leading-none border border-zinc-800 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                                                        {genre}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <span className="text-xs text-zinc-500 font-mono mt-0.5">ONLINE</span>
-                                        )}
+                                    <div className="flex flex-col min-w-0 justify-center h-10">
+                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 break-words text-lg">{userProfile.username || 'User'}</span>
                                     </div>
                                 </Link>
                                 <div className="h-8 w-px bg-zinc-800 mx-2 shrink-0" />
