@@ -177,7 +177,7 @@ export default function GlobalFeed() {
                                         )}
                                     </div>
                                     <div className="flex flex-col min-w-0">
-                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 truncate">{userProfile.username || 'User'}</span>
+                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 break-words">{userProfile.username || 'User'}</span>
                                         {(userProfile.artist_type?.length || userProfile.primary_genre?.length) ? (
                                             <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                                 {userProfile.artist_type?.map((type, i) => (
