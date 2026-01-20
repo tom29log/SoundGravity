@@ -140,6 +140,35 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                         {profile.username || 'Unknown Artist'}
                     </h1>
 
+                    {/* Artist Type & Genre Tags */}
+                    <div className="flex flex-wrap items-center justify-center gap-2 max-w-sm px-4">
+                        {/* Render Artist Types */}
+                        {Array.isArray(profile.artist_type) && profile.artist_type.map((type, i) => (
+                            <span key={`at-${i}`} className="text-[10px] md:text-xs uppercase font-bold text-black bg-white px-2 py-1 rounded-full leading-none shadow-sm">
+                                {type}
+                            </span>
+                        ))}
+                        {/* Fallback for single string legacy data (optional safety) */}
+                        {typeof profile.artist_type === 'string' && (
+                            <span className="text-[10px] md:text-xs uppercase font-bold text-black bg-white px-2 py-1 rounded-full leading-none shadow-sm">
+                                {profile.artist_type}
+                            </span>
+                        )}
+
+                        {/* Render Genres */}
+                        {Array.isArray(profile.primary_genre) && profile.primary_genre.map((genre, i) => (
+                            <span key={`pg-${i}`} className="text-[10px] md:text-xs text-zinc-300 font-medium leading-none border border-zinc-700 px-2 py-1 rounded-full shadow-sm bg-black/40 backdrop-blur-sm">
+                                {genre}
+                            </span>
+                        ))}
+                        {/* Fallback for single string legacy data */}
+                        {typeof profile.primary_genre === 'string' && (
+                            <span className="text-[10px] md:text-xs text-zinc-300 font-medium leading-none border border-zinc-700 px-2 py-1 rounded-full shadow-sm bg-black/40 backdrop-blur-sm">
+                                {profile.primary_genre}
+                            </span>
+                        )}
+                    </div>
+
                     {!isOwnProfile && (
                         <button
                             onClick={handleFollow}

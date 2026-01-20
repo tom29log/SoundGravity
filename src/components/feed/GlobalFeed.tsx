@@ -176,8 +176,8 @@ export default function GlobalFeed() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="flex flex-col min-w-0 justify-center h-10">
-                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 break-words text-lg">{userProfile.username || 'User'}</span>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 truncate text-lg">{userProfile.username || 'User'}</span>
                                     </div>
                                 </Link>
                                 <div className="h-8 w-px bg-zinc-800 mx-2 shrink-0" />
