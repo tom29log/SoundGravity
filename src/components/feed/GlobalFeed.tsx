@@ -10,6 +10,7 @@ import CommentDrawer from '../social/CommentDrawer'
 import KnobButton from '@/components/ui/KnobButton'
 import AnimatedLogo_v2 from '@/components/ui/AnimatedLogo_v2'
 import { LayoutGrid, List as ListIcon, Loader2 } from 'lucide-react'
+import { useStemPreloader } from '@/hooks/useStemPreloader'
 
 // Hook for window resize to adjust columns
 function useWindowWidth() {
@@ -27,6 +28,8 @@ function useWindowWidth() {
 export default function GlobalFeed() {
     const [projects, setProjects] = useState<Project[]>([])
     const [loading, setLoading] = useState(true)
+    // Active stem mixer - only one can be open at a time
+    const [activeMixerId, setActiveMixerId] = useState<string | null>(null)
     // User Profile Data
     const [userProfile, setUserProfile] = useState<{
         username: string | null,
@@ -113,6 +116,13 @@ export default function GlobalFeed() {
         } else {
             const newProjects = (data as unknown) as Project[] || []
 
+            // Debug: Check stems data from API
+            console.log('=== STEMS DEBUG ===')
+            newProjects.forEach(p => {
+                console.log(`${p.title}: stems =`, p.stems, 'hasStems =', p.stems && Object.keys(p.stems).length > 0)
+            })
+            console.log('===================')
+
             if (newProjects.length < PAGE_SIZE) {
                 setHasMore(false)
             }
@@ -139,6 +149,9 @@ export default function GlobalFeed() {
         fetchProjects(isLoadMore)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, filter, aiFilter])
+
+    // Performance Optimization: Smart Preload
+    useStemPreloader({ tracks: projects, currentIndex: 0 })
 
     // Handle Masonry Columns
     const width = useWindowWidth()
@@ -185,8 +198,8 @@ export default function GlobalFeed() {
                                     <Image
                                         src="/icons/mypage-icon.png"
                                         alt="My Page"
-                                        width={40}
-                                        height={40}
+                                        width={52}
+                                        height={52}
                                         className="object-contain brightness-0 invert"
                                     />
                                 </Link>
@@ -284,9 +297,9 @@ export default function GlobalFeed() {
                         {projects.map((project, index) => {
                             // Ref on last element
                             if (projects.length === index + 1) {
-                                return <div ref={lastElementRef} key={project.id}><FeedCard project={project} /></div>
+                                return <div ref={lastElementRef} key={project.id}><FeedCard project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} /></div>
                             }
-                            return <FeedCard key={project.id} project={project} />
+                            return <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} />
                         })}
                     </div>
                 ) : (
@@ -300,7 +313,7 @@ export default function GlobalFeed() {
                                     // Actually, we can just attach ref to a dummy element at bottom of container
                                     // OR attach to the last item rendered in the last column?
                                     // Let's simplify: Put a sentinel div below the grid.
-                                    return <FeedCard key={project.id} project={project} />
+                                    return <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} />
                                 })}
                             </div>
                         ))}

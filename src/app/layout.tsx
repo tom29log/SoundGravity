@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { PlaylistPlayerProvider } from '@/contexts/PlaylistPlayerContext'
+import GlobalAudioEngine from '@/components/GlobalAudioEngine'
 import "./globals.css";
 
 const geistSans = Geist({
@@ -43,17 +45,22 @@ export const viewport = {
   userScalable: false,
 };
 
+import BottomPlayerBar from '@/components/ui/BottomPlayerBar'
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <PlaylistPlayerProvider>
+          <GlobalAudioEngine />
+          {children}
+        </PlaylistPlayerProvider>
       </body>
     </html>
   );

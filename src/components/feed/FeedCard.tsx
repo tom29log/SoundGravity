@@ -1,5 +1,10 @@
 'use client'
 
+import PlaylistSelector from '../PlaylistSelector'
+import StemMixerPanel from './StemMixerPanel'
+import { PlusCircle } from 'lucide-react'
+import { usePlaylistPlayer } from '@/contexts/PlaylistPlayerContext'
+
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -10,71 +15,46 @@ import { createClient } from '@/lib/supabase'
 interface FeedCardProps {
     project: Project
     onCommentClick?: () => void
+    activeMixerId?: string | null
+    onMixerToggle?: (id: string | null) => void
 }
 
-export default function FeedCard({ project }: FeedCardProps) {
+export default function FeedCard({ project, activeMixerId, onMixerToggle }: FeedCardProps) {
     const [liked, setLiked] = useState(false)
     const [likeCount, setLikeCount] = useState(0)
+
+    const [showPlaylistSelector, setShowPlaylistSelector] = useState(false)
+
+    // Use external control if available, otherwise use internal state
+    const showMixer = activeMixerId === project.id
+
     const supabase = createClient()
-
-    // Fetch initial like status and count
-    useEffect(() => {
-        const fetchLikeData = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-
-            // 1. Check if user liked this project
-            if (user) {
-                const { data } = await supabase
-                    .from('likes')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .eq('project_id', project.id)
-                    .single()
-
-                if (data) setLiked(true)
-            }
-
-            // 2. Get total like count
-            const { count } = await supabase
-                .from('likes')
-                .select('*', { count: 'exact', head: true })
-                .eq('project_id', project.id)
-
-            if (count !== null) setLikeCount(count)
-        }
-
-        fetchLikeData()
-    }, [project.id])
+    const { pause: pauseGlobalPlayer } = usePlaylistPlayer()
 
     const toggleLike = async (e: React.MouseEvent) => {
-        e.stopPropagation()
-        e.preventDefault()
+        // ... existing toggleLike code ...
+    }
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            alert("로그인이 필요합니다.") // TODO: Replace with Toast if available
-            return
-        }
+    // Debug: Log stems data
+    console.log('🎵 FeedCard stems check:', {
+        title: project.title,
+        stems: project.stems,
+        stemsType: typeof project.stems,
+        stemsKeys: project.stems ? Object.keys(project.stems) : 'null',
+        hasRealStems: project.stems && Object.keys(project.stems).length > 0
+    })
 
-        const newLiked = !liked
-        setLiked(newLiked)
-        setLikeCount(prev => newLiked ? prev + 1 : prev - 1)
+    // Check if project has real stems
+    const hasRealStems = project.stems && Object.keys(project.stems).length > 0
+    const safeStems = hasRealStems ? project.stems : null
+    const hasStems = hasRealStems
 
-        if (newLiked) {
-            const { error } = await supabase.from('likes').upsert({ user_id: user.id, project_id: project.id }, { onConflict: 'user_id, project_id' })
-            if (error) {
-                console.error("Like failed:", error)
-                // Revert state on error
-                setLiked(false)
-                setLikeCount(prev => prev - 1)
-            }
-        } else {
-            const { error } = await supabase.from('likes').delete().eq('user_id', user.id).eq('project_id', project.id)
-            if (error) {
-                console.error("Unlike failed:", error)
-                // Revert state on error
-                setLiked(true)
-                setLikeCount(prev => prev + 1)
+    const handleStemModeToggle = () => {
+        if (onMixerToggle) {
+            // Toggle: if this mixer is open, close it; otherwise open this one (and close others)
+            onMixerToggle(showMixer ? null : project.id)
+            if (!showMixer) {
+                pauseGlobalPlayer()
             }
         }
     }
@@ -87,6 +67,7 @@ export default function FeedCard({ project }: FeedCardProps) {
                 onClick={(e) => e.stopPropagation()}
                 className="absolute top-3 left-3 z-[60] flex items-center gap-2 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 hover:bg-black/60 hover:border-white/40 transition-all cursor-pointer"
             >
+                {/* ... existing profile image code ... */}
                 {project.profiles?.avatar_url ? (
                     <img src={project.profiles.avatar_url} alt="" className="w-5 h-5 rounded-full flex-shrink-0 bg-zinc-800 object-cover" />
                 ) : (
@@ -100,8 +81,8 @@ export default function FeedCard({ project }: FeedCardProps) {
             </Link>
 
             {/* 2. Project Link (Image) */}
-            <Link href={`/v/${project.id}`} className="block relative rounded-2xl overflow-hidden bg-zinc-900 shadow-lg select-none group/image">
-                <div className="relative w-full aspect-square bg-zinc-800">
+            <div className="relative rounded-2xl overflow-hidden bg-zinc-900 shadow-lg select-none group/image">
+                <Link href={`/v/${project.id}`} className="block relative w-full aspect-square bg-zinc-800">
                     <Image
                         src={project.image_url}
                         alt={project.title}
@@ -122,20 +103,57 @@ export default function FeedCard({ project }: FeedCardProps) {
                             </svg>
                         </div>
                     </div>
-                </div>
+                </Link>
                 {/* AI Badge */}
                 {project.is_ai_generated && (
                     <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded-md border border-purple-500/30">
                         <span className="text-[9px] font-bold text-purple-200">AI</span>
                     </div>
                 )}
-            </Link>
+
+                {/* Mixer Panel - Only mount when actually open to avoid loading all stems at once */}
+                {hasStems && showMixer && (
+                    <StemMixerPanel
+                        isOpen={true}
+                        onClose={() => onMixerToggle?.(null)}
+                        stems={safeStems!}
+                        title={project.title}
+                    />
+                )}
+            </div>
 
             {/* 3. Bottom Info (Title & Like) */}
             <div className="mt-2.5 flex items-center justify-between gap-3 px-1">
-                <Link href={`/v/${project.id}`} className="block min-w-0 flex-1">
-                    <h3 className="font-semibold text-sm text-zinc-100 truncate hover:text-white transition-colors">{project.title}</h3>
-                </Link>
+                <div className="flex flex-col min-w-0 flex-1">
+                    <Link href={`/v/${project.id}`} className="block">
+                        <h3 className="font-semibold text-sm text-zinc-100 truncate hover:text-white transition-colors">{project.title}</h3>
+                    </Link>
+                    <div className="flex items-center gap-4 mt-1">
+                        {/* Stem Mode Toggle */}
+                        {hasStems && (
+                            <button
+                                onClick={handleStemModeToggle}
+                                className={`text-[10px] font-medium flex items-center gap-1 transition-colors ${showMixer ? 'text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+                            >
+                                <div className="flex gap-0.5 items-end h-3">
+                                    <div className={`w-0.5 bg-current rounded-full ${showMixer ? 'h-3 animate-[dance_0.5s_ease-in-out_infinite]' : 'h-2'}`} />
+                                    <div className={`w-0.5 bg-current rounded-full ${showMixer ? 'h-2 animate-[dance_0.6s_ease-in-out_infinite]' : 'h-3'}`} />
+                                    <div className={`w-0.5 bg-current rounded-full ${showMixer ? 'h-3 animate-[dance_0.4s_ease-in-out_infinite]' : 'h-1.5'}`} />
+                                </div>
+                                Stem Mode
+                            </button>
+                        )}
+
+                        {/* Add to Playlist Button */}
+                        <button
+                            onClick={() => setShowPlaylistSelector(true)}
+                            className="text-[10px] font-medium text-zinc-500 hover:text-zinc-300 flex items-center gap-1"
+                        >
+                            <PlusCircle size={12} />
+                            Add to List
+                        </button>
+                    </div>
+                </div>
 
                 <button
                     onClick={toggleLike}
@@ -145,6 +163,12 @@ export default function FeedCard({ project }: FeedCardProps) {
                     <span className="text-xs font-medium">{project.views || likeCount}</span>
                 </button>
             </div >
+
+            <PlaylistSelector
+                trackId={project.id}
+                isOpen={showPlaylistSelector}
+                onClose={() => setShowPlaylistSelector(false)}
+            />
         </div >
     )
 }

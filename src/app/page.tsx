@@ -1,3 +1,4 @@
+import { useStemPreloader } from '@/hooks/useStemPreloader'
 import GlobalFeed from '@/components/feed/GlobalFeed'
 
 export default function Home() {

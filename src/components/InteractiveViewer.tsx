@@ -44,55 +44,11 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
     const filterNodeRef = useRef<BiquadFilterNode | null>(null)
     const analyserNodeRef = useRef<AnalyserNode | null>(null)
     const audioRef = useRef<HTMLAudioElement | null>(null)
-    const canvasRef = useRef<HTMLCanvasElement | null>(null)
-    const animationFrameRef = useRef<number | null>(null)
 
     // Current Audio State Tracker (for Pin Capture)
     const audioState = useRef<AudioState>({ pan: 0, frequency: 20000 })
 
-    // Visualizer Drawer
-    const drawVisualizer = () => {
-        if (!canvasRef.current || !analyserNodeRef.current) return
 
-        const canvas = canvasRef.current
-        const ctx = canvas.getContext('2d')
-        const analyser = analyserNodeRef.current
-
-        if (!ctx) return
-
-        const bufferLength = analyser.frequencyBinCount
-        const dataArray = new Uint8Array(bufferLength)
-
-        const draw = () => {
-            animationFrameRef.current = requestAnimationFrame(draw)
-            analyser.getByteFrequencyData(dataArray)
-
-            const width = canvas.width
-            const height = canvas.height
-
-            ctx.clearRect(0, 0, width, height)
-
-            const barWidth = (width / bufferLength) * 2.5
-            let barHeight
-            let x = 0
-
-            for (let i = 0; i < bufferLength; i++) {
-                barHeight = dataArray[i] / 2 // Scale down
-
-                // Color calculation based on height/frequency
-                const r = barHeight + (25 * (i / bufferLength))
-                const g = 250 * (i / bufferLength)
-                const b = 50
-
-                ctx.fillStyle = `rgb(${r},${g},${b})`
-                // Draw bars at the bottom
-                ctx.fillRect(x, height - barHeight, barWidth, barHeight)
-
-                x += barWidth + 1
-            }
-        }
-        draw()
-    }
 
     // Time Update Handler
     useEffect(() => {
@@ -113,9 +69,6 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
 
         // Cleanup function for visualizer
         return () => {
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current)
-            }
             if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
                 audioContextRef.current.close()
                 audioContextRef.current = null
@@ -170,9 +123,6 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
             audioRef.current.pause()
 
             // Note: Removed context.suspend() to avoid click/pop noises on resume
-            if (animationFrameRef.current) {
-                cancelAnimationFrame(animationFrameRef.current)
-            }
             setIsPlaying(false)
         } else {
             // Play (Restart)
@@ -191,8 +141,6 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
             }
 
             audioRef.current.play().catch(e => console.error("Play failed", e))
-            // Start Visualizer
-            drawVisualizer()
             setIsPlaying(true)
         }
     }
@@ -298,15 +246,7 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                 />
             </div>
 
-            {/* Visualizer Layer (Bottom Overlay) */}
-            <div className="absolute inset-x-0 bottom-0 h-32 z-10 pointer-events-none opacity-80 mix-blend-screen">
-                <canvas
-                    ref={canvasRef}
-                    className="w-full h-full"
-                    width={1000}
-                    height={200}
-                />
-            </div>
+
 
             {/* Pins Layer (Only Visible if FileMode is TRUE) */}
             {pinMode && comments.map((comment) => {

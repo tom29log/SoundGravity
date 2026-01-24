@@ -3,7 +3,7 @@
 
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Upload, X, Music, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Music, Image as ImageIcon, Sparkles, Loader2, Check } from 'lucide-react'
 import Image from 'next/image'
 
 interface UploadFormProps {
@@ -25,6 +25,29 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
 
     const imageInputRef = useRef<HTMLInputElement>(null)
     const audioInputRef = useRef<HTMLInputElement>(null)
+
+    // Stems State (File-based for manual upload)
+    const [stems, setStems] = useState<{ [key: string]: File | null }>({
+        vocal: null,
+        drum: null,
+        bass: null,
+        synth: null,
+    })
+    // Stems URLs (for auto-separated stems)
+    const [stemUrls, setStemUrls] = useState<{ [key: string]: string | null }>({
+        vocal: null,
+        drum: null,
+        bass: null,
+        synth: null,
+    })
+    const [isSeparating, setIsSeparating] = useState(false)
+    const [separationStatus, setSeparationStatus] = useState('')
+    const stemInputRefs = {
+        vocal: useRef<HTMLInputElement>(null),
+        drum: useRef<HTMLInputElement>(null),
+        bass: useRef<HTMLInputElement>(null),
+        synth: useRef<HTMLInputElement>(null),
+    }
     const supabase = createClient()
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,15 +61,120 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
     const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0]
-
-            // Limit audio file size to 50MB
             if (file.size > 50 * 1024 * 1024) {
-                alert('File size exceeds the 50MB limit. Please upload a smaller file.')
+                alert('File size exceeds the 50MB limit.')
                 if (audioInputRef.current) audioInputRef.current.value = ''
                 return
             }
-
             setAudioFile(file)
+        }
+    }
+
+    const handleStemChange = (type: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0]
+            if (file.size > 20 * 1024 * 1024) {
+                alert('Stem file size limit is 20MB.')
+                if (stemInputRefs[type as keyof typeof stemInputRefs].current) {
+                    stemInputRefs[type as keyof typeof stemInputRefs].current!.value = ''
+                }
+                return
+            }
+            setStems(prev => ({ ...prev, [type]: file }))
+            // Clear any URL-based stem for this type
+            setStemUrls(prev => ({ ...prev, [type]: null }))
+        }
+    }
+
+    // Auto Stem Separation
+    const handleStemSeparation = async () => {
+        if (!audioFile) {
+            alert('Please upload master audio first')
+            return
+        }
+
+        setIsSeparating(true)
+        setSeparationStatus('Uploading audio...')
+
+        try {
+            // 1. Upload master audio first to get URL
+            const audioUrl = await uploadFile(audioFile)
+
+            setSeparationStatus('Separating stems (1-2 min)...')
+
+            // 2. Call stem separation API
+            const response = await fetch('/api/stems/separate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ audioUrl }),
+            })
+
+            if (!response.ok) {
+                const error = await response.json()
+                throw new Error(error.error || 'Stem separation failed')
+            }
+
+            const separatedStems = await response.json()
+
+            setSeparationStatus('Uploading stems to storage...')
+
+            // 3.5 Upload separated stems to Supabase Storage (since local URLs won't work in production)
+            const uploadedStemUrls: { [key: string]: string | null } = {
+                vocal: null,
+                drum: null,
+                bass: null,
+                synth: null,
+            }
+
+            for (const [stemType, localUrl] of Object.entries(separatedStems)) {
+                if (localUrl && typeof localUrl === 'string') {
+                    try {
+                        console.log(`Fetching ${stemType} from ${localUrl}`)
+                        // Fetch the stem file from local server
+                        const stemResponse = await fetch(localUrl)
+                        if (!stemResponse.ok) {
+                            console.error(`Failed to fetch ${stemType}: ${stemResponse.status}`)
+                            continue
+                        }
+                        const stemBlob = await stemResponse.blob()
+                        console.log(`${stemType} blob size: ${stemBlob.size}`)
+                        const stemFile = new File([stemBlob], `${stemType}.mp3`, { type: 'audio/mpeg' })
+
+                        // Upload to Supabase
+                        const fileExt = 'mp3'
+                        const fileName = `stems_${Date.now()}_${stemType}.${fileExt}`
+
+                        console.log(`Uploading ${stemType} to Supabase as ${fileName}`)
+                        const { error: uploadError } = await supabase.storage
+                            .from('assets')
+                            .upload(fileName, stemFile)
+
+                        if (uploadError) {
+                            console.error(`Failed to upload ${stemType}:`, uploadError)
+                        } else {
+                            const { data } = supabase.storage.from('assets').getPublicUrl(fileName)
+                            uploadedStemUrls[stemType as keyof typeof uploadedStemUrls] = data.publicUrl
+                            console.log(`${stemType} uploaded successfully: ${data.publicUrl}`)
+                        }
+                    } catch (err) {
+                        console.error(`Failed to upload ${stemType} stem:`, err)
+                    }
+                }
+            }
+
+            // 4. Set the stem URLs (now pointing to Supabase)
+            setStemUrls(uploadedStemUrls)
+
+            // Clear file-based stems since we now have URLs
+            setStems({ vocal: null, drum: null, bass: null, synth: null })
+
+            setSeparationStatus('Stems ready!')
+        } catch (error: any) {
+            console.error('Stem separation error:', error)
+            alert('Stem separation failed: ' + error.message)
+            setSeparationStatus('')
+        } finally {
+            setIsSeparating(false)
         }
     }
 
@@ -85,7 +213,36 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
             const imageUrl = await uploadFile(imageFile)
 
             // 2. Upload Audio
+            // 2. Upload Audio
             const audioUrl = await uploadFile(audioFile)
+
+            // 2.5 Upload Stems (if any) or use pre-separated URLs
+            let uploadedStems: Record<string, string> | null = null
+
+            // Check for URL-based stems first (from auto separation)
+            const urlBasedStems = Object.entries(stemUrls).filter(([_, url]) => url !== null)
+            if (urlBasedStems.length > 0) {
+                uploadedStems = {}
+                for (const [type, url] of urlBasedStems) {
+                    if (url) uploadedStems[type] = url
+                }
+            }
+
+            // Then check for file-based stems (manual upload)
+            const stemsToUpload = Object.entries(stems).filter(([_, file]) => file !== null)
+            if (stemsToUpload.length > 0) {
+                if (!uploadedStems) uploadedStems = {}
+                for (const [type, file] of stemsToUpload) {
+                    if (file) {
+                        try {
+                            const url = await uploadFile(file)
+                            uploadedStems[type] = url
+                        } catch (err) {
+                            console.error(`Failed to upload ${type} stem`, err)
+                        }
+                    }
+                }
+            }
 
             // 3. Insert into DB
             const { data: { user } } = await supabase.auth.getUser()
@@ -94,8 +251,9 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                 title,
                 image_url: imageUrl,
                 audio_url: audioUrl,
+                stems: uploadedStems, // Add stems data
                 target_url: targetUrl || null,
-                user_id: user?.id, // Link to current user
+                user_id: user?.id,
                 is_ai_generated: isAiGenerated,
                 ai_tool_used: isAiGenerated ? aiTool : null,
                 copyright_confirmed: copyrightConfirmed
@@ -112,6 +270,8 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
             setCopyrightConfirmed(false)
             setIsAiGenerated(false)
             setAiTool('')
+            setStemUrls({ vocal: null, drum: null, bass: null, synth: null })
+            setSeparationStatus('')
 
             if (imageInputRef.current) imageInputRef.current.value = ''
             if (audioInputRef.current) audioInputRef.current.value = ''
@@ -194,7 +354,7 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
 
                 {/* Audio Upload */}
                 <div>
-                    <label className="block text-sm font-medium mb-1 text-zinc-300">Audio File <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium mb-1 text-zinc-300">Master Audio <span className="text-red-500">*</span></label>
                     <div
                         onClick={() => audioInputRef.current?.click()}
                         className={`w-full h-[calc(100%-1.6rem)] min-h-[140px] p-4 bg-zinc-800 border border-zinc-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-800/80 hover:border-zinc-500 transition-all gap-3 ${audioFile ? 'border-green-500/30 bg-green-500/5' : ''}`}
@@ -212,17 +372,110 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                         ) : (
                             <>
                                 <Music className="w-8 h-8 text-zinc-500" />
-                                <span className="text-xs text-zinc-500">Select audio file...</span>
+                                <span className="text-xs text-zinc-500">Select master file...</span>
                             </>
                         )}
                         <input
                             type="file"
-                            accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"
+                            accept="audio/*"
                             ref={audioInputRef}
                             onChange={handleAudioChange}
                             className="hidden"
                         />
                     </div>
+                </div>
+            </div>
+
+            {/* Stems Upload Section (Optional) */}
+            <div className="border border-zinc-800 bg-zinc-900/30 rounded-lg p-5">
+                <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-sm font-medium text-white">Stems (Optional)</h3>
+                    {audioFile && (
+                        <button
+                            type="button"
+                            onClick={handleStemSeparation}
+                            disabled={isSeparating}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 disabled:from-zinc-700 disabled:to-zinc-700 rounded-lg text-xs font-medium transition-all"
+                        >
+                            {isSeparating ? (
+                                <>
+                                    <Loader2 size={12} className="animate-spin" />
+                                    {separationStatus}
+                                </>
+                            ) : separationStatus === 'Stems ready!' ? (
+                                <>
+                                    <Check size={12} />
+                                    Stems Ready
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles size={12} />
+                                    Auto Separate Stems
+                                </>
+                            )}
+                        </button>
+                    )}
+                </div>
+                <p className="text-xs text-zinc-500 mb-2">
+                    {audioFile
+                        ? 'Click "Auto Separate Stems" to split your track, or upload manually below.'
+                        : 'Upload master audio first to enable auto stem separation.'
+                    }
+                </p>
+                {audioFile && !separationStatus && (
+                    <p className="text-[11px] text-amber-500/80 mb-4 flex items-center gap-1.5">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        AI 스템 분리에는 약 2~5분이 소요됩니다 (무료 서비스)
+                    </p>
+                )}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    {['vocal', 'drum', 'bass', 'synth'].map((type) => (
+                        <div key={type} className="relative">
+                            <input
+                                type="file"
+                                accept="audio/*"
+                                ref={stemInputRefs[type as keyof typeof stemInputRefs]}
+                                onChange={(e) => handleStemChange(type, e)}
+                                className="hidden"
+                            />
+                            <div
+                                onClick={() => !stemUrls[type] && stemInputRefs[type as keyof typeof stemInputRefs].current?.click()}
+                                className={`h-24 border border-zinc-700 rounded-md flex flex-col items-center justify-center transition-colors ${stemUrls[type] ? 'bg-green-500/10 border-green-500/30 cursor-default' : stems[type] ? 'bg-blue-500/10 border-blue-500/30 cursor-pointer hover:bg-zinc-800' : 'bg-zinc-800/50 cursor-pointer hover:bg-zinc-800'}`}
+                            >
+                                <span className="text-xs font-semibold capitalize text-zinc-400 mb-1">{type}</span>
+                                {stemUrls[type] ? (
+                                    <div className="flex flex-col items-center">
+                                        <Check size={14} className="text-green-500 mb-1" />
+                                        <span className="text-[10px] text-green-400">Auto-separated</span>
+                                    </div>
+                                ) : stems[type] ? (
+                                    <span className="text-[10px] text-blue-400 px-2 truncate w-full text-center">
+                                        {stems[type]!.name}
+                                    </span>
+                                ) : (
+                                    <Upload size={14} className="text-zinc-600" />
+                                )}
+                            </div>
+                            {(stems[type] || stemUrls[type]) && (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setStems(prev => ({ ...prev, [type]: null }))
+                                        setStemUrls(prev => ({ ...prev, [type]: null }))
+                                        if (stemInputRefs[type as keyof typeof stemInputRefs].current) {
+                                            stemInputRefs[type as keyof typeof stemInputRefs].current!.value = ''
+                                        }
+                                    }}
+                                    className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-red-500/80 rounded-full text-white transition-colors"
+                                >
+                                    <X size={10} />
+                                </button>
+                            )}
+                        </div>
+                    ))}
                 </div>
             </div>
 

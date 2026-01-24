@@ -3,7 +3,6 @@
 import { Project } from '@/types'
 import Image from 'next/image'
 import { useRef, useState } from 'react'
-import Link from 'next/link'
 
 interface ProfileProjectGridProps {
     projects: Project[]
@@ -21,31 +20,43 @@ export default function ProfileProjectGrid({ projects }: ProfileProjectGridProps
 
 function ProjectCard({ project }: { project: Project }) {
     const audioRef = useRef<HTMLAudioElement | null>(null)
+    const [isPlaying, setIsPlaying] = useState(false)
     const [isHovering, setIsHovering] = useState(false)
+
+    const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault() // 페이지 이동 방지
+
+        if (audioRef.current) {
+            if (isPlaying) {
+                audioRef.current.pause()
+                setIsPlaying(false)
+            } else {
+                audioRef.current.volume = 0.5
+                audioRef.current.currentTime = 0
+                audioRef.current.play().catch(() => { })
+                setIsPlaying(true)
+            }
+        }
+    }
 
     const handleMouseEnter = () => {
         setIsHovering(true)
-        if (audioRef.current) {
-            audioRef.current.volume = 0.5
-            audioRef.current.currentTime = 0
-            audioRef.current.play().catch(() => { }) // Ignore autoplay errors
-        }
     }
 
     const handleMouseLeave = () => {
         setIsHovering(false)
-        if (audioRef.current) {
-            audioRef.current.pause()
-        }
     }
 
     return (
-        <Link href={`/v/${project.id}`} className="block relative aspect-square overflow-hidden group">
+        <div
+            className="block relative aspect-square overflow-hidden group cursor-pointer"
+            onClick={handleClick}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
             <div
                 className="w-full h-full relative transition-transform duration-500 ease-out will-change-transform"
                 style={{ transform: isHovering ? 'scale(1.02)' : 'scale(1)' }}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
             >
                 <Image
                     src={project.image_url}
@@ -54,8 +65,21 @@ function ProjectCard({ project }: { project: Project }) {
                     className="object-cover"
                 />
 
-                {/* Hover Overlay */}
-                <div className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-300 ${isHovering ? 'opacity-100' : 'opacity-0'}`}>
+                {/* Overlay */}
+                <div className={`absolute inset-0 bg-black/40 flex flex-col items-center justify-center transition-opacity duration-300 ${isHovering || isPlaying ? 'opacity-100' : 'opacity-0'}`}>
+                    {/* Play/Stop Icon */}
+                    <div className="mb-2">
+                        {isPlaying ? (
+                            <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <rect x="6" y="4" width="4" height="16" rx="1" />
+                                <rect x="14" y="4" width="4" height="16" rx="1" />
+                            </svg>
+                        ) : (
+                            <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                        )}
+                    </div>
                     <h3 className="text-white font-bold text-xl tracking-tight drop-shadow-md px-4 text-center">
                         {project.title}
                     </h3>
@@ -63,6 +87,6 @@ function ProjectCard({ project }: { project: Project }) {
 
                 <audio ref={audioRef} src={project.audio_url} loop muted={false} />
             </div>
-        </Link>
+        </div>
     )
 }

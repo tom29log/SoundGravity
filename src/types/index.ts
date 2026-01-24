@@ -31,6 +31,8 @@ export interface Project {
     ai_tool_used?: string | null
     copyright_confirmed?: boolean
     profiles?: Profile // Joined data
+    stems?: Record<string, string> | null
+    bpm?: number
 }
 
 export interface Like {

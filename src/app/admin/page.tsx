@@ -10,6 +10,7 @@ import UploadForm from '@/components/UploadForm'
 import DevicePreview from '@/components/DevicePreview'
 import KnobButton from '@/components/ui/KnobButton'
 import EditProfileModal from '@/components/profile/EditProfileModal'
+import PlaylistList from '@/components/playlist/PlaylistList'
 
 export default function AdminPage() {
     const router = useRouter()
@@ -136,8 +137,41 @@ export default function AdminPage() {
                     </div>
                 </header>
 
+                {/* Top Section: Playlists (Priority) */}
+                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
+                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                        My Playlists
+                        <span className="text-xs font-normal text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">Mixset Ready</span>
+                    </h2>
+                    <PlaylistList key={`playlist-${refreshKey}`} />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column: Upload Form */}
+                    <div className="lg:col-span-1 space-y-6">
+                        <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
+                            <h2 className="text-xl font-semibold mb-4">New Project</h2>
+                            <UploadForm onUploadSuccess={handleRefresh} />
+                        </div>
+                    </div>
+
+                    {/* Right Column: Projects */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Projects Section */}
+                        <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
+                            <h2 className="text-xl font-semibold mb-4">Your Projects (Click to Preview)</h2>
+                            <ProjectList
+                                key={refreshKey}
+                                onSelect={handleProjectSelect}
+                                selectedId={previewId}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Bottom Section: Live Preview */}
                 {previewId && (
-                    <div className="mb-8 p-6 bg-zinc-900/50 rounded-2xl border border-zinc-800">
+                    <div className="mt-8 p-6 bg-zinc-900/50 rounded-2xl border border-zinc-800">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-semibold">Live Preview</h2>
                             <a
@@ -152,28 +186,6 @@ export default function AdminPage() {
                         <DevicePreview url={previewUrl} />
                     </div>
                 )}
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left Column: Upload Form */}
-                    <div className="lg:col-span-1 space-y-6">
-                        <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
-                            <h2 className="text-xl font-semibold mb-4">New Project</h2>
-                            <UploadForm onUploadSuccess={handleRefresh} />
-                        </div>
-                    </div>
-
-                    {/* Right Column: Project List */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
-                            <h2 className="text-xl font-semibold mb-4">Your Projects (Click to Preview)</h2>
-                            <ProjectList
-                                key={refreshKey}
-                                onSelect={handleProjectSelect}
-                                selectedId={previewId}
-                            />
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {profile && (
