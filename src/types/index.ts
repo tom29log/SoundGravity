@@ -8,6 +8,10 @@ export interface Profile {
     artist_type?: string[] | null
     primary_genre?: string[] | null
     header_image_url?: string | null
+    // Subscription fields
+    is_pro?: boolean
+    subscription_id?: string | null
+    lemonsqueezy_customer_id?: string | null
     social_links?: {
         instagram?: string
         soundcloud?: string

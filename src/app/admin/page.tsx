@@ -15,8 +15,9 @@ import PlaylistList from '@/components/playlist/PlaylistList'
 export default function AdminPage() {
     const router = useRouter()
     const supabase = createClient()
-    const [profile, setProfile] = useState<{ id: string, username: string | null, avatar_url: string | null, social_links: any } | null>(null)
+    const [profile, setProfile] = useState<{ id: string, username: string | null, avatar_url: string | null, social_links: any, is_pro?: boolean } | null>(null)
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+    const [isSubscribing, setIsSubscribing] = useState(false)
 
     // Load Profile
     const getProfile = useCallback(async () => {
@@ -24,7 +25,7 @@ export default function AdminPage() {
         if (user) {
             const { data } = await supabase
                 .from('profiles')
-                .select('id, username, avatar_url, social_links')
+                .select('id, username, avatar_url, social_links, is_pro')
                 .eq('id', user.id)
                 .single()
             setProfile(data)
@@ -73,6 +74,40 @@ export default function AdminPage() {
         router.push('/login')
     }
 
+    // Subscription handlers
+    const handleSubscribe = async () => {
+        setIsSubscribing(true)
+        try {
+            const res = await fetch('/api/lemonsqueezy/checkout', { method: 'POST' })
+            const data = await res.json()
+            if (data.url) {
+                window.location.href = data.url
+            } else {
+                alert('Failed to create checkout session')
+            }
+        } catch (error) {
+            console.error('Checkout error:', error)
+            alert('Failed to start checkout')
+        } finally {
+            setIsSubscribing(false)
+        }
+    }
+
+    const handleManageSubscription = async () => {
+        try {
+            const res = await fetch('/api/lemonsqueezy/portal', { method: 'POST' })
+            const data = await res.json()
+            if (data.url) {
+                window.open(data.url, '_blank')
+            } else {
+                alert('Failed to open subscription portal')
+            }
+        } catch (error) {
+            console.error('Portal error:', error)
+            alert('Failed to open portal')
+        }
+    }
+
     const [refreshKey, setRefreshKey] = useState(0)
     const [previewId, setPreviewId] = useState<string | null>(null)
 
@@ -116,13 +151,38 @@ export default function AdminPage() {
                                 </div>
                             </div>
                             <div className="flex flex-col">
-                                <span className="font-semibold text-sm">{profile?.username || 'User'}</span>
-                                <button
-                                    onClick={() => setIsEditProfileOpen(true)}
-                                    className="text-xs text-zinc-500 hover:text-white transition-colors text-left"
-                                >
-                                    Edit Profile
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-sm">{profile?.username || 'User'}</span>
+                                    {profile?.is_pro && (
+                                        <span className="text-[9px] font-bold bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-1.5 py-0.5 rounded">
+                                            PRO
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setIsEditProfileOpen(true)}
+                                        className="text-xs text-zinc-500 hover:text-white transition-colors text-left"
+                                    >
+                                        Edit Profile
+                                    </button>
+                                    {profile?.is_pro ? (
+                                        <button
+                                            onClick={handleManageSubscription}
+                                            className="text-xs text-yellow-500 hover:text-yellow-400 transition-colors"
+                                        >
+                                            Manage Pro
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleSubscribe}
+                                            disabled={isSubscribing}
+                                            className="text-xs text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
+                                        >
+                                            {isSubscribing ? 'Loading...' : 'Upgrade to Pro'}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
