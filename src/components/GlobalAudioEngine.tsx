@@ -169,7 +169,7 @@ export default function GlobalAudioEngine() {
             // 2. Auto-Mix Logic
             // If active deck is near end (e.g., < 2s), trigger next
             const activePlayer = activeDeck === 'A' ? deckA : deckB
-            const remaining = activePlayer.duration - activePlayer.currentTime
+            const remaining = activePlayer.duration - activePlayer.getCurrentTime()
 
             // Only trigger if we have a duration and we are very close to end
             // And ensure we don't spam 'next' (debounce needed? or check if already transitioning?)
@@ -217,7 +217,7 @@ export default function GlobalAudioEngine() {
         // trackA/B might be null.
         if (!activePlayer.isReady || activePlayer.duration === 0) return
 
-        const remaining = activePlayer.duration - activePlayer.currentTime
+        const remaining = activePlayer.duration - activePlayer.getCurrentTime()
         const threshold = 5 // START MIX 5 seconds before end
 
         // If we are in the zone
@@ -229,7 +229,7 @@ export default function GlobalAudioEngine() {
                 next()
             }
         }
-    }, [isPlaying, activeDeck, deckA.currentTime, deckA.duration, deckB.currentTime, deckB.duration, trackA, trackB, next])
+    }, [isPlaying, activeDeck, deckA, deckB, trackA, trackB, next])
     // Changed dependencies to be explicit functions + boolean state, rather than whole deck object
     // usage of deckA.isPlaying (boolean) is stable-ish (changes on play/pause).
     // deckA.play (function) is stable.
@@ -251,11 +251,11 @@ export default function GlobalAudioEngine() {
             const dB = deckBRef.current
 
             if (activeDeck === 'A') {
-                updateDeckMetrics('A', { currentTime: dA.currentTime, duration: dA.duration })
-                updateDeckMetrics('B', { currentTime: dB.currentTime, duration: dB.duration })
+                updateDeckMetrics('A', { currentTime: dA.getCurrentTime(), duration: dA.duration })
+                updateDeckMetrics('B', { currentTime: dB.getCurrentTime(), duration: dB.duration })
             } else {
-                updateDeckMetrics('B', { currentTime: dB.currentTime, duration: dB.duration })
-                updateDeckMetrics('A', { currentTime: dA.currentTime, duration: dA.duration })
+                updateDeckMetrics('B', { currentTime: dB.getCurrentTime(), duration: dB.duration })
+                updateDeckMetrics('A', { currentTime: dA.getCurrentTime(), duration: dA.duration })
             }
             rAF = requestAnimationFrame(syncLoop)
         }

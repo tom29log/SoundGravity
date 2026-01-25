@@ -98,11 +98,10 @@ export default function StemMixerPanel({ isOpen, onClose, stems, title }: StemMi
                                                 type="range"
                                                 min="-60"
                                                 max="6"
-                                                orient="vertical" // Firefox specific, webkit needs appearance-slider-vertical via CSS usually or transform
                                                 value={volumes[stem] ?? 0}
                                                 onChange={(e) => setVolume(stem, Number(e.target.value))}
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                style={{ appearance: 'slider-vertical' } as any} // experimental
+                                                style={{ appearance: 'slider-vertical', WebkitAppearance: 'slider-vertical' } as never}
                                             />
                                         </div>
 
