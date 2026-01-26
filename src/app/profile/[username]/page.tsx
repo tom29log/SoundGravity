@@ -16,16 +16,16 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { username } = await params
     const decodedUsername = decodeURIComponent(username)
-    const profile = await getProfile(decodedUsername)
-
-    if (!profile) return { title: 'User Not Found' }
+    // DIAGNOSTIC: Commenting out blocking DB call to fix TTFB 10s delay
+    // const profile = await getProfile(decodedUsername)
+    // if (!profile) return { title: 'User Not Found' }
 
     return {
-        title: `${profile.username} | SoundGravity`,
-        description: `Check out ${profile.username}'s audio projects on SoundGravity.`,
-        openGraph: {
-            images: profile.avatar_url ? [profile.avatar_url] : [],
-        }
+        title: `${decodedUsername} | SoundGravity`,
+        description: `Check out ${decodedUsername}'s audio projects on SoundGravity.`,
+        // openGraph: {
+        //     images: profile.avatar_url ? [profile.avatar_url] : [],
+        // }
     }
 }
 
