@@ -17,7 +17,7 @@ export default function VisualizerCanvas({ width = 300, height = 100, color = '#
 
     useEffect(() => {
         // Initialize Worker
-        // Note: In Next.js, worker paths can be tricky. Using new Worker(new URL(...)) pattern often works.
+        // Note: In Next.js, worker paths can be tricky. Using new Worker(new URL('../workers/visualizer.worker.ts', import.meta.url)) pattern often works.
         workerRef.current = new Worker(new URL('../workers/visualizer.worker.ts', import.meta.url))
 
         workerRef.current.onmessage = (e) => {
@@ -36,6 +36,12 @@ export default function VisualizerCanvas({ width = 300, height = 100, color = '#
             workerRef.current?.terminate()
             analyserRef.current?.dispose()
             cancelAnimationFrame(animationFrameRef.current)
+
+            // Explicitly clear canvas to release GPU memory/context if possible
+            const ctx = canvasRef.current?.getContext('2d')
+            if (ctx && width && height) {
+                ctx.clearRect(0, 0, width, height)
+            }
         }
     }, [])
 
