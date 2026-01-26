@@ -21,13 +21,12 @@ interface ProjectListViewProps {
 }
 
 export default function ProjectListView({ profileId }: ProjectListViewProps) {
-    const { data: projects, isLoading } = useQuery({
+    // Use useSuspenseQuery to trigger parent Suspense boundary
+    const { data: projects } = useSuspenseQuery({
         queryKey: ['projects', profileId],
         queryFn: () => fetchProjects(profileId),
         staleTime: 60 * 1000
     })
-
-    if (isLoading) return null // Handled by Suspense boundary usually, but here by query state
 
     if (!projects || projects.length === 0) {
         return (
