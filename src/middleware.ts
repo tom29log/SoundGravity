@@ -31,6 +31,15 @@ export async function middleware(request: NextRequest) {
         }
     )
 
+    // OPTIMIZATION: Skip auth check for public routes to prevent blocking delays
+    // especially on mobile networks where Supabase handshake can timeout (10s+)
+    const isProtectedRoute = request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/admin')
+    const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
+
+    if (!isProtectedRoute && !isAuthRoute) {
+        return response
+    }
+
     const {
         data: { user },
     } = await supabase.auth.getUser()
