@@ -1,10 +1,18 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as Tone from 'tone'
 import { usePlaylistPlayer } from '@/contexts/PlaylistPlayerContext'
 import { useDeckPlayer } from '@/hooks/useDeckPlayer'
 import { calculatePlaybackRate } from '@/utils/mixingStrategy'
+
+interface AudioGraph {
+    crossFade: Tone.CrossFade
+    channelA: Tone.Channel
+    channelB: Tone.Channel
+    pitchShiftA: Tone.PitchShift
+    pitchShiftB: Tone.PitchShift
+}
 
 export default function GlobalAudioEngine() {
     const {
@@ -21,15 +29,11 @@ export default function GlobalAudioEngine() {
         setMixingState
     } = usePlaylistPlayer()
 
-    // Audio Graph
-    const crossFadeRef = useRef<Tone.CrossFade | null>(null)
-    const channelARef = useRef<Tone.Channel | null>(null)
-    const channelBRef = useRef<Tone.Channel | null>(null)
-    const pitchShiftARef = useRef<Tone.PitchShift | null>(null)
-    const pitchShiftBRef = useRef<Tone.PitchShift | null>(null)
+    // Audio Graph - Client-side only initialization
+    const [audioGraph, setAudioGraph] = useState<AudioGraph | null>(null)
 
-    // Initialize Graph
     useEffect(() => {
+        // Initialize audio graph on client side only
         const crossFade = new Tone.CrossFade(0).toDestination()
         const channelA = new Tone.Channel(0, 0)
         const channelB = new Tone.Channel(0, 0)
@@ -44,11 +48,7 @@ export default function GlobalAudioEngine() {
         channelA.connect(pitchShiftA)
         channelB.connect(pitchShiftB)
 
-        crossFadeRef.current = crossFade
-        channelARef.current = channelA
-        channelBRef.current = channelB
-        pitchShiftARef.current = pitchShiftA
-        pitchShiftBRef.current = pitchShiftB
+        setAudioGraph({ crossFade, channelA, channelB, pitchShiftA, pitchShiftB })
 
         return () => {
             crossFade.dispose()
@@ -59,15 +59,28 @@ export default function GlobalAudioEngine() {
         }
     }, [])
 
-    // Decks
+    // Store refs for effects that need them
+    const crossFadeRef = useRef<Tone.CrossFade | null>(null)
+    const pitchShiftARef = useRef<Tone.PitchShift | null>(null)
+    const pitchShiftBRef = useRef<Tone.PitchShift | null>(null)
+
+    useEffect(() => {
+        if (audioGraph) {
+            crossFadeRef.current = audioGraph.crossFade
+            pitchShiftARef.current = audioGraph.pitchShiftA
+            pitchShiftBRef.current = audioGraph.pitchShiftB
+        }
+    }, [audioGraph])
+
+    // Decks - Pass null if audioGraph not ready yet
     const deckA = useDeckPlayer({
         track: trackA,
-        destinationNode: channelARef.current
+        destinationNode: audioGraph?.channelA ?? null
     })
 
     const deckB = useDeckPlayer({
         track: trackB,
-        destinationNode: channelBRef.current
+        destinationNode: audioGraph?.channelB ?? null
     })
 
     // Master Clock & BPM Sync Logic
