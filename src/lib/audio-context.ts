@@ -27,11 +27,4 @@ export const getGlobalAudioContext = async (): Promise<AudioContext> => {
     return Tone.context.rawContext as AudioContext
 }
 
-/**
- * Helper to safely close/suspend context (if ever needed explicitly, usually we just let it run)
- */
-export const suspendGlobalAudioContext = async () => {
-    if (Tone.context.state === 'running') {
-        await Tone.context.suspend()
-    }
-}
+
