@@ -1,11 +1,12 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
-import ProfileHeader from '@/components/profile/ProfileHeader'
-import ProfileProjectList from '@/components/profile/ProfileProjectList'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { Metadata } from 'next'
+import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query'
+import ProfileView from '@/components/profile/ProfileView'
+import ProjectListView from '@/components/profile/ProjectListView'
 
-export const revalidate = 60 // Revalidate every minute
+export const revalidate = 60
 
 interface Props {
     params: Promise<{ username: string }>
@@ -37,7 +38,9 @@ export default async function ProfilePage({ params }: Props) {
     const { username } = await params
     const decodedUsername = decodeURIComponent(username)
 
-    // 1. Fetch Profile
+    const queryClient = new QueryClient()
+
+    // 1. Fetch & Prefetch Profile (Server Side)
     const { data: profile } = await supabase
         .from('profiles')
         .select('*')
@@ -48,50 +51,57 @@ export default async function ProfilePage({ params }: Props) {
         notFound()
     }
 
-    // 2. Fetch Projects and Likes in Parallel
-    const [projectsResult, likesResult] = await Promise.all([
-        // A. Fetch Projects
-        supabase
-            .from('projects')
-            .select('*')
-            .eq('user_id', profile.id)
-            .order('created_at', { ascending: false }),
+    // Prefetch Profile to QueryClient
+    await queryClient.prefetchQuery({
+        queryKey: ['profile', decodedUsername],
+        queryFn: () => profile,
+    })
 
-        // B. Fetch Total Likes (Optimized: Join directly via projects)
-        supabase
-            .from('likes')
-            // Inner join with projects to filter by user_id
-            .select('projects!inner(user_id)', { count: 'exact', head: true })
-            .eq('projects.user_id', profile.id)
+    // 2. Prefetch Projects & Likes (Parallel)
+    await Promise.all([
+        queryClient.prefetchQuery({
+            queryKey: ['projects', profile.id],
+            queryFn: async () => {
+                const { data } = await supabase
+                    .from('projects')
+                    .select('*')
+                    .eq('user_id', profile.id)
+                    .order('created_at', { ascending: false })
+                return (data as any) || []
+            }
+        }),
+        queryClient.prefetchQuery({
+            queryKey: ['profile', 'likes', profile.id],
+            queryFn: async () => {
+                const { count } = await supabase
+                    .from('likes')
+                    .select('projects!inner(user_id)', { count: 'exact', head: true })
+                    .eq('projects.user_id', profile.id)
+                return count || 0
+            }
+        })
     ])
 
-    const projects = projectsResult.data
-    const totalLikes = likesResult.count || 0
-
     return (
-        <main className="min-h-screen bg-black text-white relative">
-            <ShareProfileButton />
+        <HydrationBoundary state={dehydrate(queryClient)}>
+            <main className="min-h-screen bg-black text-white relative">
+                <ShareProfileButton />
 
-            {/* Background Aesthetic */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] bg-zinc-800/20 blur-[120px] rounded-full mix-blend-screen" />
-                <div className="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] bg-zinc-800/20 blur-[120px] rounded-full mix-blend-screen" />
-            </div>
-
-            <div className="relative z-10 container mx-auto px-4 pb-20">
-                <ProfileHeader profile={profile} totalLikes={totalLikes} />
-
-                <div className="mt-12">
-                    <div className="w-full h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-12" />
-                    {projects && projects.length > 0 ? (
-                        <ProfileProjectList projects={projects} />
-                    ) : (
-                        <div className="text-center text-zinc-600 py-20 font-light">
-                            No published projects yet.
-                        </div>
-                    )}
+                {/* Background Aesthetic */}
+                <div className="fixed inset-0 pointer-events-none">
+                    <div className="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] bg-zinc-800/20 blur-[120px] rounded-full mix-blend-screen" />
+                    <div className="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] bg-zinc-800/20 blur-[120px] rounded-full mix-blend-screen" />
                 </div>
-            </div>
-        </main>
+
+                <div className="relative z-10 container mx-auto px-4 pb-20">
+                    <ProfileView username={decodedUsername} />
+
+                    <div className="mt-12">
+                        <div className="w-full h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-12" />
+                        <ProjectListView profileId={profile.id} />
+                    </div>
+                </div>
+            </main>
+        </HydrationBoundary>
     )
 }
