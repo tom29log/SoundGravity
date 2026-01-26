@@ -1,7 +1,7 @@
 import { createPublicClient } from '@/lib/supabase-public'
 import { notFound } from 'next/navigation'
 import ProfileHeader from '@/components/profile/ProfileHeader'
-import ClientProjectListWrapper from '@/components/profile/ClientProjectListWrapper'
+import ProjectListView from '@/components/profile/ProjectListView'
 import ProfileProjectListSkeleton from '@/components/profile/ProfileProjectListSkeleton'
 import { Suspense } from 'react'
 import { getProfile } from '@/utils/data-fetchers'
@@ -38,7 +38,7 @@ export default async function ProfileContent({ username }: Props) {
 
                 {/* List loads via Streaming (Suspense) - Nested Suspense */}
                 <Suspense fallback={<ProfileProjectListSkeleton />}>
-                    <ClientProjectListWrapper profileId={profile.id} />
+                    <ProjectListView profileId={profile.id} />
                 </Suspense>
             </div>
         </div>
