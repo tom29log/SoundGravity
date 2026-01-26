@@ -31,19 +31,17 @@ export default function ProfileLoading() {
                 <div className="mt-12">
                     <div className="w-full h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-12" />
 
-                    {/* Projects Grid Skeleton */}
-                    <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-                        {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <div key={i} className="break-inside-avoid">
-                                <div className="bg-zinc-900 rounded-2xl overflow-hidden shadow-lg">
-                                    <div className="aspect-square bg-zinc-800 animate-pulse" />
-                                    <div className="p-3 space-y-2">
-                                        <div className="h-4 w-3/4 bg-zinc-800 animate-pulse rounded" />
-                                        <div className="flex justify-between items-center">
-                                            <div className="h-3 w-1/4 bg-zinc-800 animate-pulse rounded opacity-50" />
-                                            <div className="h-4 w-4 bg-zinc-800 animate-pulse rounded-full" />
-                                        </div>
-                                    </div>
+                    {/* Projects List Skeleton */}
+                    <div className="flex flex-col gap-2 max-w-3xl mx-auto w-full">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                            <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-zinc-900/40 border border-transparent">
+                                {/* Thumbnail Skeleton */}
+                                <div className="w-14 h-14 rounded-lg bg-zinc-800 animate-pulse shrink-0" />
+
+                                {/* Info Skeleton */}
+                                <div className="flex-1 space-y-2">
+                                    <div className="h-4 w-1/3 bg-zinc-800 animate-pulse rounded" />
+                                    <div className="h-3 w-1/4 bg-zinc-800 animate-pulse rounded opacity-50" />
                                 </div>
                             </div>
                         ))}

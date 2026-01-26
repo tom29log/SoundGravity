@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
 import ProfileHeader from '@/components/profile/ProfileHeader'
-import ProfileProjectGrid from '@/components/profile/ProfileProjectGrid'
+import ProfileProjectList from '@/components/profile/ProfileProjectList'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { Metadata } from 'next'
 
@@ -89,7 +89,7 @@ export default async function ProfilePage({ params }: Props) {
                 <div className="mt-12">
                     <div className="w-full h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-12" />
                     {projects && projects.length > 0 ? (
-                        <ProfileProjectGrid projects={projects} />
+                        <ProfileProjectList projects={projects} />
                     ) : (
                         <div className="text-center text-zinc-600 py-20 font-light">
                             No published projects yet.
