@@ -123,22 +123,22 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
             </div>
 
             {/* 3. Bottom Info (Title & Like) */}
-            <div className="mt-2.5 flex items-center justify-between gap-3 px-1">
+            <div className="mt-3 flex items-center justify-between gap-3 px-1">
                 <div className="flex flex-col min-w-0 flex-1">
                     <Link href={`/v/${project.id}`} className="block">
-                        <h3 className="font-semibold text-sm text-zinc-100 truncate hover:text-white transition-colors">{project.title}</h3>
+                        <h3 className="font-semibold text-base text-zinc-100 truncate hover:text-white transition-colors tracking-tight">{project.title}</h3>
                     </Link>
-                    <div className="flex items-center gap-4 mt-1">
+                    <div className="flex items-center gap-3 mt-1.5">
                         {/* Stem Mode Toggle */}
                         {hasStems && (
                             <button
                                 onClick={handleStemModeToggle}
-                                className={`text-[10px] font-medium flex items-center gap-1 transition-colors ${showMixer ? 'text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                className={`text-xs font-medium flex items-center gap-1.5 transition-colors ${showMixer ? 'text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}
                             >
-                                <div className="flex gap-0.5 items-end h-3">
-                                    <div className={`w-0.5 bg-current rounded-full ${showMixer ? 'h-3 animate-[dance_0.5s_ease-in-out_infinite]' : 'h-2'}`} />
-                                    <div className={`w-0.5 bg-current rounded-full ${showMixer ? 'h-2 animate-[dance_0.6s_ease-in-out_infinite]' : 'h-3'}`} />
-                                    <div className={`w-0.5 bg-current rounded-full ${showMixer ? 'h-3 animate-[dance_0.4s_ease-in-out_infinite]' : 'h-1.5'}`} />
+                                <div className="flex gap-[3px] items-end h-3">
+                                    <div className={`w-[2px] bg-current rounded-full ${showMixer ? 'h-3 animate-[dance_0.5s_ease-in-out_infinite]' : 'h-2'}`} />
+                                    <div className={`w-[2px] bg-current rounded-full ${showMixer ? 'h-2 animate-[dance_0.6s_ease-in-out_infinite]' : 'h-3'}`} />
+                                    <div className={`w-[2px] bg-current rounded-full ${showMixer ? 'h-3 animate-[dance_0.4s_ease-in-out_infinite]' : 'h-1.5'}`} />
                                 </div>
                                 Stem Mode
                             </button>
@@ -147,9 +147,9 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
                         {/* Add to Playlist Button */}
                         <button
                             onClick={() => setShowPlaylistSelector(true)}
-                            className="text-[10px] font-medium text-zinc-500 hover:text-zinc-300 flex items-center gap-1"
+                            className="text-xs font-medium text-zinc-500 hover:text-zinc-300 flex items-center gap-1.5"
                         >
-                            <PlusCircle size={12} />
+                            <PlusCircle size={14} />
                             Add to List
                         </button>
                     </div>
