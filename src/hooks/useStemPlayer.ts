@@ -134,14 +134,49 @@ export function useStemPlayer(stems: Record<string, string>): UseStemPlayerRetur
         }
     }, [stems])
 
+    // Ensure AudioContext is active (critical for iOS Safari)
+    const ensureAudioContext = useCallback(async () => {
+        try {
+            // Always call Tone.start() first for user gesture requirement
+            await Tone.start()
+
+            // Then check and resume if suspended
+            if (Tone.context.state === 'suspended') {
+                await Tone.context.resume()
+            }
+
+            // Wait a bit for context to stabilize on mobile
+            await new Promise(resolve => setTimeout(resolve, 50))
+
+            return Tone.context.state === 'running'
+        } catch (err) {
+            console.error('❌ Failed to activate AudioContext:', err)
+            return false
+        }
+    }, [])
+
     // Playback Control
     const togglePlay = useCallback(async () => {
-        if (!isReady) return
-
-        if (Tone.context.state === 'suspended') {
-            await Tone.context.resume()
+        if (!isReady) {
+            console.warn('⚠️ Stem player not ready yet')
+            return
         }
-        await Tone.start()
+
+        // Ensure all buffers are loaded before playing
+        const allLoaded = Object.values(playersRef.current).every(
+            player => player.buffer?.loaded
+        )
+        if (!allLoaded) {
+            console.warn('⚠️ Not all stem buffers loaded yet')
+            return
+        }
+
+        // Activate AudioContext (critical for mobile)
+        const contextReady = await ensureAudioContext()
+        if (!contextReady) {
+            console.error('❌ AudioContext not running, cannot play')
+            return
+        }
 
         if (isPlaying) {
             // Pause
@@ -155,16 +190,21 @@ export function useStemPlayer(stems: Record<string, string>): UseStemPlayerRetur
         } else {
             // Play
             const startOffset = pausedAtRef.current
-            startTimeRef.current = Tone.now() - startOffset
+            const now = Tone.now()
+            startTimeRef.current = now - startOffset
 
             Object.values(playersRef.current).forEach(player => {
                 if (player.buffer?.loaded) {
-                    player.start(Tone.now(), startOffset)
+                    try {
+                        player.start(now, startOffset)
+                    } catch (err) {
+                        console.error('❌ Error starting player:', err)
+                    }
                 }
             })
             setIsPlaying(true)
         }
-    }, [isReady, isPlaying, currentTime])
+    }, [isReady, isPlaying, currentTime, ensureAudioContext])
 
     // Seek
     const seek = useCallback((time: number) => {

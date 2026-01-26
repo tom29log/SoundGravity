@@ -28,13 +28,12 @@ export default function StemMixerPanel({ isOpen, onClose, stems, title }: StemMi
 
     const { pause: pauseGlobalPlayer } = usePlaylistPlayer()
 
-    const handlePlayToggle = () => {
+    const handlePlayToggle = async () => {
         if (!isPlaying) {
             pauseGlobalPlayer()
-            // Add slight delay to allow global player to fully pause/release context focus before starting stems
-            setTimeout(() => {
-                togglePlay()
-            }, 50)
+            // Increased delay for mobile - allow global player to fully release AudioContext
+            await new Promise(resolve => setTimeout(resolve, 150))
+            togglePlay()
         } else {
             togglePlay()
         }

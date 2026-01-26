@@ -110,11 +110,35 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
     }, [isPlaying, playbackRate, duration])
 
 
+    // Ensure AudioContext is active (critical for iOS Safari)
+    const ensureAudioContext = useCallback(async () => {
+        try {
+            await Tone.start()
+            if (Tone.context.state === 'suspended') {
+                await Tone.context.resume()
+            }
+            // Small delay for mobile context stabilization
+            await new Promise(resolve => setTimeout(resolve, 50))
+            return Tone.context.state === 'running'
+        } catch (err) {
+            console.error('[Deck] Failed to activate AudioContext:', err)
+            return false
+        }
+    }, [])
+
     const play = useCallback(async () => {
-        if (!isReady) return
+        if (!isReady) {
+            console.warn('[Deck] Not ready yet')
+            return
+        }
         if (isPlaying) return
 
-        await Tone.start()
+        // Ensure AudioContext is active (critical for mobile)
+        const contextReady = await ensureAudioContext()
+        if (!contextReady) {
+            console.error('[Deck] AudioContext not running, cannot play')
+            return
+        }
 
         const now = Tone.now()
         const offset = pausedAtRef.current
@@ -125,17 +149,27 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
             Object.keys(track?.stems || {}).forEach(key => {
                 if (playersRef.current?.has(key)) {
                     const p = playersRef.current.player(key)
-                    if (p.loaded) p.start(now, offset)
+                    if (p.loaded) {
+                        try {
+                            p.start(now, offset)
+                        } catch (err) {
+                            console.error(`[Deck] Error starting stem ${key}:`, err)
+                        }
+                    }
                 }
             })
         } else if (playerRef.current) {
             if (playerRef.current.loaded) {
-                playerRef.current.start(now, offset)
+                try {
+                    playerRef.current.start(now, offset)
+                } catch (err) {
+                    console.error('[Deck] Error starting player:', err)
+                }
             }
         }
 
         setIsPlaying(true)
-    }, [isReady, track, isPlaying])
+    }, [isReady, track, isPlaying, ensureAudioContext])
 
     const pause = useCallback(() => {
         if (!isPlaying) return
