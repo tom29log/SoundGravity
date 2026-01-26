@@ -47,6 +47,7 @@ export const viewport = {
 
 import BottomPlayerBar from '@/components/ui/BottomPlayerBar'
 import NextTopLoader from 'nextjs-toploader'
+import QueryProvider from '@/providers/QueryProvider'
 
 export default function RootLayout({
   children,
@@ -58,21 +59,23 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <PlaylistPlayerProvider>
-          <NextTopLoader
-            color="#ffffff"
-            initialPosition={0.08}
-            crawlSpeed={200}
-            height={2}
-            crawl={true}
-            showSpinner={false}
-            easing="ease"
-            speed={200}
-            shadow="0 0 10px #ffffff,0 0 5px #ffffff"
-          />
-          <GlobalAudioEngine />
-          {children}
-        </PlaylistPlayerProvider>
+        <QueryProvider>
+          <PlaylistPlayerProvider>
+            <NextTopLoader
+              color="#ffffff"
+              initialPosition={0.08}
+              crawlSpeed={200}
+              height={2}
+              crawl={true}
+              showSpinner={false}
+              easing="ease"
+              speed={200}
+              shadow="0 0 10px #ffffff,0 0 5px #ffffff"
+            />
+            <GlobalAudioEngine />
+            {children}
+          </PlaylistPlayerProvider>
+        </QueryProvider>
       </body>
     </html>
   );

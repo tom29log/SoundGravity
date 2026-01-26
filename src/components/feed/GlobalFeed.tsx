@@ -1,27 +1,29 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase'
 import { Project } from '@/types'
 import FeedCard from './FeedCard'
 import CommentDrawer from '../social/CommentDrawer'
-import KnobButton from '@/components/ui/KnobButton'
 import AnimatedLogo_v2 from '@/components/ui/AnimatedLogo_v2'
 import { LayoutGrid, List as ListIcon, Loader2 } from 'lucide-react'
 import { useStemPreloader } from '@/hooks/useStemPreloader'
+import { useProjectsInfinite } from '@/hooks/useProjectsInfinite'
 
 // Hook for window resize to adjust columns
 function useWindowWidth() {
     const [width, setWidth] = useState(0)
-    useEffect(() => {
-        if (typeof window === 'undefined') return
-        setWidth(window.innerWidth)
-        const handleResize = () => setWidth(window.innerWidth)
-        window.addEventListener('resize', handleResize)
-        return () => window.removeEventListener('resize', handleResize)
-    }, [])
+    // Client-side only
+    useState(() => {
+        if (typeof window !== 'undefined') {
+            setWidth(window.innerWidth)
+            const handleResize = () => setWidth(window.innerWidth)
+            window.addEventListener('resize', handleResize)
+            return () => window.removeEventListener('resize', handleResize)
+        }
+    })
     return width
 }
 
@@ -30,156 +32,65 @@ interface GlobalFeedProps {
 }
 
 export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
-    const [projects, setProjects] = useState<Project[]>(initialProjects)
-    const [loading, setLoading] = useState(false)
     // Active stem mixer - only one can be open at a time
     const [activeMixerId, setActiveMixerId] = useState<string | null>(null)
-    // User Profile Data
+    // User Profile Data - still fetched client side for auth user (could be optimized later)
     const [userProfile, setUserProfile] = useState<{
         username: string | null,
         avatar_url: string | null,
-        artist_type?: string[] | null,
-        primary_genre?: string[] | null
-        id?: string
     } | null>(null)
 
-    useEffect(() => {
+    const supabase = createClient()
+
+    // Auth profile fetch (Client Side for now)
+    useState(() => {
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
                 const { data } = await supabase
                     .from('profiles')
-                    .select('id, username, avatar_url, artist_type, primary_genre')
+                    .select('username, avatar_url')
                     .eq('id', user.id)
                     .single()
                 if (data) setUserProfile(data)
             }
         }
         getUser()
-    }, [])
+    })
+
     const [filter, setFilter] = useState<'latest' | 'popular'>('latest')
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
     const [aiFilter, setAiFilter] = useState<'all' | 'human' | 'ai'>('all')
 
+    // React Query Hook
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading
+    } = useProjectsInfinite(initialProjects, { filter, aiFilter })
+
+    // Flatten pages into a single array
+    const projects = data?.pages.flat() || initialProjects || []
+
     // Pagination / Infinite Scroll
-    const [page, setPage] = useState(0)
-    const [hasMore, setHasMore] = useState(true)
     const observer = useRef<IntersectionObserver | null>(null)
     const lastElementRef = useCallback((node: HTMLDivElement) => {
-        if (loading) return
+        if (isLoading || isFetchingNextPage) return
         if (observer.current) observer.current.disconnect()
 
         observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore) {
-                setPage(prev => prev + 1)
+            if (entries[0].isIntersecting && hasNextPage) {
+                fetchNextPage()
             }
         })
         if (node) observer.current.observe(node)
-    }, [loading, hasMore])
+    }, [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage])
 
     // Comment Drawer
     const [isCommentDrawerOpen, setIsCommentDrawerOpen] = useState(false)
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
-
-    const supabase = createClient()
-    const PAGE_SIZE = 12
-
-    const fetchProjects = async (isLoadMore = false) => {
-        setLoading(true)
-        const from = page * PAGE_SIZE
-        const to = from + PAGE_SIZE - 1
-
-        let query = supabase
-            .from('projects')
-            .select(`
-                *,
-                profiles:profiles!projects_user_id_fkey_profiles (
-                   username,
-                   avatar_url
-                )
-            `)
-            .range(from, to)
-
-        // Apply AI Filter
-        if (aiFilter === 'human') {
-            query = query.eq('is_ai_generated', false)
-        } else if (aiFilter === 'ai') {
-            query = query.eq('is_ai_generated', true)
-        }
-
-        if (filter === 'latest') {
-            query = query.order('created_at', { ascending: false })
-        } else {
-            query = query.order('views', { ascending: false }).order('created_at', { ascending: false })
-        }
-
-        const { data, error } = await query
-
-        if (error) {
-            console.error('Error fetching feed:', error)
-        } else {
-            const newProjects = (data as unknown) as Project[] || []
-
-            if (newProjects.length < PAGE_SIZE) {
-                setHasMore(false)
-            }
-
-            if (isLoadMore) {
-                setProjects(prev => [...prev, ...newProjects])
-            } else {
-                setProjects(newProjects)
-            }
-        }
-        setLoading(false)
-    }
-
-    // Initial fetch and filter change
-    useEffect(() => {
-        // If it's the very first render and we have initialProjects, skip fetch
-        // BUT only if filters are default. 
-        // Better logic: 
-        // 1. On mount (page 0), if filters are default, we use initialProjects.
-        // 2. If filters change, we reset page to 0 and fetch.
-        // 3. If page changes (>0), we load more.
-
-        // However, useEffect runs on mount. 
-        // We can use a ref to track first mount.
-
-        // Actually, simplest is:
-        // When filters change, setPage(0).
-        // When page changes, fetch.
-
-        // Problem: On mount, page is 0. useEffect([page]) runs.
-        // We want to skip fetch on mount IF initialProjects is present and matches default filter.
-    }, [filter, aiFilter])
-
-    // We need to refactor the effects to avoid double fetch.
-    const isFirstRun = useRef(true)
-
-    useEffect(() => {
-        if (isFirstRun.current) {
-            isFirstRun.current = false
-            // Since we passed initialProjects (which implies default filters), 
-            // we don't need to fetch page 0 immediately.
-            // BUT ensure page matches.
-            return
-        }
-
-        setPage(0)
-        setHasMore(true)
-        setProjects([])
-        fetchProjects(false)
-    }, [filter, aiFilter])
-
-    useEffect(() => {
-        // Skip fetch for page 0 on first run if we have initial data
-        // But the previous effect handles filter changes.
-        // This effect handles PAGE changes (Load More).
-
-        if (page === 0) return // Page 0 is handled by initial prop OR filter change effect
-
-        fetchProjects(true)
-    }, [page])
 
     // Performance Optimization: Smart Preload
     useStemPreloader({ tracks: projects, currentIndex: 0 })
@@ -354,11 +265,11 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
 
             {/* Loading Indicator / Sentinel */}
             <div ref={lastElementRef} className="py-12 flex justify-center w-full">
-                {loading && <Loader2 className="animate-spin text-zinc-500" />}
-                {!loading && !hasMore && projects.length > 0 && (
+                {(isLoading || isFetchingNextPage) && <Loader2 className="animate-spin text-zinc-500" />}
+                {!hasNextPage && !isLoading && projects.length > 0 && (
                     <p className="text-zinc-600 text-sm">You've reached the end.</p>
                 )}
-                {!loading && projects.length === 0 && (
+                {!isLoading && projects.length === 0 && (
                     <p className="text-zinc-500">No projects found.</p>
                 )}
             </div>

@@ -1,0 +1,41 @@
+'use client'
+
+import { useQuery } from '@tanstack/react-query'
+import { createClient } from '@/lib/supabase'
+import ProfileProjectList from './ProfileProjectList'
+import { Project } from '@/types'
+
+async function fetchProjects(profileId: string) {
+    const supabase = createClient()
+    const { data } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', profileId)
+        .order('created_at', { ascending: false })
+
+    return (data as unknown) as Project[] || []
+}
+
+interface ProjectListViewProps {
+    profileId: string
+}
+
+export default function ProjectListView({ profileId }: ProjectListViewProps) {
+    const { data: projects, isLoading } = useQuery({
+        queryKey: ['projects', profileId],
+        queryFn: () => fetchProjects(profileId),
+        staleTime: 60 * 1000
+    })
+
+    if (isLoading) return null // Handled by Suspense boundary usually, but here by query state
+
+    if (!projects || projects.length === 0) {
+        return (
+            <div className="text-center text-zinc-600 py-20 font-light">
+                No published projects yet.
+            </div>
+        )
+    }
+
+    return <ProfileProjectList projects={projects} />
+}
