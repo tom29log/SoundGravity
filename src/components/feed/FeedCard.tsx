@@ -83,7 +83,7 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
 
             {/* 2. Project Link (Image) */}
             <div className="relative rounded-2xl overflow-hidden bg-zinc-900 shadow-lg select-none group/image transition-transform active:scale-[0.98] duration-200">
-                <Link href={`/v/${project.id}`} prefetch={true} className="block relative w-full aspect-square bg-zinc-800">
+                <Link href={`/v/${project.id}`} prefetch={false} className="block relative w-full aspect-square bg-zinc-800">
                     <Image
                         src={project.image_url}
                         alt={project.title}
@@ -126,7 +126,7 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
             {/* 3. Bottom Info (Title & Like) */}
             <div className="mt-3 flex items-center justify-between gap-3 px-1">
                 <div className="flex flex-col min-w-0 flex-1">
-                    <Link href={`/v/${project.id}`} prefetch={true} className="block">
+                    <Link href={`/v/${project.id}`} prefetch={false} className="block">
                         <h3 className="font-semibold text-base text-zinc-100 truncate hover:text-white transition-colors tracking-tight">{project.title}</h3>
                     </Link>
                     <div className="flex items-center gap-3 mt-1.5">
