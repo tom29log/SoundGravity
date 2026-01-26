@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase'
 import ProfileProjectList from './ProfileProjectList'
 import { Project } from '@/types'
@@ -18,15 +18,13 @@ async function fetchProjects(profileId: string) {
 
 interface ProjectListViewProps {
     profileId: string
-    initialProjects: Project[]
 }
 
-export default function ProjectListView({ profileId, initialProjects }: ProjectListViewProps) {
-    // Revert to useQuery with initialData to guaranteed instant render without Suspense fallback
-    const { data: projects } = useQuery({
+export default function ProjectListView({ profileId }: ProjectListViewProps) {
+    // Hybrid Loading: Fetch on client side to keep initial HTML small
+    const { data: projects } = useSuspenseQuery({
         queryKey: ['projects', profileId],
         queryFn: () => fetchProjects(profileId),
-        initialData: initialProjects,
         staleTime: 60 * 1000
     })
 

@@ -4,6 +4,8 @@ import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { Metadata } from 'next'
 import ProfileView from '@/components/profile/ProfileView'
 import ProjectListView from '@/components/profile/ProjectListView'
+import ProfileProjectListSkeleton from '@/components/profile/ProfileProjectListSkeleton'
+import { Suspense } from 'react'
 import { getProfile } from '@/utils/data-fetchers'
 
 export const revalidate = 60
@@ -32,33 +34,25 @@ export default async function ProfilePage({ params }: Props) {
     const { username } = await params
     const decodedUsername = decodeURIComponent(username)
 
-    // 0. Init Supabase for list fetching
+    // Init Supabase for likes count
     const supabase = await createServerSupabaseClient()
 
-    // 1. Fetch Profile (Cached request)
+    // 1. Fetch Profile (Blocking, Fast)
     const profile = await getProfile(decodedUsername)
 
     if (!profile) {
         notFound()
     }
 
-    // 2. Fetch Projects & Likes directly (Parallel)
-    // We fetch these on the server and pass them as props to avoid any client-side hydration gaps.
-    const [projectsResult, likesResult] = await Promise.all([
-        supabase
-            .from('projects')
-            .select('id, title, image_url, created_at, views, is_ai_generated, user_id')
-            .eq('user_id', profile.id)
-            .order('created_at', { ascending: false }),
+    // 2. Fetch Total Likes (Blocking, Fast)
+    const { count: totalLikes } = await supabase
+        .from('likes')
+        .select('projects!inner(user_id)', { count: 'exact', head: true })
+        .eq('projects.user_id', profile.id)
 
-        supabase
-            .from('likes')
-            .select('projects!inner(user_id)', { count: 'exact', head: true })
-            .eq('projects.user_id', profile.id)
-    ])
-
-    const projects = (projectsResult.data as any) || []
-    const totalLikes = likesResult.count || 0
+    // 3. Projects List is NOT fetched here.
+    // We let the client component fetch it appropriately to reduce initial HTML size
+    // and solve the Safari 10s delay. This is "Hybrid Loading".
 
     return (
         <main className="min-h-screen bg-black text-white relative">
@@ -71,19 +65,20 @@ export default async function ProfilePage({ params }: Props) {
             </div>
 
             <div className="relative z-10 container mx-auto px-4 pb-20">
+                {/* Header renders instantly with server data */}
                 <ProfileView
                     username={decodedUsername}
                     initialProfile={profile}
-                    initialLikes={totalLikes}
+                    initialLikes={totalLikes || 0}
                 />
 
                 <div className="mt-12">
                     <div className="w-full h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-12" />
 
-                    <ProjectListView
-                        profileId={profile.id}
-                        initialProjects={projects}
-                    />
+                    {/* List loads via Streaming (Suspense) */}
+                    <Suspense fallback={<ProfileProjectListSkeleton />}>
+                        <ProjectListView profileId={profile.id} />
+                    </Suspense>
                 </div>
             </div>
         </main>
