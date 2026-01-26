@@ -1,4 +1,3 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { notFound } from 'next/navigation'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { Metadata } from 'next'
@@ -7,6 +6,7 @@ import ProfileView from '@/components/profile/ProfileView'
 import ProjectListView from '@/components/profile/ProjectListView'
 import ProfileProjectListSkeleton from '@/components/profile/ProfileProjectListSkeleton'
 import { Suspense } from 'react'
+import { getProfile } from '@/utils/data-fetchers'
 
 export const revalidate = 60
 
@@ -15,14 +15,9 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-    const supabase = await createServerSupabaseClient()
     const { username } = await params
     const decodedUsername = decodeURIComponent(username)
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('username, avatar_url')
-        .eq('username', decodedUsername)
-        .single()
+    const profile = await getProfile(decodedUsername)
 
     if (!profile) return { title: 'User Not Found' }
 
@@ -36,24 +31,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProfilePage({ params }: Props) {
-    const supabase = await createServerSupabaseClient()
     const { username } = await params
     const decodedUsername = decodeURIComponent(username)
 
     const queryClient = new QueryClient()
 
-    // 1. Fetch & Prefetch Profile (Server Side)
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('username', decodedUsername)
-        .single()
+    // 1. Fetch Profile (Cached request, deduped with generateMetadata)
+    const profile = await getProfile(decodedUsername)
 
     if (!profile) {
         notFound()
     }
 
-    // Prefetch Profile to QueryClient
+    // Prefetch Profile to QueryClient (for hydration)
     await queryClient.prefetchQuery({
         queryKey: ['profile', decodedUsername],
         queryFn: () => profile,
