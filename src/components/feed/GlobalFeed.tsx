@@ -25,9 +25,13 @@ function useWindowWidth() {
     return width
 }
 
-export default function GlobalFeed() {
-    const [projects, setProjects] = useState<Project[]>([])
-    const [loading, setLoading] = useState(true)
+interface GlobalFeedProps {
+    initialProjects: Project[]
+}
+
+export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
+    const [projects, setProjects] = useState<Project[]>(initialProjects)
+    const [loading, setLoading] = useState(false)
     // Active stem mixer - only one can be open at a time
     const [activeMixerId, setActiveMixerId] = useState<string | null>(null)
     // User Profile Data
@@ -116,13 +120,6 @@ export default function GlobalFeed() {
         } else {
             const newProjects = (data as unknown) as Project[] || []
 
-            // Debug: Check stems data from API
-            console.log('=== STEMS DEBUG ===')
-            newProjects.forEach(p => {
-                console.log(`${p.title}: stems =`, p.stems, 'hasStems =', p.stems && Object.keys(p.stems).length > 0)
-            })
-            console.log('===================')
-
             if (newProjects.length < PAGE_SIZE) {
                 setHasMore(false)
             }
@@ -138,17 +135,51 @@ export default function GlobalFeed() {
 
     // Initial fetch and filter change
     useEffect(() => {
-        setPage(0)
-        setHasMore(true)
-        setProjects([]) // clear current
+        // If it's the very first render and we have initialProjects, skip fetch
+        // BUT only if filters are default. 
+        // Better logic: 
+        // 1. On mount (page 0), if filters are default, we use initialProjects.
+        // 2. If filters change, we reset page to 0 and fetch.
+        // 3. If page changes (>0), we load more.
+
+        // However, useEffect runs on mount. 
+        // We can use a ref to track first mount.
+
+        // Actually, simplest is:
+        // When filters change, setPage(0).
+        // When page changes, fetch.
+
+        // Problem: On mount, page is 0. useEffect([page]) runs.
+        // We want to skip fetch on mount IF initialProjects is present and matches default filter.
     }, [filter, aiFilter])
 
-    // Fetch on page change (includes initial 0)
+    // We need to refactor the effects to avoid double fetch.
+    const isFirstRun = useRef(true)
+
     useEffect(() => {
-        const isLoadMore = page > 0
-        fetchProjects(isLoadMore)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, filter, aiFilter])
+        if (isFirstRun.current) {
+            isFirstRun.current = false
+            // Since we passed initialProjects (which implies default filters), 
+            // we don't need to fetch page 0 immediately.
+            // BUT ensure page matches.
+            return
+        }
+
+        setPage(0)
+        setHasMore(true)
+        setProjects([])
+        fetchProjects(false)
+    }, [filter, aiFilter])
+
+    useEffect(() => {
+        // Skip fetch for page 0 on first run if we have initial data
+        // But the previous effect handles filter changes.
+        // This effect handles PAGE changes (Load More).
+
+        if (page === 0) return // Page 0 is handled by initial prop OR filter change effect
+
+        fetchProjects(true)
+    }, [page])
 
     // Performance Optimization: Smart Preload
     useStemPreloader({ tracks: projects, currentIndex: 0 })
