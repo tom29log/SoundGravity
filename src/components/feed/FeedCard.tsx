@@ -1,9 +1,14 @@
 'use client'
 
 import PlaylistSelector from '../PlaylistSelector'
-import StemMixerPanel from './StemMixerPanel'
 import { PlusCircle } from 'lucide-react'
 import { usePlaylistPlayer } from '@/contexts/PlaylistPlayerContext'
+import dynamic from 'next/dynamic'
+
+const StemMixerPanel = dynamic(() => import('./StemMixerPanel'), {
+    ssr: false,
+    loading: () => null
+})
 
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'

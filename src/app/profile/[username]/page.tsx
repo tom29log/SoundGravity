@@ -2,7 +2,7 @@ import { createPublicClient } from '@/lib/supabase-public'
 import { notFound } from 'next/navigation'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { Metadata } from 'next'
-import ProfileView from '@/components/profile/ProfileView'
+import ProfileHeader from '@/components/profile/ProfileHeader'
 import ProjectListView from '@/components/profile/ProjectListView'
 import ProfileProjectListSkeleton from '@/components/profile/ProfileProjectListSkeleton'
 import { Suspense } from 'react'
@@ -66,10 +66,9 @@ export default async function ProfilePage({ params }: Props) {
 
             <div className="relative z-10 container mx-auto px-4 pb-20">
                 {/* Header renders instantly with server data */}
-                <ProfileView
-                    username={decodedUsername}
-                    initialProfile={profile}
-                    initialLikes={totalLikes || 0}
+                <ProfileHeader
+                    profile={profile}
+                    totalLikes={totalLikes || 0}
                 />
 
                 <div className="mt-12">

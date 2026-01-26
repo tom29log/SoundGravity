@@ -1,12 +1,9 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import { Profile } from '@/types'
-import { Instagram, Globe } from 'lucide-react' // Lucide icons for social
+import { Instagram, Globe } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import StatGraph from './StatGraph'
-import { createClient } from '@/lib/supabase'
+import FollowButton from './FollowButton'
 
 interface ProfileHeaderProps {
     profile: Profile
@@ -14,75 +11,8 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProps) {
+    // Server Component: Render basic JSX without state/effects
     const socialLinks = profile.social_links || {}
-    const [isFollowing, setIsFollowing] = useState(false)
-    const [localFollowers, setLocalFollowers] = useState(profile.followers_count || 0)
-    const [loading, setLoading] = useState(false)
-    const [isOwnProfile, setIsOwnProfile] = useState(false)
-    const supabase = createClient()
-
-    useEffect(() => {
-        const checkFollowStatus = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-
-            if (user) {
-                if (user.id === profile.id) {
-                    setIsOwnProfile(true)
-                } else {
-                    const { data } = await supabase
-                        .from('follows')
-                        .select('*')
-                        .eq('follower_id', user.id)
-                        .eq('following_id', profile.id)
-                        .single()
-
-                    if (data) setIsFollowing(true)
-                }
-            }
-        }
-        checkFollowStatus()
-    }, [profile.id])
-
-    const handleFollow = async () => {
-        if (loading) return
-
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            alert('로그인이 필요합니다.')
-            return
-        }
-
-        // Optimistic Update
-        const newStatus = !isFollowing
-        setIsFollowing(newStatus)
-        setLocalFollowers(prev => newStatus ? prev + 1 : prev - 1)
-        setLoading(true)
-
-        try {
-            if (newStatus) {
-                // Follow
-                const { error } = await supabase.from('follows').insert({
-                    follower_id: user.id,
-                    following_id: profile.id
-                })
-                if (error) throw error
-            } else {
-                // Unfollow
-                const { error } = await supabase.from('follows').delete()
-                    .eq('follower_id', user.id)
-                    .eq('following_id', profile.id)
-                if (error) throw error
-            }
-        } catch (error) {
-            console.error('Follow error:', error)
-            // Rollback
-            setIsFollowing(!newStatus)
-            setLocalFollowers(prev => !newStatus ? prev + 1 : prev - 1)
-            alert('팔로우 처리에 실패했습니다.')
-        } finally {
-            setLoading(false)
-        }
-    }
 
     return (
         <div className="flex flex-col items-center justify-center space-y-6 py-20 relative overflow-hidden w-full min-h-[50vh]">
@@ -170,18 +100,7 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                         )}
                     </div>
 
-                    {!isOwnProfile && (
-                        <button
-                            onClick={handleFollow}
-                            disabled={loading}
-                            className={`px-6 py-1.5 rounded-full text-xs font-bold tracking-widest transition-all shadow-lg ${isFollowing
-                                ? 'bg-zinc-800/80 backdrop-blur-sm text-zinc-400 border border-zinc-700 hover:border-red-500/50 hover:text-red-400'
-                                : 'bg-white text-black hover:scale-105 hover:shadow-[0_0_15px_rgba(255,255,255,0.4)]'
-                                }`}
-                        >
-                            {loading ? '...' : (isFollowing ? 'FOLLOWING' : 'FOLLOW')}
-                        </button>
-                    )}
+                    <FollowButton profileId={profile.id} />
                 </div>
 
                 {/* Bio */}
@@ -259,7 +178,7 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
 
                 {/* Stats Graph */}
                 <div className="flex items-center gap-12 mt-4">
-                    <StatGraph label="FOLLOWERS" value={localFollowers} />
+                    <StatGraph label="FOLLOWERS" value={profile.followers_count || 0} />
                     <StatGraph label="LIKES" value={totalLikes} />
                 </div>
             </div>
