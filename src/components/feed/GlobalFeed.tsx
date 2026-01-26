@@ -121,7 +121,7 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                     <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
                         {userProfile ? (
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <Link href={`/profile/${userProfile.username}`} className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group min-w-0">
+                                <Link href={`/profile/${userProfile.username}`} prefetch={false} className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group min-w-0">
                                     <div className="w-10 h-10 rounded-full bg-zinc-800 border-2 border-zinc-700 overflow-hidden relative group-hover:border-white transition-colors shrink-0">
                                         {userProfile.avatar_url ? (
                                             <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />

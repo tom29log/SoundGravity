@@ -64,6 +64,7 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
             {/* 1. Artist Profile Button (Header Overlay) */}
             <Link
                 href={project.profiles?.username ? `/profile/${project.profiles.username}` : '#'}
+                prefetch={false}
                 onClick={(e) => e.stopPropagation()}
                 className="absolute top-3 left-3 z-[60] flex items-center gap-2 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 hover:bg-black/60 hover:border-white/40 transition-all cursor-pointer"
             >
