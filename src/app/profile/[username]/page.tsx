@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createPublicClient } from '@/lib/supabase-public'
 import { notFound } from 'next/navigation'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { Metadata } from 'next'
@@ -34,8 +34,8 @@ export default async function ProfilePage({ params }: Props) {
     const { username } = await params
     const decodedUsername = decodeURIComponent(username)
 
-    // Init Supabase for likes count
-    const supabase = await createServerSupabaseClient()
+    // Init Supabase for likes count (Public client, no cookies needed)
+    const supabase = createPublicClient()
 
     // 1. Fetch Profile (Blocking, Fast)
     const profile = await getProfile(decodedUsername)

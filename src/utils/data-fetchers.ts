@@ -1,8 +1,8 @@
 import { cache } from 'react'
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+import { createPublicClient } from '@/lib/supabase-public'
 
 export const getProfile = cache(async (username: string) => {
-    const supabase = await createServerSupabaseClient()
+    const supabase = createPublicClient()
     const { data } = await supabase
         .from('profiles')
         .select('*')

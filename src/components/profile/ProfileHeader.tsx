@@ -126,6 +126,7 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
                             alt={profile.username || 'Artist'}
                             fill
                             className="object-cover"
+                            priority
                         />
                     ) : (
                         <div className="w-full h-full bg-zinc-900 flex items-center justify-center text-4xl font-thin text-zinc-600">
