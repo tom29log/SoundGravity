@@ -48,30 +48,25 @@ export default async function ProfilePage({ params }: Props) {
         notFound()
     }
 
-    // 2. Fetch Projects
-    // We also need to know the 'type' of access, but for now Public is fine.
-    // Assuming 'projects' table RLS allows public select.
-    const { data: projects } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('user_id', profile.id)
-        .order('created_at', { ascending: false })
+    // 2. Fetch Projects and Likes in Parallel
+    const [projectsResult, likesResult] = await Promise.all([
+        // A. Fetch Projects
+        supabase
+            .from('projects')
+            .select('*')
+            .eq('user_id', profile.id)
+            .order('created_at', { ascending: false }),
 
-    // 3. Calculate Total Likes
-    // This is a bit heavy if many projects, but fine for MVP.
-    // Better way: Join projects with likes count.
-    // For now: Fetch all likes for these projects.
-    // Optimization: Add a DB function or view later.
-    let totalLikes = 0
-    if (projects && projects.length > 0) {
-        const projectIds = projects.map((p: { id: string }) => p.id)
-        const { count } = await supabase
+        // B. Fetch Total Likes (Optimized: Join directly via projects)
+        supabase
             .from('likes')
-            .select('*', { count: 'exact', head: true })
-            .in('project_id', projectIds)
+            // Inner join with projects to filter by user_id
+            .select('projects!inner(user_id)', { count: 'exact', head: true })
+            .eq('projects.user_id', profile.id)
+    ])
 
-        totalLikes = count || 0
-    }
+    const projects = projectsResult.data
+    const totalLikes = likesResult.count || 0
 
     return (
         <main className="min-h-screen bg-black text-white relative">
