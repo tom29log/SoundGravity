@@ -5,6 +5,8 @@ import { Metadata } from 'next'
 import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import ProfileView from '@/components/profile/ProfileView'
 import ProjectListView from '@/components/profile/ProjectListView'
+import ProfileProjectListSkeleton from '@/components/profile/ProfileProjectListSkeleton'
+import { Suspense } from 'react'
 
 export const revalidate = 60
 
@@ -98,7 +100,10 @@ export default async function ProfilePage({ params }: Props) {
 
                     <div className="mt-12">
                         <div className="w-full h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-12" />
-                        <ProjectListView profileId={profile.id} />
+
+                        <Suspense fallback={<ProfileProjectListSkeleton />}>
+                            <ProjectListView profileId={profile.id} />
+                        </Suspense>
                     </div>
                 </div>
             </main>
