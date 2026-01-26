@@ -59,30 +59,9 @@ export default async function ProfilePage({ params }: Props) {
         queryFn: () => profile,
     })
 
-    // 2. Prefetch Projects & Likes (Parallel)
-    await Promise.all([
-        queryClient.prefetchQuery({
-            queryKey: ['projects', profile.id],
-            queryFn: async () => {
-                const { data } = await supabase
-                    .from('projects')
-                    .select('id, title, image_url, created_at, views, is_ai_generated, user_id')
-                    .eq('user_id', profile.id)
-                    .order('created_at', { ascending: false })
-                return (data as any) || []
-            }
-        }),
-        queryClient.prefetchQuery({
-            queryKey: ['profile', 'likes', profile.id],
-            queryFn: async () => {
-                const { count } = await supabase
-                    .from('likes')
-                    .select('projects!inner(user_id)', { count: 'exact', head: true })
-                    .eq('projects.user_id', profile.id)
-                return count || 0
-            }
-        })
-    ])
+    // 2. Prefetch Projects & Likes - REMOVED for Streaming
+    // We intentionally skip prefetching heavy lists on the server to allow immediate navigation.
+    // The client components will fetch this data, showing a skeleton during loading.
 
     return (
         <HydrationBoundary state={dehydrate(queryClient)}>
