@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Play, Pause } from 'lucide-react'
 import FloatingCTA from '@/components/FloatingCTA'
 import KnobButton from '@/components/ui/KnobButton'
+import { getGlobalAudioContext } from '@/lib/audio-context'
 
 interface Project {
     id: string
@@ -69,54 +70,74 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
 
         // Cleanup function for visualizer
         return () => {
-            if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-                audioContextRef.current.close()
-                audioContextRef.current = null
-            }
+            // DO NOT close the global context. Just disconnect nodes.
+            if (gainNodeRef.current) gainNodeRef.current.disconnect()
+            if (analyserNodeRef.current) analyserNodeRef.current.disconnect()
+            if (pannerNodeRef.current) pannerNodeRef.current.disconnect()
+            if (filterNodeRef.current) filterNodeRef.current.disconnect()
+            if (audioSourceRef.current) audioSourceRef.current.disconnect()
+
+            // Clear Refs
+            audioContextRef.current = null
+            gainNodeRef.current = null
+            analyserNodeRef.current = null
+            pannerNodeRef.current = null
+            filterNodeRef.current = null
+            audioSourceRef.current = null
         }
     }, [project])
 
-    const ensureAudioContext = () => {
+    const ensureAudioContext = async () => {
         if (!audioContextRef.current) {
-            const AudioContext = window.AudioContext || (window as any).webkitAudioContext
-            audioContextRef.current = new AudioContext()
+            // Use Singleton Context instead of creating a new one
+            const context = await getGlobalAudioContext()
+            audioContextRef.current = context
 
             const audio = audioRef.current!
             audio.crossOrigin = "anonymous"
 
-            // Create Nodes
-            const source = audioContextRef.current.createMediaElementSource(audio)
-            const filter = audioContextRef.current.createBiquadFilter()
-            const panner = audioContextRef.current.createStereoPanner()
-            const analyser = audioContextRef.current.createAnalyser()
-            const gain = audioContextRef.current.createGain()
+            try {
+                // Check if source node already exists for this element to prevent "can only be connected to one node" error
+                // In a singleton world, reusing the same <audio> element with the same context might throw if we try to createMediaElementSource again.
+                // However, InteractiveViewer mounts/unmounts. The <audio> tag is new each time.
+                // So createMediaElementSource is safe provided the <audio> element is fresh.
 
-            // Configure Nodes
-            filter.type = 'lowpass'
-            filter.frequency.value = 20000
-            filter.Q.value = 1
+                // Create Nodes
+                const source = context.createMediaElementSource(audio)
+                const filter = context.createBiquadFilter()
+                const panner = context.createStereoPanner()
+                const analyser = context.createAnalyser()
+                const gain = context.createGain()
 
-            analyser.fftSize = 256 // Resolution of visualizer
+                // Configure Nodes
+                filter.type = 'lowpass'
+                filter.frequency.value = 20000
+                filter.Q.value = 1
 
-            // Connect Graph: Source -> Filter -> Panner -> Analyser -> Gain -> Dest
-            source.connect(filter)
-            filter.connect(panner)
-            panner.connect(analyser)
-            analyser.connect(gain)
-            gain.connect(audioContextRef.current.destination)
+                analyser.fftSize = 256
 
-            // Store Refs
-            audioSourceRef.current = source
-            pannerNodeRef.current = panner
-            filterNodeRef.current = filter
-            analyserNodeRef.current = analyser
-            gainNodeRef.current = gain
+                // Connect Graph
+                source.connect(filter)
+                filter.connect(panner)
+                panner.connect(analyser)
+                analyser.connect(gain)
+                gain.connect(context.destination)
+
+                // Store Refs
+                audioSourceRef.current = source
+                pannerNodeRef.current = panner
+                filterNodeRef.current = filter
+                analyserNodeRef.current = analyser
+                gainNodeRef.current = gain
+            } catch (error) {
+                console.error("Audio Graph Setup Error (Singleton):", error)
+            }
         }
     }
 
     const togglePlay = async (fromStart = false) => {
         if (!audioRef.current) return
-        ensureAudioContext()
+        await ensureAudioContext()
 
         if (isPlaying && !fromStart) {
             // Pause (Stop)
