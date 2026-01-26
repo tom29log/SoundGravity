@@ -205,7 +205,7 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
                                     {/* Actions */}
                                     <button
                                         onClick={(e) => removeTrack(track.id, e)}
-                                        className="p-2 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                        className="p-2 text-zinc-500 hover:text-red-400 opacity-100 transition-colors"
                                         title="Remove from playlist"
                                     >
                                         <Trash2 size={16} />
