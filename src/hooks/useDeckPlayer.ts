@@ -30,6 +30,7 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
 
         setIsReady(false)
         setIsPlaying(false)
+        setPendingPlay(false) // Reset intent on track change
         pausedAtRef.current = 0
         startTimeRef.current = 0
 
@@ -126,11 +127,26 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
         }
     }, [])
 
+    // Intelligent Playback Queue
+    const [pendingPlay, setPendingPlay] = useState(false)
+
+    // Watch for Ready state to execute pending play
+    useEffect(() => {
+        if (isReady && pendingPlay) {
+            console.log('[Deck] Ready now, executing pending play')
+            play()
+        }
+    }, [isReady, pendingPlay])
+
     const play = useCallback(async () => {
+        // Always capture intent
+        setPendingPlay(true)
+
         if (!isReady) {
-            console.warn('[Deck] Not ready yet')
+            console.log('[Deck] Not ready, queuing play intent')
             return
         }
+
         if (isPlaying) return
 
         // Ensure AudioContext is active (critical for mobile)
@@ -172,6 +188,7 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
     }, [isReady, track, isPlaying, ensureAudioContext])
 
     const pause = useCallback(() => {
+        setPendingPlay(false) // Cancel intent
         if (!isPlaying) return
 
         const now = Tone.now()
@@ -187,6 +204,7 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
     }, [isPlaying])
 
     const stop = useCallback(() => {
+        setPendingPlay(false) // Cancel intent
         if (playersRef.current) {
             playersRef.current.stopAll()
         } else if (playerRef.current) {
