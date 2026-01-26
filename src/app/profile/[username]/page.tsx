@@ -64,7 +64,7 @@ export default async function ProfilePage({ params }: Props) {
             queryFn: async () => {
                 const { data } = await supabase
                     .from('projects')
-                    .select('*')
+                    .select('id, title, image_url, created_at, views, is_ai_generated, user_id')
                     .eq('user_id', profile.id)
                     .order('created_at', { ascending: false })
                 return (data as any) || []

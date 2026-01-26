@@ -9,7 +9,7 @@ async function fetchProjects(profileId: string) {
     const supabase = createClient()
     const { data } = await supabase
         .from('projects')
-        .select('*')
+        .select('id, title, image_url, created_at, views, is_ai_generated, user_id')
         .eq('user_id', profileId)
         .order('created_at', { ascending: false })
 
