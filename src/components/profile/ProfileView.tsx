@@ -26,25 +26,29 @@ async function fetchTotalLikes(profileId: string) {
 
 interface ProfileViewProps {
     username: string
+    initialProfile: any // Type this properly if possible, but 'any' avoids strict type mismatch with Supabase generated types for now
+    initialLikes: number
 }
 
-export default function ProfileView({ username }: ProfileViewProps) {
-    // 1. Profile Query
+export default function ProfileView({ username, initialProfile, initialLikes }: ProfileViewProps) {
+    // 1. Profile Query (Initialize with Server Data)
     const { data: profile } = useQuery({
         queryKey: ['profile', username],
         queryFn: () => fetchProfile(username),
+        initialData: initialProfile,
         staleTime: 60 * 1000,
     })
 
-    // 2. Likes Query (Dependent on Profile)
+    // 2. Likes Query (Initialize with Server Data)
     const { data: totalLikes } = useQuery({
         queryKey: ['profile', 'likes', profile?.id],
         queryFn: () => fetchTotalLikes(profile!.id),
+        initialData: initialLikes,
         enabled: !!profile?.id,
         staleTime: 60 * 1000,
     })
 
-    if (!profile) return null // Should be handled by Hydration/InitialData
+    if (!profile) return null
 
     return <ProfileHeader profile={profile} totalLikes={totalLikes || 0} />
 }
