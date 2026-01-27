@@ -184,15 +184,35 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
         const width = window.innerWidth
         const height = window.innerHeight
 
-        // X-axis: Panning (-1 Left to +1 Right)
-        const panValue = (clientX / width) * 2 - 1
+        const xRatio = clientX / width
+        const yRatio = clientY / height
+
+        // X-axis: Panning (Deadzone Center 20% -> 0.4 to 0.6)
+        let panValue = 0
+        if (xRatio < 0.4) {
+            // Map 0...0.4 to -1...0
+            panValue = (xRatio / 0.4) - 1
+        } else if (xRatio > 0.6) {
+            // Map 0.6...1 to 0...1
+            panValue = (xRatio - 0.6) / 0.4
+        }
+        // Clamp logic
+        panValue = Math.max(-1, Math.min(1, panValue))
+
         pannerNodeRef.current.pan.setTargetAtTime(panValue, audioContextRef.current.currentTime, 0.1)
 
-        // Y-axis: Filter Frequency
+        // Y-axis: Filter Frequency (Start from slightly below center: 0.5)
         const minFreq = 100
         const maxFreq = 20000
-        const yRatio = clientY / height
-        const frequency = maxFreq - (yRatio * (maxFreq - minFreq))
+        let frequency = maxFreq
+
+        const filterStartThreshold = 0.5
+        if (yRatio > filterStartThreshold) {
+            // Map 0.5...1.0 to maxFreq...minFreq
+            const effectiveRatio = (yRatio - filterStartThreshold) / (1 - filterStartThreshold)
+            frequency = maxFreq - (effectiveRatio * (maxFreq - minFreq))
+        }
+
         filterNodeRef.current.frequency.setTargetAtTime(frequency, audioContextRef.current.currentTime, 0.1)
 
         // Update State Tracker
