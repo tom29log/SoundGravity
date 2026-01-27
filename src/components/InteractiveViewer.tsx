@@ -221,15 +221,15 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
         const minLpFreq = 100
         const maxHpFreq = 2000 // Cap HPF at 2kHz to avoid killing all sound
 
-        if (yRatio < 0.4) {
+        if (yRatio < 0.35) {
             // UP: High Pass (Remove Bass)
-            // 0.4 -> 0 (Min HPF) ... 0.0 (Max HPF)
-            const ratio = (0.4 - yRatio) / 0.4
+            // 0.35 -> 0 (Min HPF) ... 0.0 (Max HPF)
+            const ratio = (0.35 - yRatio) / 0.35
             hpFreq = ratio * maxHpFreq
-        } else if (yRatio > 0.6) {
+        } else if (yRatio > 0.55) {
             // DOWN: Low Pass (Remove Treble)
-            // 0.6 -> 20kHz ... 1.0 -> 100Hz
-            const ratio = (yRatio - 0.6) / 0.4
+            // 0.55 -> 20kHz ... 1.0 -> 100Hz
+            const ratio = (yRatio - 0.55) / 0.45
             lpFreq = 20000 - (ratio * (20000 - minLpFreq))
         }
 
