@@ -138,11 +138,11 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                                 <div className="h-8 w-px bg-zinc-800 mx-2 shrink-0" />
                                 <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity mr-6 md:mr-0">
                                     <Image
-                                        src="/icons/mypage-icon.png"
+                                        src="/icons/dashboard-icon-new.png"
                                         alt="My Page"
-                                        width={52}
-                                        height={52}
-                                        className="object-contain brightness-0 invert"
+                                        width={60}
+                                        height={60}
+                                        className="object-contain"
                                     />
                                 </Link>
                             </div>
