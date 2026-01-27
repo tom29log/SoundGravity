@@ -30,6 +30,22 @@ export async function GET(request: Request) {
         )
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('id', user.id)
+                    .single()
+
+                if (!profile) {
+                    await supabase.from('profiles').insert({
+                        id: user.id,
+                        username: user.user_metadata.full_name || user.user_metadata.name || user.email?.split('@')[0] || 'User',
+                        avatar_url: user.user_metadata.avatar_url || user.user_metadata.picture,
+                    })
+                }
+            }
             return NextResponse.redirect(`${origin}${next}`)
         }
     }
