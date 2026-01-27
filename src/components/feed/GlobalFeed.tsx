@@ -114,7 +114,7 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
     return (
         <div className="max-w-7xl mx-auto px-4 py-8 pb-24">
             {/* Header */}
-            <div className="flex flex-col gap-6 mb-8 sticky top-0 bg-black/80 backdrop-blur-md z-40 py-4 -mx-4 px-4 border-b border-zinc-900/50">
+            <div className="flex flex-col gap-6 mb-8 sticky top-0 bg-black/80 backdrop-blur-md z-[100] py-4 -mx-4 px-4 border-b border-zinc-900/50">
 
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     {/* User Info & Navigation */}
