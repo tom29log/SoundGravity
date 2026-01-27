@@ -226,10 +226,10 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
             // 0.35 -> 0 (Min HPF) ... 0.0 (Max HPF)
             const ratio = (0.35 - yRatio) / 0.35
             hpFreq = ratio * maxHpFreq
-        } else if (yRatio > 0.55) {
+        } else if (yRatio > 0.45) {
             // DOWN: Low Pass (Remove Treble)
-            // 0.55 -> 20kHz ... 1.0 -> 100Hz
-            const ratio = (yRatio - 0.55) / 0.45
+            // 0.45 -> 20kHz ... 1.0 -> 100Hz
+            const ratio = (yRatio - 0.45) / 0.55
             lpFreq = 20000 - (ratio * (20000 - minLpFreq))
         }
 
