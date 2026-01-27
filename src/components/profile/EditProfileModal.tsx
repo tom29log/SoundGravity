@@ -16,7 +16,7 @@ interface EditProfileModalProps {
         primary_genre?: string[] | null // Updated to array
         header_image_url?: string | null
     }
-    onUpdate: () => void
+    onUpdate: (updatedProfile?: any) => void
 }
 
 export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }: EditProfileModalProps) {
@@ -87,7 +87,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                 website: formData.website
             }
 
-            const { error } = await supabase
+            const { data: updatedData, error } = await supabase
                 .from('profiles')
                 .upsert({
                     id: profile.id,
@@ -99,10 +99,12 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                     header_image_url: headerImageUrl,
                     updated_at: new Date().toISOString()
                 })
+                .select()
+                .single()
 
             if (error) throw error
 
-            onUpdate()
+            onUpdate(updatedData)
             onClose()
         } catch (error) {
             console.error('Error updating profile:', error)

@@ -38,8 +38,11 @@ export default function AdminPage() {
         getProfile()
     }, [getProfile])
 
-    const handleProfileUpdate = () => {
-        getProfile() // Refresh profile data
+    const handleProfileUpdate = (updatedProfile?: any) => {
+        if (updatedProfile) {
+            setProfile(updatedProfile) // Immediate update
+        }
+        getProfile() // Background refresh to be safe
     }
 
     // Upload Avatar
@@ -66,8 +69,20 @@ export default function AdminPage() {
 
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-            await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
-            setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null)
+            // Use upsert to create profile if it doesn't exist
+            const { data: updatedProfile, error } = await supabase
+                .from('profiles')
+                .upsert({
+                    id: user.id,
+                    avatar_url: publicUrl,
+                    updated_at: new Date().toISOString()
+                })
+                .select()
+                .single()
+
+            if (!error && updatedProfile) {
+                setProfile(updatedProfile)
+            }
         }
     }
 
