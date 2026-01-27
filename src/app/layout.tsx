@@ -72,7 +72,8 @@ export default function RootLayout({
               speed={200}
               shadow="0 0 10px #ffffff,0 0 5px #ffffff"
             />
-            {/* DIAGNOSTIC: Disabled for testing <GlobalAudioEngine /> */}
+            <GlobalAudioEngine />
+            <BottomPlayerBar />
             {children}
           </PlaylistPlayerProvider>
         </QueryProvider>
