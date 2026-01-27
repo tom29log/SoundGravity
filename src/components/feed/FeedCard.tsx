@@ -75,9 +75,9 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
             >
                 {/* ... existing profile image code ... */}
                 {project.profiles?.avatar_url ? (
-                    <img src={project.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full flex-shrink-0 bg-zinc-800 object-cover shadow-lg" />
+                    <img src={project.profiles.avatar_url} alt="" className="w-14 h-14 rounded-full flex-shrink-0 bg-zinc-800 object-cover shadow-lg" />
                 ) : (
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0 flex items-center justify-center text-xs font-bold shadow-lg">
+                    <div className="w-14 h-14 rounded-full bg-zinc-800 flex-shrink-0 flex items-center justify-center text-sm font-bold shadow-lg">
                         {project.profiles?.username?.[0]?.toUpperCase()}
                     </div>
                 )}
