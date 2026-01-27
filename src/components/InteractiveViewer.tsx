@@ -352,7 +352,7 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
 
                 {/* Audio Control Map (Guide) - Bottom Left */}
                 {!pinMode && (
-                    <div className="absolute bottom-8 left-6 text-[10px] text-white/50 pointer-events-none select-none">
+                    <div className="absolute bottom-8 left-12 text-[10px] text-white/50 pointer-events-none select-none">
                         <div className="relative w-24 h-24 border-l border-b border-white/30">
                             {/* Y-Axis Label (FILTER) */}
                             <div className="absolute -left-9 top-0 flex flex-col items-center h-full justify-between py-0 pointer-events-none select-none">
