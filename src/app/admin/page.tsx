@@ -25,11 +25,16 @@ export default function AdminPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
             setUser(user)
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('profiles')
-                .select('id, username, avatar_url, social_links, is_pro')
+                .select('*')
                 .eq('id', user.id)
                 .single()
+
+            if (error) {
+                console.error('Error loading profile:', error)
+            }
+
             setProfile(data)
         }
     }, [supabase])
