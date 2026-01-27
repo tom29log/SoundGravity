@@ -101,9 +101,25 @@ export default function GlobalAudioEngine() {
         }
 
         // 1. Determine Master BPM
-        // ... (existing logic) ...
+        // Strategy: Master BPM follows the ACTIVE track's BPM.
+        let targetBpm = 124 // Default
+        const activeTrack = activeDeck === 'A' ? trackA : trackB
+        if (activeTrack?.bpm) {
+            targetBpm = activeTrack.bpm
+        }
 
-        // ...
+        // Update Master BPM state (allows UI to show it)
+        if (targetBpm !== masterBpm) {
+            setMasterBpm(targetBpm)
+        }
+
+        // 2. Calculate Rates
+        const rateA = calculatePlaybackRate(targetBpm, trackA?.bpm)
+        const rateB = calculatePlaybackRate(targetBpm, trackB?.bpm)
+
+        // 3. Apply Rates
+        deckA.setRate(rateA)
+        deckB.setRate(rateB)
 
         // 4. Time Stretch (Key Lock) Compensation
         // If rate is 1.05 (faster, +pitch), we shift pitch down.
