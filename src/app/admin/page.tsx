@@ -11,10 +11,13 @@ import DevicePreview from '@/components/DevicePreview'
 import KnobButton from '@/components/ui/KnobButton'
 import EditProfileModal from '@/components/profile/EditProfileModal'
 import PlaylistList from '@/components/playlist/PlaylistList'
+import { Activity } from 'lucide-react'
+import { usePlaylistPlayer } from '@/contexts/PlaylistPlayerContext'
 
 export default function AdminPage() {
     const router = useRouter()
     const supabase = createClient()
+    const { autoMixMode, toggleAutoMixMode } = usePlaylistPlayer()
     const [profile, setProfile] = useState<{ id: string, username: string | null, avatar_url: string | null, social_links: any, is_pro?: boolean } | null>(null)
     const [user, setUser] = useState<any>(null)
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
@@ -221,10 +224,35 @@ export default function AdminPage() {
 
                 {/* Top Section: Playlists (Priority) */}
                 <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
-                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                        My Playlists
-                        <span className="text-xs font-normal text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">Mixset Ready</span>
-                    </h2>
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-xl font-semibold flex items-center gap-2">
+                                My Playlists
+                                <span className="text-xs font-normal text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">Mixset Ready</span>
+                            </h2>
+                            {/* Auto-Mix Controls */}
+                            <div className="flex items-center gap-3 pl-4 border-l border-zinc-700">
+                                <div className="flex items-center gap-2 cursor-pointer group" onClick={toggleAutoMixMode}>
+                                    <button
+                                        className={`p-1.5 rounded-full transition-all duration-300
+                                    ${autoMixMode
+                                                ? 'bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.5)]'
+                                                : 'text-zinc-500 bg-zinc-800 group-hover:bg-zinc-700'}`}
+                                    >
+                                        <Activity size={14} />
+                                    </button>
+                                    <span className={`text-xs font-medium ${autoMixMode ? 'text-blue-400' : 'text-zinc-500'}`}>
+                                        Auto-Mix
+                                    </span>
+                                </div>
+
+                                {/* Description */}
+                                <span className="text-[10px] text-zinc-500 font-normal hidden sm:inline-block">
+                                    Natural continuous playback when you click the automix button
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                     <PlaylistList key={`playlist-${refreshKey}`} />
                 </div>
 
