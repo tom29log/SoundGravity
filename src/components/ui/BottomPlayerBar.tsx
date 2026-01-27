@@ -99,16 +99,21 @@ export default function BottomPlayerBar() {
                 <div className="flex flex-col items-center justify-center flex-1 gap-2">
                     <div className="flex items-center gap-6">
                         {/* Mixset Toggle (Small) */}
-                        <button
-                            onClick={toggleAutoMixMode}
-                            className={`p-2 rounded-full transition-all duration-300
-                            ${autoMixMode
-                                    ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]'
-                                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
-                            title={autoMixMode ? "DJ Mode ON" : "DJ Mode OFF"}
-                        >
-                            <Activity size={16} />
-                        </button>
+                        <div className="flex flex-col items-center gap-1">
+                            <button
+                                onClick={toggleAutoMixMode}
+                                className={`p-2 rounded-full transition-all duration-300
+                                ${autoMixMode
+                                        ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]'
+                                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+                                title={autoMixMode ? "Auto-Mix ON" : "Auto-Mix OFF"}
+                            >
+                                <Activity size={16} />
+                            </button>
+                            <span className={`text-[9px] font-medium leading-none ${autoMixMode ? 'text-blue-400' : 'text-zinc-600'}`}>
+                                Auto-Mix
+                            </span>
+                        </div>
 
                         {/* Main Controls */}
                         <div className="flex items-center gap-4">
