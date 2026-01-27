@@ -89,15 +89,16 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
 
             const { error } = await supabase
                 .from('profiles')
-                .update({
+                .upsert({
+                    id: profile.id,
                     username: formData.username,
                     bio: formData.bio,
                     social_links,
                     artist_type: formData.artistType,
                     primary_genre: formData.genre,
-                    header_image_url: headerImageUrl
+                    header_image_url: headerImageUrl,
+                    updated_at: new Date().toISOString()
                 })
-                .eq('id', profile.id)
 
             if (error) throw error
 
@@ -205,8 +206,8 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                                             setFormData({ ...formData, artistType: newTypes })
                                         }}
                                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${isSelected
-                                                ? 'bg-white text-black font-bold'
-                                                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                            ? 'bg-white text-black font-bold'
+                                            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                                             }`}
                                     >
                                         {type}
@@ -239,8 +240,8 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                                             setFormData({ ...formData, genre: newGenres })
                                         }}
                                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${isSelected
-                                                ? 'bg-white text-black font-bold'
-                                                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                                            ? 'bg-white text-black font-bold'
+                                            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                                             }`}
                                     >
                                         {genre}

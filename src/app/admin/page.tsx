@@ -16,6 +16,7 @@ export default function AdminPage() {
     const router = useRouter()
     const supabase = createClient()
     const [profile, setProfile] = useState<{ id: string, username: string | null, avatar_url: string | null, social_links: any, is_pro?: boolean } | null>(null)
+    const [user, setUser] = useState<any>(null)
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
     const [isSubscribing, setIsSubscribing] = useState(false)
 
@@ -23,6 +24,7 @@ export default function AdminPage() {
     const getProfile = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+            setUser(user)
             const { data } = await supabase
                 .from('profiles')
                 .select('id, username, avatar_url, social_links, is_pro')
@@ -248,11 +250,15 @@ export default function AdminPage() {
                 )}
             </div>
 
-            {profile && (
+            {user && (
                 <EditProfileModal
                     isOpen={isEditProfileOpen}
                     onClose={() => setIsEditProfileOpen(false)}
-                    profile={profile}
+                    profile={profile || {
+                        id: user.id,
+                        username: '',
+                        social_links: {}
+                    }}
                     onUpdate={handleProfileUpdate}
                 />
             )}
