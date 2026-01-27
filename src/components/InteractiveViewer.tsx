@@ -354,19 +354,19 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                 {!pinMode && (
                     <div className="absolute bottom-8 left-6 text-[10px] text-white/50 pointer-events-none select-none">
                         <div className="relative w-24 h-24 border-l border-b border-white/30">
-                            {/* Y Axis Label */}
-                            <div className="absolute -left-5 top-0 flex flex-col items-center h-full justify-between py-1">
-                                <span>High</span>
-                                <span className="rotate-[-90deg] origin-center text-[8px] tracking-widest opacity-70">FILTER</span>
-                                <span>Low</span>
-                            </div>
+                            {/* Y-Axis Label (FILTER) */}
+                <div className="absolute top-0 bottom-10 left-0 w-6 flex flex-col justify-between py-2 items-center pointer-events-none select-none">
+                    <span className="text-zinc-300 text-xs font-medium">High</span>
+                    <span className="text-zinc-400 text-[10px] font-bold tracking-widest -rotate-90 whitespace-nowrap">FILTER</span>
+                    <span className="text-zinc-300 text-xs font-medium">Low</span>
+                </div>
 
-                            {/* X Axis Label */}
-                            <div className="absolute -bottom-5 left-0 w-full flex justify-between px-1">
-                                <span>L</span>
-                                <span className="text-[8px] tracking-widest opacity-70">PAN</span>
-                                <span>R</span>
-                            </div>
+                {/* X-Axis Label (PAN) */}
+                <div className="absolute bottom-0 left-10 right-0 h-6 flex justify-between px-2 items-center pointer-events-none select-none">
+                    <span className="text-zinc-300 text-base font-medium">L</span>
+                    <span className="text-zinc-400 text-[10px] font-bold tracking-widest">PAN</span>
+                    <span className="text-zinc-300 text-base font-medium">R</span>
+                </div>            </div>
 
                             {/* Touch Indicator - Center Dot */}
                             {isInteracting && (
@@ -398,6 +398,6 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                     animation: pulse-fast 0.2s infinite;
                 }
             `}</style>
-        </div>
+        </div >
     )
 }
