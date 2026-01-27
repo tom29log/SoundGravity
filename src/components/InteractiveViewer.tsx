@@ -355,13 +355,13 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                     <div className="absolute bottom-8 left-6 text-[10px] text-white/50 pointer-events-none select-none">
                         <div className="relative w-24 h-24 border-l border-b border-white/30">
                             {/* Y-Axis Label (FILTER) */}
-                            <div className="absolute top-0 bottom-10 left-0 w-6 flex flex-col justify-between py-2 items-center pointer-events-none select-none">
-                                <span className="text-zinc-300 text-[10px]">High</span>
+                            <div className="absolute -left-9 top-0 flex flex-col items-center h-full justify-between py-0 pointer-events-none select-none">
+                                <span className="text-zinc-300 text-[10px] whitespace-nowrap">Low pass</span>
                                 <span className="text-zinc-400 text-[10px] tracking-widest -rotate-90 whitespace-nowrap">FILTER</span>
-                                <span className="text-zinc-300 text-[10px]">Low</span>
+                                <span className="text-zinc-300 text-[10px] whitespace-nowrap">Hi-pass</span>
                             </div>
 
-                            <div className="absolute bottom-0 left-10 right-0 h-6 flex justify-between px-2 items-center pointer-events-none select-none">
+                            <div className="absolute -bottom-5 left-0 w-full flex justify-between px-0 pointer-events-none select-none">
                                 <span className="text-zinc-300 text-sm">L</span>
                                 <span className="text-zinc-400 text-[10px] tracking-widest">PAN</span>
                                 <span className="text-zinc-300 text-sm">R</span>
