@@ -231,7 +231,7 @@ export default function AdminPage() {
                                 <span className="text-xs font-normal text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-full">Mixset Ready</span>
                             </h2>
                             {/* Auto-Mix Controls */}
-                            <div className="flex items-center gap-3 pl-4 border-l border-zinc-700">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 pl-4 border-l border-zinc-700">
                                 <div className="flex items-center gap-2 cursor-pointer group" onClick={toggleAutoMixMode}>
                                     <button
                                         className={`p-1.5 rounded-full transition-all duration-300
@@ -247,8 +247,8 @@ export default function AdminPage() {
                                 </div>
 
                                 {/* Description */}
-                                <span className="text-[10px] text-zinc-500 font-normal hidden sm:inline-block">
-                                    Natural continuous playback when you click the automix button
+                                <span className="text-[10px] text-zinc-500 font-normal leading-tight">
+                                    Natural continuous playback when clicked
                                 </span>
                             </div>
                         </div>
