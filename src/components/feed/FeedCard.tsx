@@ -71,13 +71,13 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
                 href={project.profiles?.username ? `/profile/${project.profiles.username}` : '#'}
                 prefetch={false}
                 onClick={(e) => e.stopPropagation()}
-                className="absolute top-3 left-3 z-[60] flex items-center gap-2 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full border border-white/10 hover:bg-black/60 hover:border-white/40 transition-all cursor-pointer"
+                className="absolute top-3 left-3 z-[60] flex items-center gap-2 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full hover:bg-black/60 transition-all cursor-pointer"
             >
                 {/* ... existing profile image code ... */}
                 {project.profiles?.avatar_url ? (
-                    <img src={project.profiles.avatar_url} alt="" className="w-5 h-5 rounded-full flex-shrink-0 bg-zinc-800 object-cover" />
+                    <img src={project.profiles.avatar_url} alt="" className="w-8 h-8 rounded-full flex-shrink-0 bg-zinc-800 object-cover" />
                 ) : (
-                    <div className="w-5 h-5 rounded-full bg-zinc-800 flex-shrink-0 flex items-center justify-center text-[8px] font-bold">
+                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex-shrink-0 flex items-center justify-center text-xs font-bold">
                         {project.profiles?.username?.[0]?.toUpperCase()}
                     </div>
                 )}
