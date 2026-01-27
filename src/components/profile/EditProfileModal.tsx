@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { X, Image as ImageIcon, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
@@ -39,6 +39,21 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
     const [headerImageFile, setHeaderImageFile] = useState<File | null>(null)
     const [headerImagePreview, setHeaderImagePreview] = useState<string | null>(profile.header_image_url || null)
     const headerImageInputRef = useRef<HTMLInputElement>(null)
+
+    // Sync state with profile prop
+    useEffect(() => {
+        setFormData({
+            username: profile.username || '',
+            bio: profile.bio || '',
+            instagram: profile.social_links?.instagram || '',
+            soundcloud: profile.social_links?.soundcloud || '',
+            website: profile.social_links?.website || '',
+            artistType: profile.artist_type || [],
+            genre: profile.primary_genre || [],
+            headerImageUrl: profile.header_image_url || ''
+        })
+        setHeaderImagePreview(profile.header_image_url || null)
+    }, [profile])
 
     if (!isOpen) return null
 
