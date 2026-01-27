@@ -71,19 +71,16 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
                 href={project.profiles?.username ? `/profile/${project.profiles.username}` : '#'}
                 prefetch={false}
                 onClick={(e) => e.stopPropagation()}
-                className="absolute top-3 left-3 z-[60] flex items-center gap-2 bg-black/20 backdrop-blur-md px-2 py-1 rounded-full hover:bg-black/40 transition-all cursor-pointer"
+                className="absolute top-3 left-3 z-[60] flex items-center justify-center rounded-full transition-opacity cursor-pointer hover:opacity-80"
             >
                 {/* ... existing profile image code ... */}
                 {project.profiles?.avatar_url ? (
-                    <img src={project.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full flex-shrink-0 bg-zinc-800 object-cover" />
+                    <img src={project.profiles.avatar_url} alt="" className="w-10 h-10 rounded-full flex-shrink-0 bg-zinc-800 object-cover shadow-lg" />
                 ) : (
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0 flex items-center justify-center text-xs font-bold">
+                    <div className="w-10 h-10 rounded-full bg-zinc-800 flex-shrink-0 flex items-center justify-center text-xs font-bold shadow-lg">
                         {project.profiles?.username?.[0]?.toUpperCase()}
                     </div>
                 )}
-                <span className="text-[10px] font-medium text-zinc-100 pr-1 max-w-[80px] truncate leading-none pb-px">
-                    {project.profiles?.username || 'Artist'}
-                </span>
             </Link>
 
             {/* 2. Project Link (Image) */}
