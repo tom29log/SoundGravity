@@ -7,6 +7,7 @@ import Link from 'next/link'
 import * as Tone from 'tone'
 import { Project } from '@/types'
 import { usePlaylistPlayer } from '@/contexts/PlaylistPlayerContext'
+import BottomPlayerBar from '@/components/ui/BottomPlayerBar'
 
 
 interface Playlist {
@@ -27,7 +28,7 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
     const [loading, setLoading] = useState(true)
     const supabase = createClient()
 
-    const { playPlaylist, isPlaying, play, pause, stop, activeDeck, deckA, deckB, autoMixMode } = usePlaylistPlayer()
+    const { playPlaylist, isPlaying, play, pause, stop, clear, activeDeck, deckA, deckB, autoMixMode } = usePlaylistPlayer()
     const isMixsetMode = autoMixMode
 
     useEffect(() => {
@@ -79,7 +80,9 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
     }
 
     const handleClose = () => {
+        // Stop and clear when closing the modal
         stop()
+        clear() // Ensure player is cleared
         onClose()
     }
 
@@ -215,6 +218,7 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
                         )}
                     </div>
                 </motion.div>
+                <BottomPlayerBar />
             </div>
         </AnimatePresence>
     )

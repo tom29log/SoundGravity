@@ -41,6 +41,7 @@ interface PlaylistPlayerContextType {
     updateDeckMetrics: (deck: 'A' | 'B', metrics: { currentTime: number, duration: number }) => void
     stopSignal: number
     stop: () => void
+    clear: () => void
 
     // Auto-Mix & DJ State
     autoMixMode: boolean
@@ -116,6 +117,15 @@ export function PlaylistPlayerProvider({ children }: { children: ReactNode }) {
         setStopSignal(prev => prev + 1)
     }, [])
 
+    const clear = useCallback(() => {
+        setIsPlaying(false)
+        setTrackA(null)
+        setTrackB(null)
+        setQueue([])
+        setCurrentIndex(0)
+        setStopSignal(prev => prev + 1)
+    }, [])
+
     const next = useCallback(() => {
         const nextIndex = currentIndex + 1
         if (nextIndex >= queue.length) return // End of queue
@@ -181,6 +191,7 @@ export function PlaylistPlayerProvider({ children }: { children: ReactNode }) {
             play,
             pause,
             stop,
+            clear,
             next,
             previous: () => { },
             isMixing,

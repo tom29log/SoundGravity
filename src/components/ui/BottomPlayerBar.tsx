@@ -1,7 +1,7 @@
 'use client'
 
 import { usePlaylistPlayer } from '@/contexts/PlaylistPlayerContext'
-import { Play, Pause, SkipForward, Disc, Activity, Square, FastForward } from 'lucide-react'
+import { Play, Pause, SkipForward, Disc, Activity, Square, FastForward, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 export default function BottomPlayerBar() {
@@ -18,7 +18,8 @@ export default function BottomPlayerBar() {
         mixingState,
         deckA,
         deckB,
-        masterBpm
+        masterBpm,
+        clear
     } = usePlaylistPlayer()
 
     const [mounted, setMounted] = useState(false)
@@ -174,6 +175,15 @@ export default function BottomPlayerBar() {
                     ) : (
                         <div className="text-xs text-zinc-700 font-mono text-right">No Next Track</div>
                     )}
+
+                    {/* Close Button */}
+                    <button
+                        onClick={clear}
+                        className="p-2 -mr-2 text-zinc-600 hover:text-red-400 transition-colors"
+                        title="Close Player"
+                    >
+                        <X size={18} />
+                    </button>
                 </div>
             </div>
         </div>

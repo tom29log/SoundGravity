@@ -45,7 +45,6 @@ export const viewport = {
   userScalable: false,
 };
 
-import BottomPlayerBar from '@/components/ui/BottomPlayerBar'
 import NextTopLoader from 'nextjs-toploader'
 import QueryProvider from '@/providers/QueryProvider'
 
@@ -73,7 +72,6 @@ export default function RootLayout({
               shadow="0 0 10px #ffffff,0 0 5px #ffffff"
             />
             <GlobalAudioEngine />
-            <BottomPlayerBar />
             {children}
           </PlaylistPlayerProvider>
         </QueryProvider>
