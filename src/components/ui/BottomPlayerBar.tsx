@@ -29,6 +29,9 @@ export default function BottomPlayerBar() {
     // Always show bar if there is at least one track loaded, or simply always show it?
     // User requested "Simplification" and "Alignment".
 
+    // Hide if no tracks are loaded
+    if (!trackA && !trackB) return null
+
     const currentTrack = activeDeck === 'A' ? trackA : trackB
     const nextTrack = activeDeck === 'A' ? trackB : trackA
     const currentDeck = activeDeck === 'A' ? deckA : deckB
@@ -81,11 +84,11 @@ export default function BottomPlayerBar() {
                             </div>
                         </>
                     ) : (
+                        // Should not happen due to check above, but keep as fallback just in case or for smooth transitions if adapted later
                         <div className="flex items-center gap-3 opacity-50">
                             <div className="w-12 h-12 rounded-md bg-zinc-900" />
                             <div className="flex flex-col">
-                                <span className="text-sm font-bold text-zinc-700">Ready to Play</span>
-                                <span className="text-xs text-zinc-800">Select a track</span>
+                                <span className="text-sm font-bold text-zinc-700">Loading...</span>
                             </div>
                         </div>
                     )}

@@ -7,7 +7,7 @@ import Link from 'next/link'
 import * as Tone from 'tone'
 import { Project } from '@/types'
 import { usePlaylistPlayer } from '@/contexts/PlaylistPlayerContext'
-import BottomPlayerBar from '@/components/ui/BottomPlayerBar'
+
 
 interface Playlist {
     id: string
@@ -215,7 +215,6 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
                         )}
                     </div>
                 </motion.div>
-                <BottomPlayerBar />
             </div>
         </AnimatePresence>
     )
