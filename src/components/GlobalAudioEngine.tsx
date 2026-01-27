@@ -115,35 +115,6 @@ export default function GlobalAudioEngine() {
     }, [audioGraph, activeDeck, deckA, deckB])
 
 
-    // ... (Stop Signal Effect lines 191-200 remain unchanged) ...
-    // ... (Playback Logic Effect lines 208-260 remain unchanged) ...
-
-    // Dedicated Effect for Auto-Mix Trigger
-    const lastTriggerRef = useRef<string | null>(null)
-
-    useEffect(() => {
-        if (!isPlaying) return
-
-        // Auto-Mix Feature: Only active if autoMixMode is ON
-        if (!autoMixMode) return
-
-        const activePlayer = activeDeck === 'A' ? deckA : deckB
-        if (!activePlayer.isReady || activePlayer.duration === 0) return
-
-        const remaining = activePlayer.duration - activePlayer.getCurrentTime()
-        const threshold = 5 // START MIX 5 seconds before end
-
-        // If we are in the zone
-        if (remaining <= threshold && remaining > 0.5) {
-            const trackId = activeDeck === 'A' ? trackA?.id : trackB?.id
-            if (trackId && lastTriggerRef.current !== trackId) {
-                console.log('[AutoMix] Triggering Next for track', trackId)
-                lastTriggerRef.current = trackId
-                next()
-            }
-        }
-    }, [isPlaying, activeDeck, deckA, deckB, trackA, trackB, next, autoMixMode])
-
     // If I setMasterBpm inside, and it's a dept, loop.
     // Fixed: logic above uses `targetBpm` calculated from tracks, not referring to masterBpm state for calculation.
     // But I used `masterBpm` in dep array?
