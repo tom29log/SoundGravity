@@ -38,8 +38,16 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
         disposePlayers()
 
         const loadAudio = async () => {
-            console.log('[Deck] Loading audio for:', track.title, track.audio_url)
+            console.log('[Deck] Loading audio for:', track.title)
+
             const hasStems = track.stems && Object.keys(track.stems).length > 0
+
+            // Validation
+            if (!hasStems && !track.audio_url) {
+                console.error('[Deck] Track has no audio URL or stems:', track.title)
+                // Could emit error state here if we added one
+                return
+            }
 
             if (hasStems) {
                 const players = new Tone.Players(track.stems!, () => {
@@ -54,15 +62,17 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
                 playersRef.current = players
             } else {
                 try {
+                    // Start loading immediately
                     const player = new Tone.Player({
-                        url: track.audio_url,
+                        url: track.audio_url!,
                         onload: () => {
                             console.log('[Deck] Single Player loaded for', track.title)
                             setDuration(player.buffer.duration)
                             setIsReady(true)
                         },
                         onerror: (err: any) => {
-                            console.error('[Deck] Error loading player:', err)
+                            console.error('[Deck] Error loading player for track:', track.title, err)
+                            // Potential: Retry logic or cleanup
                         }
                     })
                     player.connect(destinationNode)
