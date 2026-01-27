@@ -377,7 +377,7 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                         )}
                         <input
                             type="file"
-                            accept="audio/*"
+                            accept="audio/*,.mp3,.wav,.m4a,.flac,.aiff"
                             ref={audioInputRef}
                             onChange={handleAudioChange}
                             className="hidden"
@@ -435,7 +435,7 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                         <div key={type} className="relative">
                             <input
                                 type="file"
-                                accept="audio/*"
+                                accept="audio/*,.mp3,.wav,.m4a,.flac,.aiff"
                                 ref={stemInputRefs[type as keyof typeof stemInputRefs]}
                                 onChange={(e) => handleStemChange(type, e)}
                                 className="hidden"
