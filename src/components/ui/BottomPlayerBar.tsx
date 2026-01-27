@@ -133,7 +133,16 @@ export default function BottomPlayerBar() {
 
                             {/* Next */}
                             <button
-                                onClick={next}
+                                onClick={async () => {
+                                    // Ensure audio context is running on user gesture
+                                    if (typeof window !== 'undefined') {
+                                        const Tone = await import('tone')
+                                        if (Tone.context.state !== 'running') {
+                                            await Tone.start()
+                                        }
+                                    }
+                                    next()
+                                }}
                                 className="p-2 text-zinc-400 hover:text-white transition-colors hover:scale-105"
                                 disabled={!nextTrack}
                             >

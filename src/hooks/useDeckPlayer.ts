@@ -147,9 +147,7 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
             return
         }
 
-        if (isPlaying) return
-
-        // Ensure AudioContext is active (critical for mobile)
+        // Force resume context (critical for mobile)
         const contextReady = await ensureAudioContext()
         if (!contextReady) {
             console.error('[Deck] AudioContext not running, cannot play')
@@ -167,6 +165,8 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
                     const p = playersRef.current.player(key)
                     if (p.loaded) {
                         try {
+                            // Ensure stopped before starting to avoid overlap if called rapidly
+                            if (p.state === 'started') p.stop()
                             p.start(now, offset)
                         } catch (err) {
                             console.error(`[Deck] Error starting stem ${key}:`, err)
@@ -177,6 +177,8 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
         } else if (playerRef.current) {
             if (playerRef.current.loaded) {
                 try {
+                    // Start
+                    if (playerRef.current.state === 'started') playerRef.current.stop()
                     playerRef.current.start(now, offset)
                 } catch (err) {
                     console.error('[Deck] Error starting player:', err)
@@ -185,7 +187,7 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
         }
 
         setIsPlaying(true)
-    }, [isReady, track, isPlaying, ensureAudioContext])
+    }, [isReady, track, ensureAudioContext]) // Removed isPlaying dependency to allow forced re-trigger if needed
 
     const pause = useCallback(() => {
         setPendingPlay(false) // Cancel intent
