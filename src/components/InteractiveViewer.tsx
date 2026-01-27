@@ -19,6 +19,7 @@ interface Project {
 interface AudioState {
     pan: number
     frequency: number
+    hpFrequency?: number
 }
 
 interface InteractiveViewerProps {
@@ -42,7 +43,8 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
     const audioSourceRef = useRef<MediaElementAudioSourceNode | null>(null)
     const gainNodeRef = useRef<GainNode | null>(null)
     const pannerNodeRef = useRef<StereoPannerNode | null>(null)
-    const filterNodeRef = useRef<BiquadFilterNode | null>(null)
+    const lowPassFilterRef = useRef<BiquadFilterNode | null>(null)
+    const highPassFilterRef = useRef<BiquadFilterNode | null>(null)
     const analyserNodeRef = useRef<AnalyserNode | null>(null)
     const audioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -74,7 +76,8 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
             if (gainNodeRef.current) gainNodeRef.current.disconnect()
             if (analyserNodeRef.current) analyserNodeRef.current.disconnect()
             if (pannerNodeRef.current) pannerNodeRef.current.disconnect()
-            if (filterNodeRef.current) filterNodeRef.current.disconnect()
+            if (lowPassFilterRef.current) lowPassFilterRef.current.disconnect()
+            if (highPassFilterRef.current) highPassFilterRef.current.disconnect()
             if (audioSourceRef.current) audioSourceRef.current.disconnect()
 
             // Clear Refs
@@ -82,7 +85,8 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
             gainNodeRef.current = null
             analyserNodeRef.current = null
             pannerNodeRef.current = null
-            filterNodeRef.current = null
+            lowPassFilterRef.current = null
+            highPassFilterRef.current = null
             audioSourceRef.current = null
         }
     }, [project])
@@ -104,21 +108,27 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
 
                 // Create Nodes
                 const source = context.createMediaElementSource(audio)
-                const filter = context.createBiquadFilter()
+                const lowPass = context.createBiquadFilter()
+                const highPass = context.createBiquadFilter()
                 const panner = context.createStereoPanner()
                 const analyser = context.createAnalyser()
                 const gain = context.createGain()
 
                 // Configure Nodes
-                filter.type = 'lowpass'
-                filter.frequency.value = 20000
-                filter.Q.value = 1
+                lowPass.type = 'lowpass'
+                lowPass.frequency.value = 20000
+                lowPass.Q.value = 1
+
+                highPass.type = 'highpass'
+                highPass.frequency.value = 0
+                highPass.Q.value = 1
 
                 analyser.fftSize = 256
 
-                // Connect Graph
-                source.connect(filter)
-                filter.connect(panner)
+                // Connect Graph: Source -> HP -> LP -> Panner -> Analyser -> Gain -> Dest
+                source.connect(highPass)
+                highPass.connect(lowPass)
+                lowPass.connect(panner)
                 panner.connect(analyser)
                 analyser.connect(gain)
                 gain.connect(context.destination)
@@ -126,7 +136,8 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                 // Store Refs
                 audioSourceRef.current = source
                 pannerNodeRef.current = panner
-                filterNodeRef.current = filter
+                lowPassFilterRef.current = lowPass
+                highPassFilterRef.current = highPass
                 analyserNodeRef.current = analyser
                 gainNodeRef.current = gain
             } catch (error) {
@@ -179,7 +190,7 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
 
     const handleInteraction = (clientX: number, clientY: number) => {
         // Block interaction if in Pin Mode or not ready
-        if (pinMode || !audioContextRef.current || !pannerNodeRef.current || !filterNodeRef.current) return
+        if (pinMode || !audioContextRef.current || !pannerNodeRef.current || !lowPassFilterRef.current || !highPassFilterRef.current) return
 
         const width = window.innerWidth
         const height = window.innerHeight
@@ -201,29 +212,41 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
 
         pannerNodeRef.current.pan.setTargetAtTime(panValue, audioContextRef.current.currentTime, 0.1)
 
-        // Y-axis: Filter Frequency (Start from slightly below center: 0.5)
-        const minFreq = 100
-        const maxFreq = 20000
-        let frequency = maxFreq
+        // Y-axis: Bi-directional Filter
+        // Deadzone: 0.3 to 0.7 (Center +/- 20%)
 
-        const filterStartThreshold = 0.5
-        if (yRatio > filterStartThreshold) {
-            // Map 0.5...1.0 to maxFreq...minFreq
-            const effectiveRatio = (yRatio - filterStartThreshold) / (1 - filterStartThreshold)
-            frequency = maxFreq - (effectiveRatio * (maxFreq - minFreq))
+        let lpFreq = 20000
+        let hpFreq = 0
+
+        const minLpFreq = 100
+        const maxHpFreq = 2000 // Cap HPF at 2kHz to avoid killing all sound
+
+        if (yRatio < 0.3) {
+            // UP: High Pass (Remove Bass)
+            // 0.3 -> 0 (Min HPF) ... 0.0 (Max HPF)
+            const ratio = (0.3 - yRatio) / 0.3
+            hpFreq = ratio * maxHpFreq
+        } else if (yRatio > 0.7) {
+            // DOWN: Low Pass (Remove Treble)
+            // 0.7 -> 20kHz ... 1.0 -> 100Hz
+            const ratio = (yRatio - 0.7) / 0.3
+            lpFreq = 20000 - (ratio * (20000 - minLpFreq))
         }
 
-        filterNodeRef.current.frequency.setTargetAtTime(frequency, audioContextRef.current.currentTime, 0.1)
+        lowPassFilterRef.current.frequency.setTargetAtTime(lpFreq, audioContextRef.current.currentTime, 0.1)
+        highPassFilterRef.current.frequency.setTargetAtTime(hpFreq, audioContextRef.current.currentTime, 0.1)
 
         // Update State Tracker
-        audioState.current = { pan: panValue, frequency }
+        // @ts-ignore
+        audioState.current = { pan: panValue, frequency: lpFreq, hpFrequency: hpFreq }
     }
 
-    const restoreAudioState = (state: AudioState) => {
-        if (!audioContextRef.current || !pannerNodeRef.current || !filterNodeRef.current) return
+    const restoreAudioState = (state: any) => {
+        if (!audioContextRef.current || !pannerNodeRef.current || !lowPassFilterRef.current || !highPassFilterRef.current) return
 
         if (state.pan !== undefined) pannerNodeRef.current.pan.setTargetAtTime(state.pan, audioContextRef.current.currentTime, 0.5)
-        if (state.frequency !== undefined) filterNodeRef.current.frequency.setTargetAtTime(state.frequency, audioContextRef.current.currentTime, 0.5)
+        if (state.frequency !== undefined) lowPassFilterRef.current.frequency.setTargetAtTime(state.frequency, audioContextRef.current.currentTime, 0.5)
+        if (state.hpFrequency !== undefined) highPassFilterRef.current.frequency.setTargetAtTime(state.hpFrequency, audioContextRef.current.currentTime, 0.5)
     }
 
     const handleCanvasClick = (e: React.MouseEvent) => {
