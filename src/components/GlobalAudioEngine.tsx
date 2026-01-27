@@ -89,39 +89,21 @@ export default function GlobalAudioEngine() {
             // Reset rates if mode is off
             if (deckA.setRate) deckA.setRate(1)
             if (deckB.setRate) deckB.setRate(1)
-            if (pitchShiftARef.current) pitchShiftARef.current.pitch = 0
-            if (pitchShiftBRef.current) pitchShiftBRef.current.pitch = 0
+            if (pitchShiftARef.current) {
+                pitchShiftARef.current.pitch = 0
+                pitchShiftARef.current.wet.value = 0 // Bypass to avoid artifacts
+            }
+            if (pitchShiftBRef.current) {
+                pitchShiftBRef.current.pitch = 0
+                pitchShiftBRef.current.wet.value = 0 // Bypass to avoid artifacts
+            }
             return
         }
 
         // 1. Determine Master BPM
-        // Strategy: Master BPM follows the ACTIVE track's BPM.
-        // If Active Deck changes, Master BPM should ideally ramp to new BPM, but for MVP let's snap or stick.
-        // Let's set Master BPM to trackA's BPM if A is active, or B if B.
-        // User requested: "Master Tempo(Key Lock)" implying consistent tempo? or changing?
-        // "Realtime BPM Adjustment (Master Clock)"
-        // "Next curve BPM catch-up"
-        // Let's assume Master BPM is set by the currently playing track initially.
+        // ... (existing logic) ...
 
-        let targetBpm = 124 // Default
-        const activeTrack = activeDeck === 'A' ? trackA : trackB
-        if (activeTrack?.bpm) {
-            targetBpm = activeTrack.bpm
-        }
-
-        // Update Master BPM state (allows UI to show it)
-        // Optimization: Only update if different to avoid render loops
-        if (targetBpm !== masterBpm) {
-            setMasterBpm(targetBpm)
-        }
-
-        // 2. Calculate Rates
-        const rateA = calculatePlaybackRate(targetBpm, trackA?.bpm)
-        const rateB = calculatePlaybackRate(targetBpm, trackB?.bpm)
-
-        // 3. Apply Rates
-        deckA.setRate(rateA)
-        deckB.setRate(rateB)
+        // ...
 
         // 4. Time Stretch (Key Lock) Compensation
         // If rate is 1.05 (faster, +pitch), we shift pitch down.
@@ -130,10 +112,12 @@ export default function GlobalAudioEngine() {
             const shift = -12 * Math.log2(rateA)
             // Clamping reasonable limits (-12 to +12)
             pitchShiftARef.current.pitch = Math.max(-12, Math.min(12, shift))
+            pitchShiftARef.current.wet.value = 1 // Enable effect
         }
         if (pitchShiftBRef.current) {
             const shift = -12 * Math.log2(rateB)
             pitchShiftBRef.current.pitch = Math.max(-12, Math.min(12, shift))
+            pitchShiftBRef.current.wet.value = 1 // Enable effect
         }
 
     }, [autoMixMode, activeDeck, trackA, trackB, deckA, deckB, masterBpm]) // Dependencies needs careful check to avoid Loop.
