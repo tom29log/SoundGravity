@@ -33,8 +33,10 @@ export default function ProfileHeader({ profile, totalLikes }: ProfileHeaderProp
             )}
 
             {/* Back to Feed Button - Top Left */}
+            {/* Back to Feed Button - Top Left */}
             <Link
                 href="/"
+                prefetch={false}
                 className="absolute top-4 left-4 md:left-8 flex items-center gap-2 group opacity-80 hover:opacity-100 transition-opacity z-50"
             >
                 <Image

@@ -16,7 +16,7 @@ export default function ProfileProjectList({ projects }: ProfileProjectListProps
                 <Link
                     key={project.id}
                     href={`/v/${project.id}`}
-                    prefetch={true}
+                    prefetch={false}
                     className="group flex items-center gap-4 p-3 rounded-xl bg-zinc-900/40 hover:bg-zinc-800/60 border border-transparent hover:border-zinc-700/50 transition-all active:scale-[0.99] duration-200"
                 >
                     {/* Thumbnail */}
