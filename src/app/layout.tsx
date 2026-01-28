@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { PlaylistPlayerProvider } from '@/contexts/PlaylistPlayerContext'
 import GlobalAudioEngine from '@/components/GlobalAudioEngine'
 import MobilePortraitLock from '@/components/ui/MobilePortraitLock'
+import ServiceWorkerUnregister from '@/components/ServiceWorkerUnregister'
 import "./globals.css";
 
 const geistSans = Geist({
@@ -73,6 +74,7 @@ export default function RootLayout({
               shadow="0 0 10px #ffffff,0 0 5px #ffffff"
             />
             <MobilePortraitLock />
+            <ServiceWorkerUnregister />
             <GlobalAudioEngine />
             {children}
           </PlaylistPlayerProvider>
