@@ -45,14 +45,12 @@ export default function ProfileContent({ username }: Props) {
                 return
             }
 
-            // 2. Fetch Total Likes
-            const { count } = await supabase
-                .from('likes')
-                .select('projects!inner(user_id)', { count: 'exact', head: true })
-                .eq('projects.user_id', profileData.id)
+            // 2. Fetch Total Likes (Optimized via RPC)
+            const { data: totalLikesData } = await supabase
+                .rpc('get_user_total_likes', { target_user_id: profileData.id })
 
             setProfile(profileData)
-            setTotalLikes(count || 0)
+            setTotalLikes(Number(totalLikesData) || 0)
             setLoading(false)
         }
 
