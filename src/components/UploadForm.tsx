@@ -178,6 +178,35 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
         }
     }
 
+    // R2 Upload Helper
+    const uploadToR2 = async (file: File) => {
+        // 1. Get Presigned URL
+        const res = await fetch('/api/upload-url', {
+            method: 'POST',
+            body: JSON.stringify({
+                filename: file.name,
+                contentType: file.type
+            })
+        })
+
+        if (!res.ok) throw new Error('Failed to get upload URL')
+
+        const { uploadUrl, publicUrl } = await res.json()
+
+        // 2. Upload to R2 (Directly)
+        const upload = await fetch(uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+                'Content-Type': file.type
+            }
+        })
+
+        if (!upload.ok) throw new Error('Failed to upload to R2')
+
+        return publicUrl
+    }
+
     const uploadFile = async (file: File) => {
         const fileExt = file.name.split('.').pop()
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
@@ -195,6 +224,89 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
         return data.publicUrl
     }
 
+    // Auto Stem Separation
+    const handleStemSeparation = async () => {
+        if (!audioFile) {
+            alert('Please upload master audio first')
+            return
+        }
+
+        setIsSeparating(true)
+        setSeparationStatus('Uploading audio...')
+
+        try {
+            // 1. Upload master audio first (Use R2 now!)
+            const audioUrl = await uploadToR2(audioFile)
+
+            setSeparationStatus('Separating stems (1-2 min)...')
+
+            // 2. Call stem separation API
+            const response = await fetch('/api/stems/separate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ audioUrl }),
+            })
+
+            if (!response.ok) {
+                const error = await response.json()
+                throw new Error(error.error || 'Stem separation failed')
+            }
+
+            const separatedStems = await response.json()
+
+            setSeparationStatus('Uploading stems to storage...')
+
+            // 3.5 Upload separated stems to R2 (Cloudflare)
+            const uploadedStemUrls: { [key: string]: string | null } = {
+                vocal: null,
+                drum: null,
+                bass: null,
+                synth: null,
+            }
+
+            for (const [stemType, localUrl] of Object.entries(separatedStems)) {
+                if (localUrl && typeof localUrl === 'string') {
+                    try {
+                        console.log(`Fetching ${stemType} from ${localUrl}`)
+                        // Fetch the stem file from local server
+                        const stemResponse = await fetch(localUrl)
+                        if (!stemResponse.ok) {
+                            console.error(`Failed to fetch ${stemType}: ${stemResponse.status}`)
+                            continue
+                        }
+                        const stemBlob = await stemResponse.blob()
+                        console.log(`${stemType} blob size: ${stemBlob.size}`)
+                        const stemFile = new File([stemBlob], `${stemType}.mp3`, { type: 'audio/mpeg' })
+
+                        // Upload to R2
+                        console.log(`Uploading ${stemType} to R2...`)
+                        const r2Url = await uploadToR2(stemFile)
+
+                        uploadedStemUrls[stemType as keyof typeof uploadedStemUrls] = r2Url
+                        console.log(`${stemType} uploaded successfully: ${r2Url}`)
+
+                    } catch (err) {
+                        console.error(`Failed to upload ${stemType} stem:`, err)
+                    }
+                }
+            }
+
+            // 4. Set the stem URLs
+            setStemUrls(uploadedStemUrls)
+
+            // Clear file-based stems since we now have URLs
+            setStems({ vocal: null, drum: null, bass: null, synth: null })
+
+            setSeparationStatus('Stems ready!')
+        } catch (error: any) {
+            console.error('Stem separation error:', error)
+            alert('Stem separation failed: ' + error.message)
+            setSeparationStatus('')
+        } finally {
+            setIsSeparating(false)
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!imageFile || !audioFile || !title) {
@@ -209,12 +321,11 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
 
         setLoading(true)
         try {
-            // 1. Upload Image
+            // 1. Upload Image (Keep on Supabase for optimization/speed for now, or move to R2 later)
             const imageUrl = await uploadFile(imageFile)
 
-            // 2. Upload Audio
-            // 2. Upload Audio
-            const audioUrl = await uploadFile(audioFile)
+            // 2. Upload Audio (To R2)
+            const audioUrl = await uploadToR2(audioFile)
 
             // 2.5 Upload Stems (if any) or use pre-separated URLs
             let uploadedStems: Record<string, string> | null = null
@@ -235,7 +346,7 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                 for (const [type, file] of stemsToUpload) {
                     if (file) {
                         try {
-                            const url = await uploadFile(file)
+                            const url = await uploadToR2(file)
                             uploadedStems[type] = url
                         } catch (err) {
                             console.error(`Failed to upload ${type} stem`, err)
@@ -244,7 +355,7 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                 }
             }
 
-            // 3. Insert into DB
+            // 3. Insert into DB (Same as before)
             const { data: { user } } = await supabase.auth.getUser()
 
             const { error } = await supabase.from('projects').insert({
