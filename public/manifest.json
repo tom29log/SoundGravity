@@ -3,6 +3,7 @@
     "short_name": "SoundGravity",
     "description": "Discover new music and artists.",
     "start_url": "/",
+    "orientation": "portrait",
     "display": "standalone",
     "background_color": "#000000",
     "theme_color": "#000000",
