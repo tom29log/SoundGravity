@@ -98,7 +98,7 @@ export default function LoginPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="z-10 w-full max-w-[85%] md:max-w-sm flex flex-col items-center text-center"
+                className="z-10 w-full max-w-[75%] md:max-w-sm flex flex-col items-center text-center"
             >
                 <div className="relative w-32 h-32 md:w-40 md:h-40 mb-2 mx-auto">
                     <Image
