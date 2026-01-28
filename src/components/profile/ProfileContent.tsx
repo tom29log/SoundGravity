@@ -11,6 +11,8 @@ interface Props {
 }
 
 export default async function ProfileContent({ username }: Props) {
+    // DIAGNOSTIC START: Bypass DB for performance test
+    /*
     // 1. Fetch Profile (Blocking execution of this component, but not the whole page shell)
     const profile = await getProfile(username)
 
@@ -24,6 +26,23 @@ export default async function ProfileContent({ username }: Props) {
         .from('likes')
         .select('projects!inner(user_id)', { count: 'exact', head: true })
         .eq('projects.user_id', profile.id)
+     */
+
+    // DUMMY DATA
+    const profile = {
+        id: 'dummy-id',
+        username: username,
+        avatar_url: null,
+        bio: 'Diagnostic Bio',
+        website: null,
+        instagram: null,
+        youtube: null,
+        followers_count: 0,
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
+    }
+    const totalLikes = 999
+    // DIAGNOSTIC END
 
     return (
         <div className="relative z-10 container mx-auto px-4 pb-20">
