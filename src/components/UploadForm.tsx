@@ -530,6 +530,10 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                     </div>
                     <label htmlFor="copyright" className="text-sm text-zinc-300 cursor-pointer select-none">
                         <span className="font-medium text-white">Copyright Confirmation</span>
+                        <div className="bg-amber-500/10 border border-amber-500/20 rounded p-2 my-2">
+                            <p className="text-xs text-amber-200 font-medium mb-0.5">⚠️ 중요: 자신의 창작물 공유가 기본 서비스의 목적입니다.</p>
+                            <p className="text-[11px] text-amber-500/80">저작권이 있는 타인의 음원(팝송 등)을 무단 업로드 시, 법적 책임이 따를 수 있으며 통보 없이 삭제될 수 있습니다.</p>
+                        </div>
                         <p className="text-xs text-zinc-500 mt-0.5">
                             I confirm that I created this original work and have the right to distribute it.
                             I understand that I am responsible for any copyright violations.

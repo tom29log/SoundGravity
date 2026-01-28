@@ -37,6 +37,17 @@ export interface Project {
     profiles?: Profile // Joined data
     stems?: Record<string, string> | null
     bpm?: number
+    is_hidden?: boolean
+}
+
+export interface Report {
+    id: string
+    reporter_id: string
+    project_id: string
+    reason: string
+    details?: string
+    status: 'pending' | 'resolved' | 'dismissed'
+    created_at: string
 }
 
 export interface Like {

@@ -26,6 +26,7 @@ export function useProjectsInfinite(
                 )
             `)
                 .range(from, to)
+                .eq('is_hidden', false) // Exclude hidden projects
 
             // Apply filters
             if (filters.aiFilter === 'human') {

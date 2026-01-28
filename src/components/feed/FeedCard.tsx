@@ -1,21 +1,21 @@
 'use client'
 
 import PlaylistSelector from '../PlaylistSelector'
-import { PlusCircle } from 'lucide-react'
+import { PlusCircle, MoreVertical, Flag, Heart } from 'lucide-react'
 import { usePlaylistPlayer } from '@/contexts/PlaylistPlayerContext'
 import dynamic from 'next/dynamic'
+import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { Project } from '@/types'
+import { createClient } from '@/lib/supabase'
 
 const StemMixerPanel = dynamic(() => import('./StemMixerPanel'), {
     ssr: false,
     loading: () => null
 })
 
-import { useState, useRef, useEffect } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { Heart } from 'lucide-react'
-import { Project } from '@/types'
-import { createClient } from '@/lib/supabase'
+const ReportModal = dynamic(() => import('../ReportModal'), { ssr: false })
 
 interface FeedCardProps {
     project: Project
@@ -29,12 +29,25 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
     const [likeCount, setLikeCount] = useState(0)
 
     const [showPlaylistSelector, setShowPlaylistSelector] = useState(false)
+    const [showReportModal, setShowReportModal] = useState(false)
+    const [showMenu, setShowMenu] = useState(false)
+    const menuRef = useRef<HTMLDivElement>(null)
 
     // Use external control if available, otherwise use internal state
     const showMixer = activeMixerId === project.id
 
     const supabase = createClient()
     const { pause: pauseGlobalPlayer } = usePlaylistPlayer()
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setShowMenu(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     useEffect(() => {
         const fetchLikeStatus = async () => {
@@ -101,15 +114,6 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
         }
     }
 
-    // Debug: Log stems data
-    console.log('🎵 FeedCard stems check:', {
-        title: project.title,
-        stems: project.stems,
-        stemsType: typeof project.stems,
-        stemsKeys: project.stems ? Object.keys(project.stems) : 'null',
-        hasRealStems: project.stems && Object.keys(project.stems).length > 0
-    })
-
     // Check if project has real stems
     const hasRealStems = project.stems && Object.keys(project.stems).length > 0
     const safeStems = hasRealStems ? project.stems : null
@@ -127,6 +131,16 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
 
     return (
         <div className="group relative break-inside-avoid mb-6">
+            {/* Report Modal */}
+            {showReportModal && (
+                <ReportModal
+                    isOpen={showReportModal}
+                    onClose={() => setShowReportModal(false)}
+                    projectId={project.id}
+                    projectTitle={project.title}
+                />
+            )}
+
             {/* 1. Artist Profile Button (Header Overlay) */}
             <Link
                 href={project.profiles?.username ? `/profile/${project.profiles.username}` : '#'}
@@ -143,6 +157,36 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
                     </div>
                 )}
             </Link>
+
+            {/* 1.5 More Options Button (Top Right Absolute) */}
+            <div className="absolute top-3 right-3 z-[60]" ref={menuRef}>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        setShowMenu(!showMenu)
+                    }}
+                    className="p-1.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors backdrop-blur-md"
+                >
+                    <MoreVertical size={16} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showMenu && (
+                    <div className="absolute right-0 top-full mt-2 w-32 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden py-1 z-[70] animate-in fade-in zoom-in-95 duration-100">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setShowMenu(false)
+                                setShowReportModal(true)
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-zinc-800 flex items-center gap-2"
+                        >
+                            <Flag size={12} />
+                            Report
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {/* 2. Project Link (Image) */}
             <div className="relative rounded-2xl overflow-hidden bg-zinc-900 shadow-lg select-none group/image transition-transform active:scale-[0.98] duration-200">
