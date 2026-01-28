@@ -102,7 +102,9 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
 
     // Performance Optimization: Smart Preload
-    useStemPreloader({ tracks: projects, currentIndex: 0 })
+    // [BANDWIDTH OPTIMIZATION] Disabled to save egress costs (19GB spike).
+    // Only load audio when user explicitly plays.
+    // useStemPreloader({ tracks: projects, currentIndex: 0 })
 
     // Handle Masonry Columns
     const width = useWindowWidth()
