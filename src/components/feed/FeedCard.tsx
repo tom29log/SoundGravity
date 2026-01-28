@@ -36,8 +36,69 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
     const supabase = createClient()
     const { pause: pauseGlobalPlayer } = usePlaylistPlayer()
 
+    useEffect(() => {
+        const fetchLikeStatus = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+
+            // Get count
+            const { count } = await supabase
+                .from('likes')
+                .select('*', { count: 'exact', head: true })
+                .eq('project_id', project.id)
+
+            setLikeCount(count || 0)
+
+            if (user) {
+                const { data } = await supabase
+                    .from('likes')
+                    .select('project_id')
+                    .eq('project_id', project.id)
+                    .eq('user_id', user.id)
+                    .maybeSingle()
+                setLiked(!!data)
+            }
+        }
+        fetchLikeStatus()
+    }, [project.id])
+
     const toggleLike = async (e: React.MouseEvent) => {
-        // ... existing toggleLike code ...
+        e.preventDefault()
+        e.stopPropagation()
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+            // Ideally redirect to login or show toast
+            alert('로그인이 필요합니다.')
+            return
+        }
+
+        // Optimistic update
+        const newLiked = !liked
+        setLiked(newLiked)
+        setLikeCount(prev => newLiked ? prev + 1 : prev - 1)
+
+        try {
+            if (newLiked) {
+                const { error } = await supabase
+                    .from('likes')
+                    .insert({ user_id: user.id, project_id: project.id })
+
+                if (error) throw error
+            } else {
+                const { error } = await supabase
+                    .from('likes')
+                    .delete()
+                    .eq('project_id', project.id)
+                    .eq('user_id', user.id)
+
+                if (error) throw error
+            }
+        } catch (error) {
+            console.error('Error toggling like:', error)
+            // Revert state
+            setLiked(!newLiked)
+            setLikeCount(prev => newLiked ? prev - 1 : prev + 1)
+        }
     }
 
     // Debug: Log stems data
@@ -163,7 +224,7 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
                     className={`flex items-center gap-1.5 transition-colors cursor-pointer group/like ${liked ? 'text-red-500' : 'text-zinc-400 hover:text-white'}`}
                 >
                     <Heart size={14} fill={liked ? "currentColor" : "none"} className={`transition-transform duration-200 group-active/like:scale-75 ${liked ? "text-red-500" : ""}`} />
-                    <span className="text-xs font-medium">{project.views || likeCount}</span>
+                    <span className="text-xs font-medium">{likeCount}</span>
                 </button>
             </div >
 
