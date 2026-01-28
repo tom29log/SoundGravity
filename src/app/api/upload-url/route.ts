@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid'
 export async function POST(request: Request) {
     try {
         // 1. Auth Check
-        const supabase = createClient()
+        const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
 
         if (!user) {
