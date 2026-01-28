@@ -48,12 +48,13 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
     useEffect(() => {
         const getUser = async () => {
             try {
-                const { data: { user } } = await supabase.auth.getUser()
-                if (user) {
+                // OPTIMIZATION: Use getSession (local) instead of getUser (remote) for instant UI feedback
+                const { data: { session } } = await supabase.auth.getSession()
+                if (session?.user) {
                     const { data } = await supabase
                         .from('profiles')
                         .select('username, avatar_url')
-                        .eq('id', user.id)
+                        .eq('id', session.user.id)
                         .single()
                     if (data) setUserProfile(data)
                 }
