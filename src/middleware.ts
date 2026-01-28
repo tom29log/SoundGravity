@@ -34,6 +34,13 @@ export async function middleware(request: NextRequest) {
 
     // IMPORTANT: This must run to refresh the auth token!
     // Breaking this breaks the Playlist functionality.
+
+    // OPTIMIZATION: Skip blocking auth check for Root and Profile paths to prevent mobile 8s timeout
+    const { pathname } = request.nextUrl
+    if (pathname === '/' || pathname.startsWith('/profile')) {
+        return response
+    }
+
     await supabase.auth.getUser()
 
     return response

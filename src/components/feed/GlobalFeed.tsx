@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase'
@@ -43,20 +43,28 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
     const supabase = createClient()
 
     // Auth profile fetch (Client Side for now)
-    useState(() => {
+    const [loadingAuth, setLoadingAuth] = useState(true)
+
+    useEffect(() => {
         const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-                const { data } = await supabase
-                    .from('profiles')
-                    .select('username, avatar_url')
-                    .eq('id', user.id)
-                    .single()
-                if (data) setUserProfile(data)
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    const { data } = await supabase
+                        .from('profiles')
+                        .select('username, avatar_url')
+                        .eq('id', user.id)
+                        .single()
+                    if (data) setUserProfile(data)
+                }
+            } catch (e) {
+                // Ignore auth errors, just stay logged out
+            } finally {
+                setLoadingAuth(false)
             }
         }
         getUser()
-    })
+    }, [])
 
     const [filter, setFilter] = useState<'latest' | 'popular'>('latest')
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -119,7 +127,15 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                     {/* User Info & Navigation */}
                     <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
-                        {userProfile ? (
+                        {loadingAuth ? (
+                            // Auth Loading Skeleton
+                            <div className="flex items-center gap-3">
+                                <div className="w-16 h-16 rounded-full bg-zinc-800 animate-pulse" />
+                                <div className="flex flex-col gap-2">
+                                    <div className="h-4 w-20 bg-zinc-800 animate-pulse rounded" />
+                                </div>
+                            </div>
+                        ) : userProfile ? (
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                                 <Link href={`/profile/${userProfile.username}`} prefetch={false} className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group min-w-0">
                                     <div className="w-16 h-16 rounded-full bg-zinc-800 overflow-hidden relative transition-colors shrink-0">
