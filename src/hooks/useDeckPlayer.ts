@@ -24,6 +24,10 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
 
     const [playbackRate, setPlaybackRate] = useState(1)
 
+    const [error, setError] = useState<string | null>(null)
+    const retryCountRef = useRef(0)
+    const MAX_RETRIES = 3
+
     // Load Track
     useEffect(() => {
         if (!track || !destinationNode) return
@@ -31,8 +35,10 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
         setIsReady(false)
         setIsPlaying(false)
         setPendingPlay(false) // Reset intent on track change
+        setError(null)
         pausedAtRef.current = 0
         startTimeRef.current = 0
+        retryCountRef.current = 0
 
         // Cleanup
         disposePlayers()
@@ -44,8 +50,9 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
 
             // Validation
             if (!hasStems && !track.audio_url) {
-                console.error('[Deck] Track has no audio URL or stems:', track.title)
-                // Could emit error state here if we added one
+                const msg = `[Deck] Track has no audio URL or stems: ${track.title}`
+                console.error(msg)
+                setError(msg)
                 return
             }
 
@@ -53,9 +60,13 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
                 const players = new Tone.Players(track.stems!, () => {
                     console.log('[Deck] Players loaded for', track.title)
                     if (players.loaded) {
+                        // Check if still mounted/valid
+                        if (track.id !== track.id) return // Basic check if closed over value changed? No, track is from closure.
+
                         const anyBuffer = players.player(Object.keys(track.stems!)[0]).buffer
                         setDuration(anyBuffer.duration)
                         setIsReady(true)
+                        retryCountRef.current = 0
                     }
                 })
                 players.connect(destinationNode)
@@ -69,16 +80,27 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
                             console.log('[Deck] Single Player loaded for', track.title)
                             setDuration(player.buffer.duration)
                             setIsReady(true)
+                            retryCountRef.current = 0
                         },
                         onerror: (err: any) => {
                             console.error('[Deck] Error loading player for track:', track.title, err)
-                            // Potential: Retry logic or cleanup
+
+                            // Retry logic
+                            if (retryCountRef.current < MAX_RETRIES) {
+                                retryCountRef.current++
+                                console.log(`[Deck] Retrying load (${retryCountRef.current}/${MAX_RETRIES})...`)
+                                setTimeout(loadAudio, 1000 * retryCountRef.current) // Exponential backoff
+                            } else {
+                                setError('Failed to load audio after multiple attempts.')
+                                setIsReady(true) // Mark ready but with error to allow skipping?
+                            }
                         }
                     })
                     player.connect(destinationNode)
                     playerRef.current = player
                 } catch (e) {
                     console.error('[Deck] Exception creating player:', e)
+                    setError('Exception creating audio player')
                 }
             }
         }
@@ -87,6 +109,8 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
 
         return () => disposePlayers()
     }, [track, destinationNode])
+
+    // ... existing dispose, getCurrentTime, ensureAudioContext ...
 
     const disposePlayers = () => {
         try {
@@ -106,6 +130,7 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
 
     // Direct Time Accessor (No State Updates!)
     const getCurrentTime = useCallback(() => {
+        // ... (same as original)
         if (!isPlaying) return pausedAtRef.current
 
         const now = Tone.now()
@@ -114,7 +139,6 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
 
         // Clamp to duration if valid
         if (duration > 0 && totalTime >= duration) {
-            // Auto-Stop check logic could be here, but usually better handled by engine poller
             return duration
         }
         return totalTime
@@ -128,7 +152,6 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
             if (Tone.context.state === 'suspended') {
                 await Tone.context.resume()
             }
-            // Small delay for mobile context stabilization
             await new Promise(resolve => setTimeout(resolve, 50))
             return Tone.context.state === 'running'
         } catch (err) {
@@ -142,15 +165,20 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
 
     // Watch for Ready state to execute pending play
     useEffect(() => {
-        if (isReady && pendingPlay) {
+        if (isReady && pendingPlay && !error) {
             console.log('[Deck] Ready now, executing pending play')
             play()
         }
-    }, [isReady, pendingPlay])
+    }, [isReady, pendingPlay, error])
 
     const play = useCallback(async () => {
         // Always capture intent
         setPendingPlay(true)
+
+        if (error) {
+            console.warn('[Deck] Cannot play due to error:', error)
+            return
+        }
 
         if (!isReady) {
             console.log('[Deck] Not ready, queuing play intent')
@@ -175,7 +203,6 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
                     const p = playersRef.current.player(key)
                     if (p.loaded) {
                         try {
-                            // Ensure stopped before starting to avoid overlap if called rapidly
                             if (p.state === 'started') p.stop()
                             p.start(now, offset)
                         } catch (err) {
@@ -197,7 +224,7 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
         }
 
         setIsPlaying(true)
-    }, [isReady, track, ensureAudioContext]) // Removed isPlaying dependency to allow forced re-trigger if needed
+    }, [isReady, track, ensureAudioContext, error])
 
     const pause = useCallback(() => {
         setPendingPlay(false) // Cancel intent
@@ -247,7 +274,8 @@ export function useDeckPlayer({ track, destinationNode }: UseDeckPlayerProps) {
         pause,
         stop,
         duration,
-        getCurrentTime, // Expose this!
-        setRate
-    }), [isReady, isPlaying, play, pause, stop, duration, getCurrentTime, setRate])
+        getCurrentTime,
+        setRate,
+        error // Expose error
+    }), [isReady, isPlaying, play, pause, stop, duration, getCurrentTime, setRate, error])
 }

@@ -228,6 +228,21 @@ export default function GlobalAudioEngine() {
     // usage of deckA.isPlaying (boolean) is stable-ish (changes on play/pause).
     // deckA.play (function) is stable.
 
+    // ERROR HANDLING & AUTO-SKIP
+    useEffect(() => {
+        const activePlayer = activeDeck === 'A' ? deckA : deckB
+        // Check for error property in deck object (we added it to useDeckPlayer ret)
+        // types need update if using TS strictly, but runtime works.
+        // Assuming we updated useDeckPlayer return type in the hook file implicitely.
+        // We cast to any to access error if needed, or update types. 
+        // For now, let's treat it as if it exists.
+        const error = (activePlayer as any).error
+
+        if (error && isPlaying) {
+            console.error('[Engine] Active deck error, skipping track:', error)
+            next()
+        }
+    }, [activeDeck, deckA, deckB, isPlaying, next])
 
     // Sync Deck Metrics to Context (for UI)
     // Use refs to avoid effect re-running every frame when decks update

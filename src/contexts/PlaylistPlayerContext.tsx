@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react'
 import { Project } from '@/types'
+import * as Tone from 'tone'
 
 interface DeckState {
     track: Project | null
@@ -92,7 +93,12 @@ export function PlaylistPlayerProvider({ children }: { children: ReactNode }) {
         setTrackA(tracks[startIndex])
         setTrackB(tracks[startIndex + 1] || null)
 
-        setIsPlaying(true)
+        // Ensure audio context is ready
+        if (Tone.context.state !== 'running') {
+            Tone.start().then(() => setIsPlaying(true))
+        } else {
+            setIsPlaying(true)
+        }
     }, [])
 
     const addToQueue = useCallback((tracks: Project[]) => {
@@ -109,7 +115,12 @@ export function PlaylistPlayerProvider({ children }: { children: ReactNode }) {
         else setDeckBMetrics(metrics)
     }, [])
 
-    const play = useCallback(() => setIsPlaying(true), [])
+    const play = useCallback(async () => {
+        if (Tone.context.state !== 'running') {
+            await Tone.start()
+        }
+        setIsPlaying(true)
+    }, [])
     const pause = useCallback(() => setIsPlaying(false), [])
 
     const stop = useCallback(() => {
