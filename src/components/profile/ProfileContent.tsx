@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase'
+import { createClient as createRawClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import ProfileHeader from '@/components/profile/ProfileHeader'
 import ProjectListView from '@/components/profile/ProjectListView'
@@ -18,7 +18,19 @@ export default function ProfileContent({ username }: Props) {
 
     useEffect(() => {
         const fetchData = async () => {
-            const supabase = createClient()
+            // OPTIMIZATION: Use raw client WITHOUT session persistence
+            // This prevents the 8s delay caused by checking local storage/auth session on mobile
+            const supabase = createRawClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                {
+                    auth: {
+                        persistSession: false, // Critical: Disable session restoration
+                        autoRefreshToken: false,
+                        detectSessionInUrl: false
+                    }
+                }
+            )
 
             // 1. Fetch Profile
             const { data: profileData, error } = await supabase
