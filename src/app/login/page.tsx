@@ -110,9 +110,13 @@ export default function LoginPage() {
                     />
                 </div>
 
-                <h1 className="text-[13vw] md:text-9xl font-bold tracking-tighter mb-8 md:mb-12 drop-shadow-2xl leading-tight py-4 galaxy-text">
+                <h1 className="text-[13vw] md:text-9xl font-bold tracking-tighter mb-2 md:mb-4 drop-shadow-2xl leading-tight py-4 galaxy-text">
                     SoundGravity
                 </h1>
+
+                <p className="text-xs md:text-lg text-zinc-500 font-light tracking-[0.3em] md:tracking-[0.5em] uppercase mb-10 md:mb-12 opacity-80">
+                    Into your sound gravity
+                </p>
 
                 {/* Auth Container */}
                 <div className="w-full space-y-6">
