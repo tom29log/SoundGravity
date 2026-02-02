@@ -38,6 +38,7 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
     const [userProfile, setUserProfile] = useState<{
         username: string | null,
         avatar_url: string | null,
+        is_pro?: boolean
     } | null>(null)
 
     const supabase = createClient()
@@ -53,7 +54,7 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                 if (session?.user) {
                     const { data } = await supabase
                         .from('profiles')
-                        .select('username, avatar_url')
+                        .select('username, avatar_url, is_pro')
                         .eq('id', session.user.id)
                         .single()
                     if (data) setUserProfile(data)
@@ -258,9 +259,9 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                         {projects.map((project, index) => {
                             // Ref on last element
                             if (projects.length === index + 1) {
-                                return <div ref={lastElementRef} key={project.id}><FeedCard project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} /></div>
+                                return <div ref={lastElementRef} key={project.id}><FeedCard project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} isPro={userProfile?.is_pro} /></div>
                             }
-                            return <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} />
+                            return <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} isPro={userProfile?.is_pro} />
                         })}
                     </div>
                 ) : (
@@ -274,7 +275,7 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                                     // Actually, we can just attach ref to a dummy element at bottom of container
                                     // OR attach to the last item rendered in the last column?
                                     // Let's simplify: Put a sentinel div below the grid.
-                                    return <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} />
+                                    return <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} isPro={userProfile?.is_pro} />
                                 })}
                             </div>
                         ))}

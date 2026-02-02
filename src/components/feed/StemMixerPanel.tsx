@@ -12,9 +12,10 @@ interface StemMixerPanelProps {
     onClose: () => void
     stems: Record<string, string>
     title: string
+    isPro?: boolean
 }
 
-export default function StemMixerPanel({ isOpen, onClose, stems, title }: StemMixerPanelProps) {
+export default function StemMixerPanel({ isOpen, onClose, stems, title, isPro = false }: StemMixerPanelProps) {
     const {
         isReady,
         isPlaying,
@@ -42,6 +43,11 @@ export default function StemMixerPanel({ isOpen, onClose, stems, title }: StemMi
     }
 
     const handleDownloadStems = async () => {
+        if (!isPro) {
+            alert('Stem Download is a PRO feature. Please upgrade to Pro to download stems.')
+            return
+        }
+
         if (isDownloading) return;
         setIsDownloading(true);
 
@@ -103,8 +109,8 @@ export default function StemMixerPanel({ isOpen, onClose, stems, title }: StemMi
                                 <button
                                     onClick={handleDownloadStems}
                                     disabled={!isReady || isDownloading}
-                                    className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Download Stems"
+                                    className={`p-1.5 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${!isPro ? 'text-zinc-600 hover:text-zinc-400' : 'hover:bg-zinc-800 text-zinc-400 hover:text-blue-400'}`}
+                                    title={isPro ? "Download Stems" : "Upgrade to Pro to Download"}
                                 >
                                     {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                                 </button>

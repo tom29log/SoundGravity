@@ -22,9 +22,10 @@ interface FeedCardProps {
     onCommentClick?: () => void
     activeMixerId?: string | null
     onMixerToggle?: (id: string | null) => void
+    isPro?: boolean
 }
 
-export default function FeedCard({ project, activeMixerId, onMixerToggle }: FeedCardProps) {
+export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro = false }: FeedCardProps) {
     const [liked, setLiked] = useState(false)
     const [likeCount, setLikeCount] = useState(0)
 
@@ -226,6 +227,7 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle }: Feed
                         onClose={() => onMixerToggle?.(null)}
                         stems={safeStems!}
                         title={project.title}
+                        isPro={isPro}
                     />
                 )}
             </div>

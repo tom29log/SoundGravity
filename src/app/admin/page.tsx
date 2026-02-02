@@ -108,7 +108,7 @@ export default function AdminPage() {
             if (data.url) {
                 window.location.href = data.url
             } else {
-                alert('Failed to create checkout session')
+                alert(`Checkout Error: ${data.error || 'Failed to create checkout session'}`)
             }
         } catch (error) {
             console.error('Checkout error:', error)

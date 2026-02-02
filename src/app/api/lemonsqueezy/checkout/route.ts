@@ -15,13 +15,46 @@ export async function POST() {
     const productId = process.env.LEMONSQUEEZY_PRODUCT_ID
     const apiKey = process.env.LEMONSQUEEZY_API_KEY
 
+    // Console logs for server-side debugging if needed
+    console.log('--- Lemon Squeezy Checkout Request ---')
+    console.log('User:', user.id)
+
     if (!storeId || !productId || !apiKey) {
-        console.error('Missing LemonSqueezy configuration')
-        return NextResponse.json({ error: 'Payment system not configured' }, { status: 500 })
+        console.error('Missing Lemon Squeezy environment variables')
+        return NextResponse.json({ error: 'Missing Lemon Squeezy configuration' }, { status: 500 })
     }
 
     try {
-        // Create checkout session via LemonSqueezy API
+        const payload = {
+            data: {
+                type: 'checkouts',
+                attributes: {
+                    checkout_data: {
+                        custom: {
+                            user_id: user.id
+                        }
+                    },
+                    product_options: {
+                        redirect_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin?success=true`,
+                    }
+                },
+                relationships: {
+                    store: {
+                        data: {
+                            type: 'stores',
+                            id: storeId.toString()
+                        }
+                    },
+                    variant: {
+                        data: {
+                            type: 'variants',
+                            id: productId.toString()
+                        }
+                    }
+                }
+            }
+        }
+
         const response = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
             method: 'POST',
             headers: {
@@ -29,48 +62,18 @@ export async function POST() {
                 'Content-Type': 'application/vnd.api+json',
                 'Authorization': `Bearer ${apiKey}`
             },
-            body: JSON.stringify({
-                data: {
-                    type: 'checkouts',
-                    attributes: {
-                        checkout_data: {
-                            custom: {
-                                user_id: user.id
-                            },
-                            email: user.email
-                        },
-                        product_options: {
-                            redirect_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin?subscription=success`
-                        }
-                    },
-                    relationships: {
-                        store: {
-                            data: {
-                                type: 'stores',
-                                id: storeId
-                            }
-                        },
-                        variant: {
-                            data: {
-                                type: 'variants',
-                                id: productId
-                            }
-                        }
-                    }
-                }
-            })
+            body: JSON.stringify(payload)
         })
 
+        const data = await response.json()
+
         if (!response.ok) {
-            const errorData = await response.json()
-            console.error('LemonSqueezy API error:', errorData)
-            return NextResponse.json({ error: 'Failed to create checkout' }, { status: 500 })
+            console.error('Lemon Squeezy API Error:', JSON.stringify(data, null, 2))
+            return NextResponse.json({ error: data.errors?.[0]?.detail || 'Failed to create checkout session' }, { status: response.status })
         }
 
-        const data = await response.json()
-        const checkoutUrl = data.data.attributes.url
-
-        return NextResponse.json({ url: checkoutUrl })
+        console.log('Checkout created successfully URL:', data.data.attributes.url)
+        return NextResponse.json({ url: data.data.attributes.url })
     } catch (error) {
         console.error('Checkout creation error:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
