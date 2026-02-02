@@ -134,7 +134,7 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
         return data.publicUrl
     }
 
-    // Auto Stem Separation
+    // Auto Stem Separation (Async Polling)
     const handleStemSeparation = async () => {
         if (!audioFile) {
             alert('Please upload master audio first')
@@ -146,73 +146,121 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
 
         try {
             // 1. Upload master audio first (Use R2 now!)
-            const audioUrl = await uploadToR2(audioFile)
+            let audioUrl = ''
+            try {
+                audioUrl = await uploadToR2(audioFile)
+            } catch (err) {
+                // Fallback to supabase storage if R2 fails (optional, but good for robustness) or just fail
+                console.error('R2 Upload failed, trying Supabase...', err)
+                audioUrl = await uploadFile(audioFile)
+            }
 
-            setSeparationStatus('Separating stems (1-2 min)...')
+            setSeparationStatus('Starting separation job...')
 
-            // 2. Call stem separation API
-            const response = await fetch('/api/stems/separate', {
+            // 2. Start separation job (Async)
+            const startRes = await fetch('/api/stems/separate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ audioUrl }),
             })
 
-            if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.error || 'Stem separation failed')
+            if (!startRes.ok) {
+                const error = await startRes.json()
+                throw new Error(error.error || 'Failed to start separation')
             }
 
-            const separatedStems = await response.json()
+            const { processingId } = await startRes.json()
+            console.log('Separation job started:', processingId)
 
-            setSeparationStatus('Uploading stems to storage...')
+            // 3. Poll for status
+            const pollInterval = 2000 // 2 seconds
+            let attempts = 0
+            const maxAttempts = 150 // ~5 minutes
 
-            // 3.5 Upload separated stems to R2 (Cloudflare)
-            const uploadedStemUrls: { [key: string]: string | null } = {
-                vocal: null,
-                drum: null,
-                bass: null,
-                synth: null,
-            }
+            const checkStatus = async () => {
+                if (attempts > maxAttempts) {
+                    throw new Error('Separation timed out')
+                }
+                attempts++
 
-            for (const [stemType, localUrl] of Object.entries(separatedStems)) {
-                if (localUrl && typeof localUrl === 'string') {
-                    try {
-                        console.log(`Fetching ${stemType} from ${localUrl}`)
-                        // Fetch the stem file from local server
-                        const stemResponse = await fetch(localUrl)
-                        if (!stemResponse.ok) {
-                            console.error(`Failed to fetch ${stemType}: ${stemResponse.status}`)
-                            continue
-                        }
-                        const stemBlob = await stemResponse.blob()
-                        console.log(`${stemType} blob size: ${stemBlob.size}`)
-                        const stemFile = new File([stemBlob], `${stemType}.mp3`, { type: 'audio/mpeg' })
+                const statusRes = await fetch(`/api/stems/separate?id=${processingId}`)
+                if (!statusRes.ok) {
+                    // If network error, just retry
+                    return false
+                }
 
-                        // Upload to R2
-                        console.log(`Uploading ${stemType} to R2...`)
-                        const r2Url = await uploadToR2(stemFile)
+                const data = await statusRes.json()
+                console.log('Poll status:', data.status)
 
-                        uploadedStemUrls[stemType as keyof typeof uploadedStemUrls] = r2Url
-                        console.log(`${stemType} uploaded successfully: ${r2Url}`)
+                if (data.status === 'succeeded') {
+                    // Success!
+                    setSeparationStatus('Uploading stems to storage...')
 
-                    } catch (err) {
-                        console.error(`Failed to upload ${stemType} stem:`, err)
+                    const separatedStems = data.stems
+
+                    // 3.5 Upload separated stems to R2 (Cloudflare)
+                    const uploadedStemUrls: { [key: string]: string | null } = {
+                        vocal: null,
+                        drum: null,
+                        bass: null,
+                        synth: null,
                     }
+
+                    for (const [stemType, localUrl] of Object.entries(separatedStems)) {
+                        if (localUrl && typeof localUrl === 'string') {
+                            try {
+                                console.log(`Fetching ${stemType} from ${localUrl}`)
+                                // Fetch the stem file from Replicate URL
+                                const stemResponse = await fetch(localUrl)
+                                if (!stemResponse.ok) {
+                                    console.error(`Failed to fetch ${stemType}: ${stemResponse.status}`)
+                                    continue
+                                }
+                                const stemBlob = await stemResponse.blob()
+                                const stemFile = new File([stemBlob], `${stemType}.mp3`, { type: 'audio/mpeg' })
+
+                                // Upload to R2
+                                console.log(`Uploading ${stemType} to R2...`)
+                                const r2Url = await uploadToR2(stemFile)
+
+                                uploadedStemUrls[stemType as keyof typeof uploadedStemUrls] = r2Url
+                                console.log(`${stemType} uploaded successfully: ${r2Url}`)
+
+                            } catch (err) {
+                                console.error(`Failed to upload ${stemType} stem:`, err)
+                            }
+                        }
+                    }
+
+                    // 4. Set the stem URLs
+                    setStemUrls(uploadedStemUrls)
+                    // Clear file-based stems since we now have URLs
+                    setStems({ vocal: null, drum: null, bass: null, synth: null })
+                    setSeparationStatus('Stems ready!')
+                    setIsSeparating(false)
+                    return true // Stop polling
+                } else if (data.status === 'failed' || data.status === 'canceled') {
+                    throw new Error('Separation failed on server')
+                } else {
+                    // Still processing (starting, processing)
+                    setSeparationStatus(`Separating... (${data.status})`)
+                    return false // Continue polling
                 }
             }
 
-            // 4. Set the stem URLs
-            setStemUrls(uploadedStemUrls)
+            // Start polling loop
+            const poll = async () => {
+                const done = await checkStatus()
+                if (!done) {
+                    setTimeout(poll, pollInterval)
+                }
+            }
+            poll()
 
-            // Clear file-based stems since we now have URLs
-            setStems({ vocal: null, drum: null, bass: null, synth: null })
-
-            setSeparationStatus('Stems ready!')
         } catch (error: any) {
             console.error('Stem separation error:', error)
             alert('Stem separation failed: ' + error.message)
             setSeparationStatus('')
-        } finally {
             setIsSeparating(false)
         }
     }

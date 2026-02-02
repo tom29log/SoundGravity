@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Replicate from 'replicate'
 
-export const maxDuration = 300 // 5 minutes timeout for long running separation
+export const maxDuration = 300 // Keep high timeout just in case
 
+// POST: Start the separation job
 export async function POST(request: NextRequest) {
     try {
         const { audioUrl } = await request.json()
@@ -27,51 +28,81 @@ export async function POST(request: NextRequest) {
             auth: token,
         })
 
-        console.log('Using Replicate for stem separation:', audioUrl)
+        console.log('Starting Replicate prediction for:', audioUrl)
 
-        // Using cjwbw/demucs model (htdemucs)
-        // This is a popular deployment of Demucs on Replicate
-        const output = await replicate.run(
-            "cjwbw/demucs:25a173108cff36ef9f80f854c162d01df9e6528be175794b81158fa03836d953",
-            {
-                input: {
-                    audio: audioUrl,
-                    model: "htdemucs" // default model
-                }
+        // Create a prediction (async)
+        const prediction = await replicate.predictions.create({
+            version: "25a173108cff36ef9f80f854c162d01df9e6528be175794b81158fa03836d953", // cjwbw/demucs
+            input: {
+                audio: audioUrl,
+                model: "htdemucs"
             }
-        )
+        })
 
-        console.log('Replicate output:', output)
-
-        // cjwbw/demucs returns a JSON object like:
-        // {
-        //   "bass": "https://...",
-        //   "drums": "https://...",
-        //   "other": "https://...",
-        //   "vocals": "https://..."
-        // }
-        // We need to map this to our frontend expectation: vocal, drum, bass, synth
-        // "other" usually maps to synth/accompaniment in 4-stem context if not explicitly defined
-
-        if (!output || typeof output !== 'object') {
-            throw new Error('Invalid response from Replicate')
+        if (prediction?.error) {
+            return NextResponse.json({ error: prediction.error }, { status: 500 })
         }
 
-        const rawStems = output as Record<string, string>
-
-        const stems = {
-            vocal: rawStems.vocals || null,
-            drum: rawStems.drums || null,
-            bass: rawStems.bass || null,
-            synth: rawStems.other || null // Mapping 'other' to 'synth' for our app
-        }
-
-        return NextResponse.json(stems)
+        return NextResponse.json({
+            processingId: prediction.id,
+            status: prediction.status
+        })
 
     } catch (error: any) {
-        console.error('Stem separation error:', error)
+        console.error('Stem separation start error:', error)
         return NextResponse.json(
-            { error: error.message || 'Stem separation failed' },
+            { error: error.message || 'Failed to start stem separation' },
+            { status: 500 }
+        )
+    }
+}
+
+// GET: Check the status of a job
+export async function GET(request: NextRequest) {
+    try {
+        const searchParams = request.nextUrl.searchParams
+        const predictionId = searchParams.get('id')
+
+        if (!predictionId) {
+            return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+        }
+
+        const token = process.env.REPLICATE_API_TOKEN
+        if (!token) {
+            return NextResponse.json({ error: 'Missing token' }, { status: 500 })
+        }
+
+        const replicate = new Replicate({
+            auth: token,
+        })
+
+        const prediction = await replicate.predictions.get(predictionId)
+
+        if (prediction?.error) {
+            return NextResponse.json({ error: prediction.error }, { status: 500 })
+        }
+
+        let stems = null
+        if (prediction.status === 'succeeded' && prediction.output) {
+            const rawStems = prediction.output as Record<string, string>
+            stems = {
+                vocal: rawStems.vocals || null,
+                drum: rawStems.drums || null,
+                bass: rawStems.bass || null,
+                synth: rawStems.other || null
+            }
+        }
+
+        return NextResponse.json({
+            status: prediction.status,
+            stems: stems,
+            logs: prediction.logs
+        })
+
+    } catch (error: any) {
+        console.error('Stem separation poll error:', error)
+        return NextResponse.json(
+            { error: error.message || 'Failed to check status' },
             { status: 500 }
         )
     }
