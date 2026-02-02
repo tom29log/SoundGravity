@@ -3,8 +3,9 @@
 import { useStemPlayer } from '@/hooks/useStemPlayer'
 import { usePlaylistPlayer } from '@/contexts/PlaylistPlayerContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Volume2, Maximize2, Minimize2, Play, Pause } from 'lucide-react'
+import { X, Volume2, Maximize2, Minimize2, Play, Pause, Download, Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import JSZip from 'jszip'
 
 interface StemMixerPanelProps {
     isOpen: boolean
@@ -27,6 +28,7 @@ export default function StemMixerPanel({ isOpen, onClose, stems, title }: StemMi
     } = useStemPlayer(stems)
 
     const { pause: pauseGlobalPlayer } = usePlaylistPlayer()
+    const [isDownloading, setIsDownloading] = useState(false)
 
     const handlePlayToggle = async () => {
         if (!isPlaying) {
@@ -39,10 +41,42 @@ export default function StemMixerPanel({ isOpen, onClose, stems, title }: StemMi
         }
     }
 
-    // Close panel logic? Maybe just minimize. 
-    // If closed, we might want to stop playback or keep it running?
-    // Usually a mixer implies control. If closed, maybe stop?
-    // Let's assume closing stops for now to save resources, or we rely on parent to unmount.
+    const handleDownloadStems = async () => {
+        if (isDownloading) return;
+        setIsDownloading(true);
+
+        try {
+            const zip = new JSZip();
+            const folder = zip.folder(`${title.replace(/[^a-z0-9]/gi, '_')}_stems`);
+
+            // Fetch all stems in parallel
+            const fetchPromises = Object.entries(stems).map(async ([name, url]) => {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                folder?.file(`${name}.mp3`, blob);
+            });
+
+            await Promise.all(fetchPromises);
+
+            // Generate zip
+            const content = await zip.generateAsync({ type: 'blob' });
+
+            // Trigger download
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = `${title}_stems.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+
+        } catch (error) {
+            console.error('Failed to download stems:', error);
+            alert('Failed to download stems. Please try again.');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
 
     useEffect(() => {
         if (!isOpen && isPlaying) {
@@ -66,6 +100,15 @@ export default function StemMixerPanel({ isOpen, onClose, stems, title }: StemMi
                                 Stem Mixer
                             </h4>
                             <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleDownloadStems}
+                                    disabled={!isReady || isDownloading}
+                                    className="p-1.5 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Download Stems"
+                                >
+                                    {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+                                </button>
+                                <div className="h-4 w-px bg-zinc-800 mx-1"></div>
                                 <button
                                     onClick={handlePlayToggle}
                                     className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 hover:bg-zinc-700 text-white transition-colors"
@@ -134,3 +177,4 @@ export default function StemMixerPanel({ isOpen, onClose, stems, title }: StemMi
         </AnimatePresence>
     )
 }
+
