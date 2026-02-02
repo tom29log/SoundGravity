@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Replicate from 'replicate'
 
-// Local Python Demucs server for stem separation
-const DEMUCS_SERVER_URL = process.env.DEMUCS_SERVER_URL || 'http://localhost:5001'
+export const maxDuration = 300 // 5 minutes timeout for long running separation
 
 export async function POST(request: NextRequest) {
     try {
@@ -14,44 +14,64 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        console.log('Calling local Demucs server for:', audioUrl)
-
-        // Call local Python Demucs server
-        const response = await fetch(`${DEMUCS_SERVER_URL}/separate`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ audioUrl }),
-        })
-
-        if (!response.ok) {
-            const error = await response.json()
-            console.error('Demucs server error:', error)
+        const token = process.env.REPLICATE_API_TOKEN
+        if (!token) {
+            console.error('REPLICATE_API_TOKEN is missing')
             return NextResponse.json(
-                { error: error.error || 'Stem separation failed' },
+                { error: 'Server configuration error: Missing Replicate API Token' },
                 { status: 500 }
             )
         }
 
-        const stems = await response.json()
-        console.log('Stems received:', stems)
+        const replicate = new Replicate({
+            auth: token,
+        })
+
+        console.log('Using Replicate for stem separation:', audioUrl)
+
+        // Using cjwbw/demucs model (htdemucs)
+        // This is a popular deployment of Demucs on Replicate
+        const output = await replicate.run(
+            "cjwbw/demucs:25a1731053f3d9db2eb5181313768b4ef214e6b194d216f40b079017f8a7fe7b",
+            {
+                input: {
+                    audio: audioUrl,
+                    model: "htdemucs" // default model
+                }
+            }
+        )
+
+        console.log('Replicate output:', output)
+
+        // cjwbw/demucs returns a JSON object like:
+        // {
+        //   "bass": "https://...",
+        //   "drums": "https://...",
+        //   "other": "https://...",
+        //   "vocals": "https://..."
+        // }
+        // We need to map this to our frontend expectation: vocal, drum, bass, synth
+        // "other" usually maps to synth/accompaniment in 4-stem context if not explicitly defined
+
+        if (!output || typeof output !== 'object') {
+            throw new Error('Invalid response from Replicate')
+        }
+
+        const rawStems = output as Record<string, string>
+
+        const stems = {
+            vocal: rawStems.vocals || null,
+            drum: rawStems.drums || null,
+            bass: rawStems.bass || null,
+            synth: rawStems.other || null // Mapping 'other' to 'synth' for our app
+        }
 
         return NextResponse.json(stems)
 
     } catch (error: any) {
         console.error('Stem separation error:', error)
-
-        // Check if the local server is running
-        if (error.cause?.code === 'ECONNREFUSED') {
-            return NextResponse.json(
-                { error: 'Demucs server not running. Start it with: python scripts/demucs_server.py' },
-                { status: 503 }
-            )
-        }
-
         return NextResponse.json(
-            { error: error.message || 'Internal server error' },
+            { error: error.message || 'Stem separation failed' },
             { status: 500 }
         )
     }
