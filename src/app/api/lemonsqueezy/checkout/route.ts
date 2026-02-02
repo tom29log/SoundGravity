@@ -69,7 +69,10 @@ export async function POST() {
 
         if (!response.ok) {
             console.error('Lemon Squeezy API Error:', JSON.stringify(data, null, 2))
-            return NextResponse.json({ error: data.errors?.[0]?.detail || 'Failed to create checkout session' }, { status: response.status })
+            const keyDebug = apiKey ? `(KeyLen: ${apiKey.length}, Start: ${apiKey.substring(0, 5)}...)` : '(Key Missing)';
+            return NextResponse.json({
+                error: `${data.errors?.[0]?.detail || 'Failed to create checkout session'} ${keyDebug}`
+            }, { status: response.status })
         }
 
         console.log('Checkout created successfully URL:', data.data.attributes.url)
