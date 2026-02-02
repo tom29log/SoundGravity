@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         // Using cjwbw/demucs model (htdemucs)
         // This is a popular deployment of Demucs on Replicate
         const output = await replicate.run(
-            "cjwbw/demucs:25a1731053f3d9db2eb5181313768b4ef214e6b194d216f40b079017f8a7fe7b",
+            "cjwbw/demucs:25a173108cff36ef9f80f854c162d01df9e6528be175794b81158fa03836d953",
             {
                 input: {
                     audio: audioUrl,
