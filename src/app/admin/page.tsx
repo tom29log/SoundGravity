@@ -125,7 +125,7 @@ export default function AdminPage() {
             if (data.url) {
                 window.open(data.url, '_blank')
             } else {
-                alert('Failed to open subscription portal')
+                alert(`Failed to open portal: ${data.error} ${JSON.stringify(data.details || '')}`)
             }
         } catch (error) {
             console.error('Portal error:', error)
