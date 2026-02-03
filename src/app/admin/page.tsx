@@ -123,7 +123,7 @@ export default function AdminPage() {
             const res = await fetch('/api/lemonsqueezy/portal', { method: 'POST' })
             const data = await res.json()
             if (data.url) {
-                window.open(data.url, '_blank')
+                window.location.href = data.url
             } else {
                 alert(`Failed to open portal: ${data.error} ${JSON.stringify(data.details || '')}`)
             }
