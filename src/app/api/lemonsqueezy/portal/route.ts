@@ -45,13 +45,15 @@ export async function POST() {
                 customerId = searchData.data[0].id
                 console.log(`[Portal] Found Customer ID: ${customerId}`)
 
-                // Self-Healing: Try to save it to DB (ignore error if column doesn't exist yet)
                 const adminSupabase = createAdminSupabaseClient()
-                await adminSupabase
+                const { error: updateError } = await adminSupabase
                     .from('profiles')
                     .update({ lemonsqueezy_customer_id: customerId })
                     .eq('id', user.id)
-                    .catch(e => console.warn('Failed to save customer_id (column might be missing)', e))
+
+                if (updateError) {
+                    console.warn('Failed to save customer_id (column might be missing)', updateError)
+                }
             }
         } catch (e) {
             console.error('[Portal] Customer lookup failed:', e)
