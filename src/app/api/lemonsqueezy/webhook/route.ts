@@ -1,4 +1,4 @@
-```typescript
+
 import { NextResponse } from 'next/server'
 import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 import crypto from 'crypto'
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         // Usually checkout_data inside meta or attributes.
         const userId = payload.meta.custom_data?.user_id || payload.data.attributes.checkout_data?.custom?.user_id
 
-        console.log(`[Webhook] Event: ${ eventName }, User: ${ userId } `)
+        console.log(`[Webhook] Event: ${eventName}, User: ${userId} `)
 
         if (!userId) {
             console.log('[Webhook] No user_id found in payload, ignoring.')
@@ -63,14 +63,14 @@ export async function POST(request: Request) {
                     console.error('[Webhook] DB Update Failed:', error)
                     return NextResponse.json({ error: 'Database update failed' }, { status: 500 })
                 }
-                console.log(`[Webhook] Success! User ${ userId } upgraded to PRO.`)
+                console.log(`[Webhook] Success! User ${userId} upgraded to PRO.`)
             } else {
                 console.log(`[Webhook] Status is '${status}', not upgrading user.`)
                 // Optionally handle 'expired' or 'cancelled' to remove PRO status
                 if (status === 'expired' || status === 'cancelled') {
                     const supabase = createAdminSupabaseClient()
                     await supabase.from('profiles').update({ is_pro: false }).eq('id', userId)
-                    console.log(`[Webhook] User ${ userId } downgraded due to status '${status}'.`)
+                    console.log(`[Webhook] User ${userId} downgraded due to status '${status}'.`)
                 }
             }
         }
