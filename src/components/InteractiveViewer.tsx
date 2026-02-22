@@ -14,6 +14,8 @@ interface Project {
     image_url: string
     audio_url: string
     target_url: string | null
+    is_ai_generated?: boolean
+    ai_tool_used?: string | null
 }
 
 interface AudioState {
@@ -379,6 +381,21 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                                 Visit Link ↗
                             </a>
                         )}
+
+                        {/* Disclaimer & AI Info (Top Right) */}
+                        <div className="flex flex-col items-end pointer-events-none text-[10px] text-zinc-400 font-mono space-y-1 mt-2 text-right">
+                            {project.is_ai_generated && (
+                                <div className="text-purple-400/70 flex items-center gap-1.5 justify-end">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                                    <span className="font-bold">AI COLLAB</span>
+                                    <span className="text-zinc-500">|</span>
+                                    <span>Used: {project.ai_tool_used || 'Unknown Tool'}</span>
+                                </div>
+                            )}
+                            <div className="opacity-50">
+                                © Content responsibility lies with the creator.
+                            </div>
+                        </div>
                     </div>
                 </div>
 
