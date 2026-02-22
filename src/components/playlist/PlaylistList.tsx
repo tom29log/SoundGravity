@@ -11,6 +11,11 @@ interface Playlist {
     title: string
     description: string | null
     created_at: string
+    playlist_tracks?: Array<{
+        project: {
+            image_url: string
+        }
+    }>
 }
 
 export default function PlaylistList() {
@@ -25,12 +30,20 @@ export default function PlaylistList() {
 
         const { data, error } = await supabase
             .from('playlists')
-            .select('*')
+            .select(`
+                *,
+                playlist_tracks(
+                    added_at,
+                    project:projects(
+                        image_url
+                    )
+                )
+            `)
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
 
         if (data) {
-            setPlaylists(data)
+            setPlaylists(data as any[])
         }
     }
 
@@ -47,24 +60,35 @@ export default function PlaylistList() {
                 </div>
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {playlists.map((playlist) => (
-                        <div
-                            key={playlist.id}
-                            onClick={() => {
-                                setSelectedPlaylist(playlist)
-                                setIsDetailOpen(true)
-                            }}
-                            className="bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-xl p-4 cursor-pointer border border-zinc-800 flex flex-col gap-3 group"
-                        >
-                            <div className="w-full aspect-square bg-zinc-950 rounded-lg flex items-center justify-center text-zinc-700 group-hover:text-zinc-500 transition-colors">
-                                <Music2 size={32} />
+                    {playlists.map((playlist) => {
+                        // Attempt to grab the first track's image url (either the first returned, or conceptually the first added)
+                        const firstTrackImage = playlist.playlist_tracks && playlist.playlist_tracks.length > 0
+                            ? playlist.playlist_tracks[0]?.project?.image_url
+                            : null
+
+                        return (
+                            <div
+                                key={playlist.id}
+                                onClick={() => {
+                                    setSelectedPlaylist(playlist)
+                                    setIsDetailOpen(true)
+                                }}
+                                className="bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-xl p-4 cursor-pointer border border-zinc-800 flex flex-col gap-3 group"
+                            >
+                                <div className="w-full aspect-square bg-zinc-950 rounded-lg flex items-center justify-center text-zinc-700 group-hover:text-zinc-500 transition-colors relative overflow-hidden">
+                                    {firstTrackImage ? (
+                                        <img src={firstTrackImage} alt={playlist.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    ) : (
+                                        <Music2 size={32} />
+                                    )}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-sm text-zinc-100 truncate group-hover:text-white">{playlist.title}</h3>
+                                    <p className="text-xs text-zinc-500 truncate">{playlist.description || 'No description'}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="font-bold text-sm text-zinc-100 truncate group-hover:text-white">{playlist.title}</h3>
-                                <p className="text-xs text-zinc-500 truncate">{playlist.description || 'No description'}</p>
-                            </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             )}
 
