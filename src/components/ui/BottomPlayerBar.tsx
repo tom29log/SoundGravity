@@ -3,8 +3,10 @@
 import { usePlaylistPlayer } from '@/contexts/PlaylistPlayerContext'
 import { Play, Pause, SkipForward, Disc, Activity, Square, FastForward, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 
 export default function BottomPlayerBar() {
+
     const {
         trackA,
         trackB,
@@ -13,12 +15,12 @@ export default function BottomPlayerBar() {
         play,
         pause,
         next,
+        stop,
         autoMixMode,
         toggleAutoMixMode,
         mixingState,
         deckA,
         deckB,
-        masterBpm,
         clear
     } = usePlaylistPlayer()
 
@@ -53,93 +55,111 @@ export default function BottomPlayerBar() {
                     className="h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-100 ease-linear"
                     style={{ width: `${(currentDeck?.progress || 0) * 100}%` }}
                 />
-                {/* Hover effect could go here */}
             </div>
 
-            <div className="max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between gap-6">
+            <div className="max-w-screen-2xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-6">
 
-                {/* 1. Left: Track Info */}
-                <div className="flex items-center gap-4 w-1/3 min-w-0">
-                    {currentTrack ? (
-                        <>
-                            {/* Artwork */}
-                            <div className={`relative w-12 h-12 rounded-md overflow-hidden bg-zinc-900 shadow-lg flex-shrink-0 group ${isPlaying ? 'animate-pulse-slow' : ''}`}>
-                                <img src={currentTrack.image_url} alt={currentTrack.title} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                            </div>
-
-                            {/* Text Info */}
-                            <div className="flex flex-col min-w-0 justify-center">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold text-white truncate leading-tight hover:underline cursor-pointer">
-                                        {currentTrack.title}
-                                    </span>
-                                    {/* BPM Badge (if DJ Mode) */}
-                                    <span className="text-[9px] font-mono text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">
-                                        {currentTrack.bpm ? `${Math.round(currentTrack.bpm)} BPM` : 'No BPM'}
-                                    </span>
+                {/* 1. Top/Left: Track Info - On mobile, show current track info at the top */}
+                <div className="flex items-center justify-between w-full md:w-1/3 min-w-0">
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
+                        {currentTrack ? (
+                            <>
+                                {/* Artwork */}
+                                <div className={`relative w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-zinc-900 shadow-lg flex-shrink-0 group ${isPlaying ? 'animate-spin-slow' : ''}`}>
+                                    <Image src={currentTrack.image_url} alt={currentTrack.title} fill className="object-cover" />
+                                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors rounded-full" />
+                                    {/* Center Hole for Vinyl Look */}
+                                    <div className="absolute inset-0 m-auto w-3 h-3 bg-black rounded-full shadow-inner" />
                                 </div>
-                                <span className="text-xs text-zinc-400 truncate leading-tight hover:text-zinc-300 cursor-pointer">
-                                    {currentTrack.profiles?.username}
-                                </span>
+
+                                {/* Text Info */}
+                                <div className="flex flex-col min-w-0 justify-center flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-bold text-white truncate leading-tight hover:underline cursor-pointer">
+                                            {currentTrack.title}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-xs text-zinc-400 truncate leading-tight hover:text-zinc-300 cursor-pointer">
+                                            {currentTrack.profiles?.username}
+                                        </span>
+                                        {/* BPM Badge */}
+                                        <span className="text-[9px] font-mono text-blue-400 bg-blue-500/10 px-1 py-0.5 rounded border border-blue-500/20">
+                                            {currentTrack.bpm ? `${Math.round(currentTrack.bpm)} BPM` : 'No BPM'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex items-center gap-3 opacity-50">
+                                <div className="w-10 h-10 rounded-full bg-zinc-900" />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-zinc-700">Loading...</span>
+                                </div>
                             </div>
-                        </>
-                    ) : (
-                        // Should not happen due to check above, but keep as fallback just in case or for smooth transitions if adapted later
-                        <div className="flex items-center gap-3 opacity-50">
-                            <div className="w-12 h-12 rounded-md bg-zinc-900" />
-                            <div className="flex flex-col">
-                                <span className="text-sm font-bold text-zinc-700">Loading...</span>
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
+                    {/* Close Button on Mobile (Moved from right) */}
+                    <button
+                        onClick={clear}
+                        className="md:hidden p-2 text-zinc-600 hover:text-red-400 transition-colors ml-2 bg-zinc-900 rounded-full"
+                        title="Close Player"
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
 
-                {/* 2. Center: Playback Controls */}
-                <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                    <div className="flex items-center gap-6">
-                        {/* Mixset Toggle (Small) */}
+                {/* 2. Center: Playback Controls & Mixer Elements */}
+                <div className="flex flex-col items-center justify-center w-full md:flex-1 gap-2">
+                    <div className="flex items-center justify-between w-full md:justify-center md:gap-8 bg-zinc-900/50 md:bg-transparent rounded-2xl px-4 py-2 md:p-0">
+
+                        {/* Mixset Toggle */}
                         <div className="flex flex-col items-center gap-1">
                             <button
                                 onClick={toggleAutoMixMode}
-                                className={`p-2 rounded-full transition-all duration-300
+                                className={`p-2.5 rounded-full transition-all duration-300 border
                                 ${autoMixMode
-                                        ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]'
-                                        : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800'}`}
+                                        ? 'bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)] border-blue-400'
+                                        : 'bg-zinc-900 text-zinc-500 border-zinc-800 hover:text-zinc-300 hover:bg-zinc-800'}`}
                                 title={autoMixMode ? "Auto-Mix ON" : "Auto-Mix OFF"}
                             >
                                 <Activity size={16} />
                             </button>
-                            <span className={`text-[9px] font-medium leading-none ${autoMixMode ? 'text-blue-400' : 'text-zinc-600'}`}>
+                            <span className={`text-[9px] font-medium leading-none ${autoMixMode ? 'text-blue-400' : 'text-zinc-600'} hidden md:block`}>
                                 Auto-Mix
                             </span>
                         </div>
 
                         {/* Main Controls */}
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 md:gap-6 bg-zinc-900 md:bg-transparent rounded-full px-2 py-1 md:p-0 shadow-inner md:shadow-none border border-zinc-800/50 md:border-0">
                             {/* Stop */}
-                            {autoMixMode && (
-                                <button
-                                    onClick={() => { pause(); /* stop logic */ }}
-                                    className="p-2 text-zinc-400 hover:text-white transition-colors"
-                                >
-                                    <Square size={16} fill="currentColor" />
-                                </button>
-                            )}
+                            <button
+                                onClick={stop}
+                                className="p-2 text-zinc-500 hover:text-white transition-colors"
+                                title="Stop and Go to Beginning"
+                            >
+                                <Square size={16} fill="currentColor" />
+                            </button>
 
-                            {/* Play/Pause */}
+                            {/* Play/Pause (Mixer Jog Wheel Style) */}
                             <button
                                 onClick={isPlaying ? pause : play}
-                                className="w-12 h-12 flex items-center justify-center bg-white text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg"
+                                className="relative w-14 h-14 md:w-16 md:h-16 flex items-center justify-center bg-gradient-to-br from-zinc-700 to-zinc-900 rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_4px_15px_rgba(0,0,0,0.5)] border-2 border-zinc-800 group"
                                 disabled={!currentTrack}
                             >
-                                {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-1" />}
+                                <div className="absolute inset-1 rounded-full bg-gradient-to-tr from-zinc-900 to-zinc-800 shadow-inner" />
+                                <div className={`relative z-10 ${isPlaying ? 'text-blue-400' : 'text-white group-hover:text-blue-300'} transition-colors`}>
+                                    {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-1" />}
+                                </div>
+                                {/* LED Ring Indicator */}
+                                {isPlaying && (
+                                    <div className="absolute inset-0 rounded-full border-2 border-blue-500/50 animate-pulse-slow" />
+                                )}
                             </button>
 
                             {/* Next */}
                             <button
                                 onClick={async () => {
-                                    // Ensure audio context is running on user gesture
                                     if (typeof window !== 'undefined') {
                                         const Tone = await import('tone')
                                         if (Tone.context.state !== 'running') {
@@ -148,52 +168,61 @@ export default function BottomPlayerBar() {
                                     }
                                     next()
                                 }}
-                                className="p-2 text-zinc-400 hover:text-white transition-colors hover:scale-105"
+                                className="p-2 text-zinc-500 hover:text-white transition-colors hover:scale-105"
                                 disabled={!nextTrack}
                             >
                                 <SkipForward size={24} fill="currentColor" />
                             </button>
                         </div>
 
-                        {/* Spacer to balance center */}
-                        <div className="w-8" />
-                    </div>
-
-                    {/* Clock & Status */}
-                    <div className="flex items-center gap-3 text-xs font-mono font-medium tracking-wider text-zinc-500">
-                        <span>{currentTrack ? formatTime(currentDeck.currentTime) : '00:00:00'}</span>
-                        {/* Status Separator */}
-                        {mixingState !== 'idle' && (
-                            <>
-                                <span className="w-1 h-1 rounded-full bg-zinc-700" />
-                                <span className={`${mixingState === 'mixing' ? 'text-yellow-500 animate-pulse' : 'text-blue-500'}`}>
+                        {/* Time Display for Mobile (Moved into control band) */}
+                        <div className="flex flex-col items-end md:hidden">
+                            <span className="text-xs font-mono font-medium tracking-wider text-blue-400">
+                                {currentTrack ? formatTime(currentDeck.currentTime) : '00:00:00'}
+                            </span>
+                            {/* Status Separator */}
+                            {mixingState !== 'idle' && (
+                                <span className={`text-[9px] font-bold tracking-widest ${mixingState === 'mixing' ? 'text-yellow-500 animate-pulse' : 'text-blue-500'}`}>
                                     {mixingState === 'mixing' ? 'MIXING' : 'CUEING'}
                                 </span>
-                            </>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* 3. Right: Next Track / Volume / Tools */}
-                <div className="flex items-center justify-end w-1/3 gap-4 min-w-0">
+                {/* 3. Right: Next Track & Display (Hidden on very small screens, displayed normally on MD) */}
+                <div className="hidden md:flex items-center justify-end w-1/3 gap-4 min-w-0">
+                    {/* Time Display for Desktop */}
+                    <div className="flex flex-col items-end mr-4 border-r border-zinc-800 pr-4">
+                        <span className="text-sm font-mono font-medium tracking-wider text-blue-400">
+                            {currentTrack ? formatTime(currentDeck.currentTime) : '00:00:00'}
+                        </span>
+                        {mixingState !== 'idle' && (
+                            <span className={`text-[10px] font-bold tracking-widest mt-1 ${mixingState === 'mixing' ? 'text-yellow-500 animate-pulse' : 'text-blue-500'}`}>
+                                {mixingState === 'mixing' ? 'MIXING' : 'CUEING'}
+                            </span>
+                        )}
+                    </div>
+
                     {nextTrack ? (
-                        <div className="flex items-center gap-3 group cursor-pointer opacity-60 hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-3 group cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
                             <div className="flex flex-col items-end min-w-0">
                                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Next Up</span>
                                 <span className="text-xs font-medium text-zinc-300 truncate max-w-[120px]">{nextTrack.title}</span>
                             </div>
-                            <div className="active-deck-b w-10 h-10 rounded bg-zinc-800 overflow-hidden shadow-inner flex-shrink-0">
-                                <img src={nextTrack.image_url} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                            <div className="relative w-10 h-10 rounded-full bg-zinc-800 overflow-hidden shadow-inner flex-shrink-0">
+                                <Image src={nextTrack.image_url} alt="" fill className="object-cover grayscale group-hover:grayscale-0 transition-all" />
+                                <div className="absolute inset-0 m-auto w-2 h-2 bg-black rounded-full shadow-inner" />
                             </div>
                         </div>
                     ) : (
                         <div className="text-xs text-zinc-700 font-mono text-right">No Next Track</div>
                     )}
 
-                    {/* Close Button */}
+                    {/* Close Button on Desktop */}
                     <button
                         onClick={clear}
-                        className="p-2 -mr-2 text-zinc-600 hover:text-red-400 transition-colors"
+                        className="p-2 ml-2 text-zinc-600 hover:text-red-400 transition-colors bg-zinc-900 rounded-full hover:bg-zinc-800"
                         title="Close Player"
                     >
                         <X size={18} />

@@ -28,14 +28,16 @@ interface InteractiveViewerProps {
     project: Project
     onTimeUpdate?: (time: number) => void
     // New Props
+    // New Props
     pinMode?: boolean
     comments?: Comment[]
     onPinCreate?: (x: number, y: number, audioState: AudioState) => void
+    autoPlay?: boolean
 }
 
 import { Comment } from '@/types' // Need to ensure Comment type is imported
 
-export default function InteractiveViewer({ project, onTimeUpdate, pinMode = false, comments = [], onPinCreate }: InteractiveViewerProps) {
+export default function InteractiveViewer({ project, onTimeUpdate, pinMode = false, comments = [], onPinCreate, autoPlay = true }: InteractiveViewerProps) {
     const [isPlaying, setIsPlaying] = useState(false)
     const [isInteracting, setIsInteracting] = useState(false)
     const [activePinId, setActivePinId] = useState<string | null>(null)
@@ -181,6 +183,8 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
 
     // Auto-play on enter
     useEffect(() => {
+        if (!autoPlay) return;
+
         // Attempt auto-play
         const timer = setTimeout(() => {
             if (!isPlaying) {

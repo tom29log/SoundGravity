@@ -8,7 +8,7 @@ import { Project } from '@/types'
 import { useRealtimeComments } from '@/hooks/useRealtimeComments'
 import { MapPin } from 'lucide-react'
 
-export default function ProjectDetailView({ project }: { project: Project }) {
+export default function ProjectDetailView({ project, autoPlay = true }: { project: Project, autoPlay?: boolean }) {
     const [currentTime, setCurrentTime] = useState(0)
     const [pinMode, setPinMode] = useState(false)
     const { comments, loading, addComment } = useRealtimeComments(project.id)
@@ -40,6 +40,7 @@ export default function ProjectDetailView({ project }: { project: Project }) {
                 pinMode={pinMode}
                 comments={comments}
                 onPinCreate={handlePinCreate}
+                autoPlay={autoPlay}
             />
 
             {/* Toast Notification Container */}

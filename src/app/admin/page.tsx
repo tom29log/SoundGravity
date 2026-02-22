@@ -145,9 +145,9 @@ export default function AdminPage() {
     }
 
     // Construct preview URL
-    // In dev: localhost:3000/v/id, In prod: domain/v/id
-    // We can use relative for iframe if on same domain
-    const previewUrl = previewId ? `/v/${previewId}` : ''
+    // Append autoPlay=false to prevent the interactive viewer from auto-playing sound
+    // when the user is just browsing the dashboard.
+    const previewUrl = previewId ? `/v/${previewId}?autoPlay=false` : ''
 
     return (
         <div className="min-h-screen bg-black text-white p-8">

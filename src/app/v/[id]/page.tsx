@@ -38,6 +38,7 @@ async function getProject(id: string) {
 
 type Props = {
     params: Promise<{ id: string }>
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export async function generateMetadata(
@@ -69,13 +70,17 @@ export async function generateMetadata(
     }
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
     const { id } = await params
+    const resolvedSearchParams = await searchParams
     const project = await getProject(id)
 
     if (!project) {
         return <div className="h-screen bg-black flex items-center justify-center text-white">Project not found</div>
     }
 
-    return <ProjectDetailView project={project} />
+    const autoPlayParam = resolvedSearchParams?.autoPlay
+    const autoPlay = autoPlayParam !== 'false'
+
+    return <ProjectDetailView project={project} autoPlay={autoPlay} />
 }
