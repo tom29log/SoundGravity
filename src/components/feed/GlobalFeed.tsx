@@ -249,7 +249,7 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                                         className="bg-transparent text-[11px] md:text-xs font-medium text-white px-3 py-2 outline-none cursor-pointer appearance-none text-center"
                                         style={{ WebkitAppearance: 'none' }}
                                     >
-                                        <option value="" className="bg-zinc-900">Genre</option>
+                                        <option value="" className="bg-zinc-900">All kind</option>
                                         <option value="K-Pop" className="bg-zinc-900">K-Pop</option>
                                         <option value="Lo-Fi" className="bg-zinc-900">Lo-Fi</option>
                                         <option value="Techno" className="bg-zinc-900">Techno</option>
