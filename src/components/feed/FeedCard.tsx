@@ -237,6 +237,9 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
                 <div className="flex flex-col min-w-0 flex-1">
                     <Link href={`/v/${project.id}`} prefetch={false} className="block">
                         <h3 className="font-semibold text-base text-zinc-100 truncate hover:text-white transition-colors tracking-tight">{project.title}</h3>
+                        {project.genre && (
+                            <p className="text-[11px] font-medium text-zinc-400 mt-0.5">{project.genre}</p>
+                        )}
                     </Link>
                     <div className="flex items-center gap-3 mt-1.5">
                         {/* Stem Mode Toggle */}

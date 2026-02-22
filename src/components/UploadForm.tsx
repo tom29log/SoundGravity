@@ -22,6 +22,7 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
     const [copyrightConfirmed, setCopyrightConfirmed] = useState(false)
     const [isAiGenerated, setIsAiGenerated] = useState(false)
     const [aiTool, setAiTool] = useState('')
+    const [genre, setGenre] = useState('') // New genre state
 
     const imageInputRef = useRef<HTMLInputElement>(null)
     const audioInputRef = useRef<HTMLInputElement>(null)
@@ -323,6 +324,7 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                 stems: uploadedStems, // Add stems data
                 target_url: targetUrl || null,
                 user_id: user?.id,
+                genre: genre || null,
                 is_ai_generated: isAiGenerated,
                 ai_tool_used: isAiGenerated ? aiTool : null,
                 copyright_confirmed: copyrightConfirmed
@@ -332,6 +334,7 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
 
             // Reset form
             setTitle('')
+            setGenre('')
             setTargetUrl('')
             setImageFile(null)
             setAudioFile(null)
@@ -374,6 +377,26 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                     className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-white focus:outline-none transition-colors"
                     required
                 />
+            </div>
+
+            {/* Genre Selection */}
+            <div>
+                <label className="block text-sm font-medium mb-1 text-zinc-300">Genre <span className="text-red-500">*</span></label>
+                <select
+                    value={genre}
+                    onChange={(e) => setGenre(e.target.value)}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-3 text-sm focus:ring-1 focus:ring-white focus:outline-none transition-colors appearance-none"
+                    required
+                >
+                    <option value="" disabled>Select a genre...</option>
+                    <option value="K-Pop">K-Pop</option>
+                    <option value="Lo-Fi">Lo-Fi</option>
+                    <option value="Techno">Techno</option>
+                    <option value="EDM">EDM</option>
+                    <option value="Rock">Rock</option>
+                    <option value="Indie">Indie</option>
+                    <option value="Pop">Pop</option>
+                </select>
             </div>
 
             {/* Target URL Input */}
