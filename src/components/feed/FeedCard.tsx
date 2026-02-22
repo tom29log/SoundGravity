@@ -159,35 +159,7 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
                 )}
             </Link>
 
-            {/* 1.5 More Options Button (Top Right Absolute) */}
-            <div className="absolute top-3 right-3 z-[60]" ref={menuRef}>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        setShowMenu(!showMenu)
-                    }}
-                    className="p-1.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors backdrop-blur-md"
-                >
-                    <MoreVertical size={16} />
-                </button>
 
-                {/* Dropdown Menu */}
-                {showMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-32 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden py-1 z-[70] animate-in fade-in zoom-in-95 duration-100">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                setShowMenu(false)
-                                setShowReportModal(true)
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-zinc-800 flex items-center gap-2"
-                        >
-                            <Flag size={12} />
-                            Report
-                        </button>
-                    </div>
-                )}
-            </div>
 
             {/* 2. Project Link (Image) */}
             <div className="relative rounded-2xl overflow-hidden bg-zinc-900 shadow-lg select-none group/image transition-transform active:scale-[0.98] duration-200">
@@ -268,13 +240,45 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
                     </div>
                 </div>
 
-                <button
-                    onClick={toggleLike}
-                    className={`flex items-center gap-1.5 transition-colors cursor-pointer group/like ${liked ? 'text-red-500' : 'text-zinc-400 hover:text-white'}`}
-                >
-                    <Heart size={14} fill={liked ? "currentColor" : "none"} className={`transition-transform duration-200 group-active/like:scale-75 ${liked ? "text-red-500" : ""}`} />
-                    <span className="text-xs font-medium">{likeCount}</span>
-                </button>
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={toggleLike}
+                        className={`flex items-center gap-1.5 transition-colors cursor-pointer group/like ${liked ? 'text-red-500' : 'text-zinc-400 hover:text-white'}`}
+                    >
+                        <Heart size={14} fill={liked ? "currentColor" : "none"} className={`transition-transform duration-200 group-active/like:scale-75 ${liked ? "text-red-500" : ""}`} />
+                        <span className="text-xs font-medium">{likeCount}</span>
+                    </button>
+
+                    {/* More Options Button (Bottom Right) */}
+                    <div className="relative" ref={menuRef}>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setShowMenu(!showMenu)
+                            }}
+                            className="text-zinc-400 hover:text-white transition-colors p-1"
+                        >
+                            <MoreVertical size={16} />
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {showMenu && (
+                            <div className="absolute right-0 bottom-full mb-2 w-32 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden py-1 z-[70] animate-in fade-in slide-in-from-bottom-2 duration-100">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setShowMenu(false)
+                                        setShowReportModal(true)
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-zinc-800 flex items-center gap-2"
+                                >
+                                    <Flag size={12} />
+                                    Report
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div >
 
             <PlaylistSelector
