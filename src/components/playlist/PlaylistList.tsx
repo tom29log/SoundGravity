@@ -33,6 +33,7 @@ export default function PlaylistList() {
             .select(`
                 *,
                 playlist_tracks(
+                    position,
                     added_at,
                     project:projects(
                         image_url
@@ -43,7 +44,18 @@ export default function PlaylistList() {
             .order('created_at', { ascending: false })
 
         if (data) {
-            setPlaylists(data as any[])
+            // Sort playlist_tracks by position locally to be safe, since nested order isn't always perfectly supported
+            const sortedData = data.map((playlist: any) => {
+                if (playlist.playlist_tracks) {
+                    playlist.playlist_tracks.sort((a: any, b: any) => {
+                        const posA = a.position ?? 0
+                        const posB = b.position ?? 0
+                        return posA - posB
+                    })
+                }
+                return playlist
+            })
+            setPlaylists(sortedData)
         }
     }
 

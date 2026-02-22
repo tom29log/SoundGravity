@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
-import { X, Play, Music, Trash2, Disc } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { X, Play, Music, Trash2, GripVertical } from 'lucide-react'
+import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import Image from 'next/image'
 import Link from 'next/link'
 import * as Tone from 'tone'
@@ -44,6 +44,7 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
             .from('playlist_tracks')
             .select(`
                 track_id,
+                position,
                 project:projects!playlist_tracks_track_id_fkey (
                     *,
                     profiles:profiles!projects_user_id_fkey_profiles (
@@ -53,6 +54,7 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
                 )
             `)
             .eq('playlist_id', playlist.id)
+            .order('position', { ascending: true })
             .order('added_at', { ascending: false })
 
         if (error) {
@@ -84,6 +86,22 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
         stop()
         clear() // Ensure player is cleared
         onClose()
+    }
+
+    const saveOrder = async (currentTracks: Project[]) => {
+        const trackIds = currentTracks.map(t => t.id)
+        try {
+            await fetch('/api/playlists/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    playlistId: playlist.id,
+                    tracks: trackIds
+                })
+            })
+        } catch (err) {
+            console.error('Failed to save order', err)
+        }
     }
 
     // Close on escape key
@@ -166,55 +184,69 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
                                 <p>No tracks in this playlist yet.</p>
                             </div>
                         ) : (
-                            tracks.map((track, index) => (
-                                <div
-                                    key={track.id}
-                                    onClick={() => handlePlayTrack(index)}
-                                    className="group flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-800/50 transition-colors border border-transparent hover:border-zinc-800/50 cursor-pointer"
-                                >
-                                    {/* Cover */}
-                                    <div className="relative w-12 h-12 rounded bg-zinc-800 overflow-hidden shrink-0">
-                                        <Image
-                                            src={track.image_url}
-                                            alt={track.title}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Play size={16} className="text-white fill-current" />
-                                        </div>
-                                    </div>
-
-                                    {/* Info */}
-                                    {isMixsetMode && index < tracks.length - 1 && (
-                                        <div className="absolute left-[23px] top-[48px] h-[30px] w-0.5 bg-gradient-to-b from-blue-500/50 to-transparent z-0 pointer-events-none" />
-                                    )}
-                                    <div className="flex-1 min-w-0 z-10">
-                                        <h4 className="text-sm font-semibold truncate text-zinc-200 group-hover:text-blue-400 transition-colors">
-                                            {track.title}
-                                        </h4>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-xs text-zinc-500 truncate">
-                                                {track.profiles?.username || 'Unknown Artist'}
-                                            </span>
-                                            {track.is_ai_generated && (
-                                                <span className="px-1 py-0.5 rounded text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                                                    AI
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Actions */}
-                                    <button
-                                        onClick={(e) => removeTrack(track.id, e)}
-                                        className="p-2 text-zinc-500 hover:text-red-400 opacity-100 transition-colors"
-                                        title="Remove from playlist"
+                            <Reorder.Group axis="y" values={tracks} onReorder={setTracks} className="space-y-2">
+                                {tracks.map((track, index) => (
+                                    <Reorder.Item
+                                        key={track.id}
+                                        value={track}
+                                        onDragEnd={() => saveOrder(tracks)}
+                                        className="group flex items-center gap-3 p-2 rounded-lg bg-zinc-900 border border-transparent hover:border-zinc-800/50 cursor-pointer relative"
                                     >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                            ))
+                                        {/* Drag Handle */}
+                                        <div className="cursor-grab active:cursor-grabbing p-1 text-zinc-600 hover:text-zinc-400">
+                                            <GripVertical size={16} />
+                                        </div>
+
+                                        {/* Cover */}
+                                        <div
+                                            className="relative w-12 h-12 rounded bg-zinc-800 overflow-hidden shrink-0"
+                                            onClick={() => handlePlayTrack(index)}
+                                        >
+                                            <Image
+                                                src={track.image_url}
+                                                alt={track.title}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Play size={16} className="text-white fill-current" />
+                                            </div>
+                                        </div>
+
+                                        {/* Info */}
+                                        {isMixsetMode && index < tracks.length - 1 && (
+                                            <div className="absolute left-[39px] top-[48px] h-[30px] w-0.5 bg-gradient-to-b from-blue-500/50 to-transparent z-0 pointer-events-none" />
+                                        )}
+                                        <div
+                                            className="flex-1 min-w-0 z-10"
+                                            onClick={() => handlePlayTrack(index)}
+                                        >
+                                            <h4 className="text-sm font-semibold truncate text-zinc-200 group-hover:text-blue-400 transition-colors">
+                                                {track.title}
+                                            </h4>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-xs text-zinc-500 truncate">
+                                                    {track.profiles?.username || 'Unknown Artist'}
+                                                </span>
+                                                {track.is_ai_generated && (
+                                                    <span className="px-1 py-0.5 rounded text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                                        AI
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <button
+                                            onClick={(e) => removeTrack(track.id, e)}
+                                            className="p-2 text-zinc-500 hover:text-red-400 opacity-100 transition-colors"
+                                            title="Remove from playlist"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </Reorder.Item>
+                                ))}
+                            </Reorder.Group>
                         )}
                     </div>
                 </motion.div>
