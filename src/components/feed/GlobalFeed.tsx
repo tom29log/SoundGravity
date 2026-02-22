@@ -71,6 +71,7 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
     const [filter, setFilter] = useState<'latest' | 'popular'>('latest')
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
     const [aiFilter, setAiFilter] = useState<'all' | 'human' | 'ai'>('all')
+    const [genreFilter, setGenreFilter] = useState<string>('')
 
     // React Query Hook
     const {
@@ -79,7 +80,11 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
         hasNextPage,
         isFetchingNextPage,
         isLoading
-    } = useProjectsInfinite(initialProjects, { filter, aiFilter })
+    } = useProjectsInfinite(
+        // Only use initial projects if no filters are applied, otherwise we might show mixed data
+        filter === 'latest' && aiFilter === 'all' && genreFilter === '' ? initialProjects : undefined,
+        { filter, aiFilter, genre: genreFilter || null }
+    )
 
     // Flatten pages into a single array
     const projects = data?.pages.flat() || initialProjects || []
@@ -191,27 +196,32 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
 
                         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
 
-                            {/* Filter Groups */}
                             <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 md:pb-0 scrollbar-hide">
                                 {/* AI Filter */}
                                 <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800 shrink-0">
                                     <button
                                         onClick={() => setAiFilter('all')}
-                                        className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all ${aiFilter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                        className={`px-2 md:px-3 py-1.5 rounded-full text-[10px] md:text-[11px] font-medium transition-all w-8 md:w-auto ${aiFilter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                        title="All"
                                     >
-                                        All
+                                        <span className="md:hidden">A</span>
+                                        <span className="hidden md:inline">All</span>
                                     </button>
                                     <button
                                         onClick={() => setAiFilter('human')}
-                                        className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all ${aiFilter === 'human' ? 'bg-zinc-800 text-green-400' : 'text-zinc-500 hover:text-green-400'}`}
+                                        className={`px-2 md:px-3 py-1.5 rounded-full text-[10px] md:text-[11px] font-medium transition-all w-8 md:w-auto ${aiFilter === 'human' ? 'bg-zinc-800 text-green-400' : 'text-zinc-500 hover:text-green-400'}`}
+                                        title="Human"
                                     >
-                                        Human
+                                        <span className="md:hidden">H</span>
+                                        <span className="hidden md:inline">Human</span>
                                     </button>
                                     <button
                                         onClick={() => setAiFilter('ai')}
-                                        className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all ${aiFilter === 'ai' ? 'bg-zinc-800 text-purple-400' : 'text-zinc-500 hover:text-purple-400'}`}
+                                        className={`px-2 md:px-3 py-1.5 rounded-full text-[10px] md:text-[11px] font-medium transition-all w-8 md:w-auto ${aiFilter === 'ai' ? 'bg-zinc-800 text-purple-400' : 'text-zinc-500 hover:text-purple-400'}`}
+                                        title="AI"
                                     >
-                                        AI
+                                        <span className="md:hidden">AI</span>
+                                        <span className="hidden md:inline">AI</span>
                                     </button>
                                 </div>
 
@@ -229,6 +239,25 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                                     >
                                         Popular
                                     </button>
+                                </div>
+
+                                {/* Genre Filter */}
+                                <div className="flex bg-zinc-900 rounded-full border border-zinc-800 shrink-0 overflow-hidden">
+                                    <select
+                                        value={genreFilter}
+                                        onChange={(e) => setGenreFilter(e.target.value)}
+                                        className="bg-transparent text-[11px] md:text-xs font-medium text-white px-3 py-2 outline-none cursor-pointer appearance-none text-center"
+                                        style={{ WebkitAppearance: 'none' }}
+                                    >
+                                        <option value="" className="bg-zinc-900">Genre</option>
+                                        <option value="K-Pop" className="bg-zinc-900">K-Pop</option>
+                                        <option value="Lo-Fi" className="bg-zinc-900">Lo-Fi</option>
+                                        <option value="Techno" className="bg-zinc-900">Techno</option>
+                                        <option value="EDM" className="bg-zinc-900">EDM</option>
+                                        <option value="Rock" className="bg-zinc-900">Rock</option>
+                                        <option value="Indie" className="bg-zinc-900">Indie</option>
+                                        <option value="Pop" className="bg-zinc-900">Pop</option>
+                                    </select>
                                 </div>
                             </div>
 

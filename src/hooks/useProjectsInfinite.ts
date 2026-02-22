@@ -6,7 +6,7 @@ const PAGE_SIZE = 12
 
 export function useProjectsInfinite(
     initialData?: Project[],
-    filters: { filter: 'latest' | 'popular', aiFilter: 'all' | 'human' | 'ai' } = { filter: 'latest', aiFilter: 'all' }
+    filters: { filter: 'latest' | 'popular', aiFilter: 'all' | 'human' | 'ai', genre?: string | null } = { filter: 'latest', aiFilter: 'all' }
 ) {
     const supabase = createClient()
 
@@ -33,6 +33,10 @@ export function useProjectsInfinite(
                 query = query.eq('is_ai_generated', false)
             } else if (filters.aiFilter === 'ai') {
                 query = query.eq('is_ai_generated', true)
+            }
+
+            if (filters.genre) {
+                query = query.eq('genre', filters.genre)
             }
 
             if (filters.filter === 'latest') {
