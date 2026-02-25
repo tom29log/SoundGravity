@@ -201,10 +201,10 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                                 <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800 shrink-0">
                                     <button
                                         onClick={() => setAiFilter('all')}
-                                        className={`px-2 md:px-3 py-1.5 rounded-full text-[10px] md:text-[11px] font-medium transition-all w-8 md:w-auto ${aiFilter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                        className={`px-2 md:px-3 py-1.5 rounded-full text-[10px] md:text-[11px] font-medium transition-all w-auto md:w-auto ${aiFilter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
                                         title="All"
                                     >
-                                        <span className="md:hidden">A</span>
+                                        <span className="md:hidden">All</span>
                                         <span className="hidden md:inline">All</span>
                                     </button>
                                     <button
