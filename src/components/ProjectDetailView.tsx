@@ -4,6 +4,7 @@ import { useState } from 'react'
 import InteractiveViewer from '@/components/InteractiveViewer'
 import RealtimeComments from '@/components/social/RealtimeComments'
 import ToastContainer, { useToast } from '@/components/ui/Toast'
+import ShareProjectButton from '@/components/ShareProjectButton'
 import { Project } from '@/types'
 import { useRealtimeComments } from '@/hooks/useRealtimeComments'
 import { MapPin } from 'lucide-react'
@@ -48,6 +49,11 @@ export default function ProjectDetailView({ project, autoPlay = true }: { projec
 
             {/* UI Controls Layer */}
             <div className="fixed bottom-8 right-8 z-40 flex flex-col gap-4 items-end pointer-events-none">
+
+                {/* Native OS Share Button */}
+                <div className="pointer-events-auto">
+                    <ShareProjectButton title={project.title} />
+                </div>
 
                 {/* Pin Mode Toggle */}
                 <button
