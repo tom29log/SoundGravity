@@ -251,8 +251,10 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                                     >
                                         <option value="" className="bg-zinc-900">All kind</option>
                                         <option value="K-Pop" className="bg-zinc-900">K-Pop</option>
+                                        <option value="Hip-Hop" className="bg-zinc-900">Hip-Hop</option>
                                         <option value="Lo-Fi" className="bg-zinc-900">Lo-Fi</option>
                                         <option value="Techno" className="bg-zinc-900">Techno</option>
+                                        <option value="House" className="bg-zinc-900">House</option>
                                         <option value="EDM" className="bg-zinc-900">EDM</option>
                                         <option value="Rock" className="bg-zinc-900">Rock</option>
                                         <option value="Indie" className="bg-zinc-900">Indie</option>

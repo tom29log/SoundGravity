@@ -390,8 +390,10 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                 >
                     <option value="" disabled>Select a genre...</option>
                     <option value="K-Pop">K-Pop</option>
+                    <option value="Hip-Hop">Hip-Hop</option>
                     <option value="Lo-Fi">Lo-Fi</option>
                     <option value="Techno">Techno</option>
+                    <option value="House">House</option>
                     <option value="EDM">EDM</option>
                     <option value="Rock">Rock</option>
                     <option value="Indie">Indie</option>

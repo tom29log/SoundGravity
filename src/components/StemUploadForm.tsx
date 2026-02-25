@@ -239,9 +239,10 @@ export default function StemUploadForm({ onUploadSuccess }: StemUploadFormProps)
                     >
                         <option value="">Select Genre</option>
                         <option value="Pop">Pop</option>
-                        <option value="Hip Hop">Hip Hop</option>
+                        <option value="Hip-Hop">Hip-Hop</option>
                         <option value="R&B">R&B</option>
                         <option value="Electronic">Electronic</option>
+                        <option value="House">House</option>
                         <option value="Rock">Rock</option>
                         <option value="Jazz">Jazz</option>
                         <option value="Classical">Classical</option>
