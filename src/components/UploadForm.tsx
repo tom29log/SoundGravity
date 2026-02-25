@@ -396,6 +396,8 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                     <option value="Rock">Rock</option>
                     <option value="Indie">Indie</option>
                     <option value="Pop">Pop</option>
+                    <option value="CCM">CCM</option>
+                    <option value="Drum & Bass">Drum & Bass</option>
                 </select>
             </div>
 

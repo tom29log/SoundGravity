@@ -23,7 +23,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
     const supabase = createClient()
     const [loading, setLoading] = useState(false)
     const artistTypes = ['DJ', 'Producer', 'Player', 'Singer', 'Creator', 'Celebrity', 'Other']
-    const genres = ['Hip-hop', 'EDM', 'Electronic', 'Pop', 'R&B', 'Lo-fi', 'Jazz', 'Rock', 'Classical', 'Other']
+    const genres = ['Hip-hop', 'EDM', 'Electronic', 'Pop', 'R&B', 'Lo-fi', 'Jazz', 'Rock', 'Classical', 'CCM', 'Drum & Bass', 'Other']
 
     const [formData, setFormData] = useState({
         username: profile.username || '',

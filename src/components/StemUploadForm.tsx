@@ -245,6 +245,8 @@ export default function StemUploadForm({ onUploadSuccess }: StemUploadFormProps)
                         <option value="Rock">Rock</option>
                         <option value="Jazz">Jazz</option>
                         <option value="Classical">Classical</option>
+                        <option value="CCM">CCM</option>
+                        <option value="Drum & Bass">Drum & Bass</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
