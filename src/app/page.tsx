@@ -17,7 +17,7 @@ export default async function Home() {
     .from('projects')
     .select(`
             *,
-            profiles:profiles!projects_user_id_fkey_profiles (
+            profiles (
                username,
                avatar_url
             )

@@ -13,7 +13,7 @@ export default function StemTestPage() {
 
     useEffect(() => {
         const testStemLoading = async () => {
-            const stemUrl = 'https://jgzistwfzvfiikqsygpt.supabase.co/storage/v1/object/public/assets/stems_1769296478668_bass.mp3'
+            const stemUrl = 'https://arndqdrposydzyllljbv.supabase.co/storage/v1/object/public/assets/stems_1769296478668_bass.mp3'
 
             addLog('1. Testing fetch...')
 

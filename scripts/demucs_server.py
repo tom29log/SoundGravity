@@ -19,8 +19,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Supabase configuration
-SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://jgzistwfzvfiikqsygpt.supabase.co')
-SUPABASE_KEY = os.environ.get('SUPABASE_KEY', 'sb_publishable_Kl5bie_hH4W9nAUQTjz8kQ_mBeJRu4F')
+SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://arndqdrposydzyllljbv.supabase.co')
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFybmRxZHJwb3N5ZHp5bGxsamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMDc3MDgsImV4cCI6MjEwMTU4MzcwOH0.Sylpwo3xGdqfMgj_me2wsC5dgHDbo8n85_8Ot4zJe7s')
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Output directory for separated stems

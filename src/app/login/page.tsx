@@ -1,4 +1,3 @@
-'use plain'
 'use client'
 
 import { useState } from 'react'
@@ -26,51 +25,60 @@ export default function LoginPage() {
         setError(null)
         setMessage(null)
 
-        if (isLogin) {
-            // Login Logic
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            })
-            if (error) {
-                setError(error.message)
-            } else {
-                router.push('/')
-            }
-        } else {
-            // Sign Up Logic
-            const { error, data } = await supabase.auth.signUp({
-                email,
-                password,
-                // options: { emailRedirectTo: `${location.origin}/auth/callback` } // Optional: Email confirmation
-            })
-            if (error) {
-                setError(error.message)
-            } else {
-                // Insert Profile
-                if (data.user) {
-                    const { error: profileError } = await supabase
-                        .from('profiles')
-                        .insert({
-                            id: data.user.id,
-                            username: username,
-                            avatar_url: null, // Default empty
-                        })
+        try {
+            if (isLogin) {
+                // 1. Try Server Login Route
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                })
+                const resData = await res.json().catch(() => ({}))
 
-                    if (profileError) {
-                        console.error('Profile creation failed:', profileError)
-                        // Non-blocking, can retry later or ignore
-                    }
+                if (res.ok && !resData.error) {
+                    window.location.href = '/'
+                    return
                 }
 
-                if (data.user && !data.session) {
-                    setMessage("Check your email for the confirmation link.")
+                // Fallback: Direct Supabase Client Login
+                const { error: clientError } = await supabase.auth.signInWithPassword({ email, password })
+                if (clientError) {
+                    setError(resData.error || clientError.message)
                 } else {
-                    router.push('/') // If auto-confirm is on
+                    window.location.href = '/'
+                }
+            } else {
+                // 1. Try Server Signup Route
+                const res = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, username }),
+                })
+                const resData = await res.json().catch(() => ({}))
+
+                if (res.ok && !resData.error) {
+                    window.location.href = '/'
+                    return
+                }
+
+                // Fallback: Direct Supabase Client Signup
+                const { error: signUpErr } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: { data: { username } }
+                })
+
+                if (signUpErr) {
+                    setError(resData.error || signUpErr.message)
+                } else {
+                    window.location.href = '/'
                 }
             }
+        } catch (err: any) {
+            setError(err?.message || 'An error occurred during authentication')
+        } finally {
+            setLoading(false)
         }
-        setLoading(false)
     }
 
     return (
@@ -198,17 +206,25 @@ export default function LoginPage() {
                         <button
                             type="button"
                             onClick={async () => {
-                                const { error } = await supabase.auth.signInWithOAuth({
-                                    provider: 'google',
-                                    options: {
-                                        redirectTo: `${location.origin}/auth/callback`,
-                                        queryParams: {
-                                            access_type: 'offline',
-                                            prompt: 'consent',
+                                try {
+                                    const { data, error } = await supabase.auth.signInWithOAuth({
+                                        provider: 'google',
+                                        options: {
+                                            redirectTo: `${window.location.origin}/auth/callback`,
+                                            queryParams: {
+                                                access_type: 'offline',
+                                                prompt: 'consent',
+                                            },
                                         },
-                                    },
-                                })
-                                if (error) setError(error.message)
+                                    })
+                                    if (error) {
+                                        setError(error.message)
+                                    } else if (data?.url) {
+                                        window.location.href = data.url
+                                    }
+                                } catch (err: any) {
+                                    setError(err?.message || 'Failed to start Google login')
+                                }
                             }}
                             className="w-full py-3 md:py-3.5 bg-zinc-900 text-white font-medium text-sm md:text-base rounded-xl border border-zinc-800 hover:bg-zinc-800 transition-all flex items-center justify-center gap-2"
                         >

@@ -45,9 +45,9 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
             .select(`
                 track_id,
                 position,
-                project:projects!playlist_tracks_track_id_fkey (
+                project:projects (
                     *,
-                    profiles:profiles!projects_user_id_fkey_profiles (
+                    profiles (
                         username,
                         avatar_url
                     )

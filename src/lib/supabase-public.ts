@@ -1,10 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://arndqdrposydzyllljbv.supabase.co').trim()
+const SUPABASE_ANON_KEY = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFybmRxZHJwb3N5ZHp5bGxsamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMDc3MDgsImV4cCI6MjEwMTU4MzcwOH0.Sylpwo3xGdqfMgj_me2wsC5dgHDbo8n85_8Ot4zJe7s').trim()
 
 // Client specifically for server-side fetching of PUBLIC data (no cookies/auth needed)
-// avoiding the overhead of Next.js cookies() and dynamic rendering opt-in
 export const createPublicClient = () => {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    return createSupabaseClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
     )
 }

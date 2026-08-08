@@ -1,4 +1,3 @@
-'use plain'
 'use client'
 
 import { useState, useRef } from 'react'
