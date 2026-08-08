@@ -1,6 +1,8 @@
-
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+
+const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://arndqdrposydzyllljbv.supabase.co').trim()
+const SUPABASE_ANON_KEY = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFybmRxZHJwb3N5ZHp5bGxsamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMDc3MDgsImV4cCI6MjEwMTU4MzcwOH0.Sylpwo3xGdqfMgj_me2wsC5dgHDbo8n85_8Ot4zJe7s').trim()
 
 export async function middleware(request: NextRequest) {
     let response = NextResponse.next({
@@ -10,8 +12,8 @@ export async function middleware(request: NextRequest) {
     })
 
     const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
         {
             cookies: {
                 getAll() {
@@ -32,29 +34,23 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    // IMPORTANT: This must run to refresh the auth token!
-    // Breaking this breaks the Playlist functionality.
-
-    // OPTIMIZATION: Skip blocking auth check for Root and Profile paths to prevent mobile 8s timeout
+    // Skip blocking auth check for Root, Profile, Login and API paths
     const { pathname } = request.nextUrl
-    if (pathname === '/' || pathname.startsWith('/profile')) {
+    if (pathname === '/' || pathname.startsWith('/profile') || pathname.startsWith('/login') || pathname.startsWith('/api')) {
         return response
     }
 
-    await supabase.auth.getUser()
+    try {
+        await supabase.auth.getUser()
+    } catch {
+        // Prevent middleware crash
+    }
 
     return response
 }
 
 export const config = {
     matcher: [
-        /*
-         * Match all request paths except for the ones starting with:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * - public assets
-         */
         '/((?!_next/static|_next/image|favicon.ico|profile|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 }
