@@ -1,16 +1,11 @@
-import { createClient } from '@supabase/supabase-js'
+import { createPublicClient } from '@/lib/supabase-public'
 import GlobalFeed from '@/components/feed/GlobalFeed'
 import { Project } from '@/types'
 
 export const revalidate = 60 // ISR: Revalidate feed every minute
 
 export default async function Home() {
-  // OPTIMIZATION: Use raw client for public feed data to ensure pure Static Generation (ISR)
-  // and avoid any cookie/header dependency that might trigger dynamic rendering or cold starts.
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const supabase = createPublicClient()
 
   // Server-side fetch initial data (Default: Latest, All)
   const { data } = await supabase
