@@ -27,55 +27,39 @@ export default function LoginPage() {
 
         try {
             if (isLogin) {
-                // 1. Try Server Login Route
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password }),
+                // Direct Official Supabase SDK Login
+                const { data, error: loginErr } = await supabase.auth.signInWithPassword({
+                    email: email.trim(),
+                    password: password.trim(),
                 })
-                const resData = await res.json().catch(() => ({}))
 
-                if (res.ok && !resData.error) {
-                    window.location.href = '/'
-                    return
-                }
-
-                // Fallback: Direct Supabase Client Login
-                const { error: clientError } = await supabase.auth.signInWithPassword({ email, password })
-                if (clientError) {
-                    setError(resData.error || clientError.message)
-                } else {
+                if (loginErr) {
+                    setError(
+                        loginErr.message.includes('Invalid login credentials')
+                            ? '등록되지 않은 계정이거나 비밀번호가 틀렸습니다. [Sign Up] 탭을 눌러 회원가입을 해주세요.'
+                            : loginErr.message
+                    )
+                } else if (data?.user) {
                     window.location.href = '/'
                 }
             } else {
-                // 1. Try Server Signup Route
-                const res = await fetch('/api/auth/signup', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, username }),
-                })
-                const resData = await res.json().catch(() => ({}))
-
-                if (res.ok && !resData.error) {
-                    window.location.href = '/'
-                    return
-                }
-
-                // Fallback: Direct Supabase Client Signup
-                const { error: signUpErr } = await supabase.auth.signUp({
-                    email,
-                    password,
-                    options: { data: { username } }
+                // Direct Official Supabase SDK Signup
+                const { data, error: signUpErr } = await supabase.auth.signUp({
+                    email: email.trim(),
+                    password: password.trim(),
+                    options: {
+                        data: { username: username.trim() || email.split('@')[0] }
+                    }
                 })
 
                 if (signUpErr) {
-                    setError(resData.error || signUpErr.message)
+                    setError(signUpErr.message)
                 } else {
                     window.location.href = '/'
                 }
             }
         } catch (err: any) {
-            setError(err?.message || 'An error occurred during authentication')
+            setError(err?.message || '인증 처리 중 오류가 발생했습니다.')
         } finally {
             setLoading(false)
         }
