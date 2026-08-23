@@ -49,18 +49,22 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
     useEffect(() => {
         const getUser = async () => {
             try {
-                // OPTIMIZATION: Use getSession (local) instead of getUser (remote) for instant UI feedback
                 const { data: { session } } = await supabase.auth.getSession()
                 if (session?.user) {
                     const { data } = await supabase
                         .from('profiles')
                         .select('username, avatar_url, is_pro')
                         .eq('id', session.user.id)
-                        .single()
-                    if (data) setUserProfile(data)
+                        .maybeSingle()
+
+                    setUserProfile({
+                        username: data?.username || session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                        avatar_url: data?.avatar_url || session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture || null,
+                        is_pro: data?.is_pro || false
+                    })
                 }
             } catch (e) {
-                // Ignore auth errors, just stay logged out
+                // Ignore auth errors
             } finally {
                 setLoadingAuth(false)
             }
