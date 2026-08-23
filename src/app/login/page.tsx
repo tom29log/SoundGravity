@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -18,6 +18,20 @@ export default function LoginPage() {
     const supabase = createClient()
 
     const [username, setUsername] = useState('')
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                // Purge any stale tokens from old Supabase project
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i)
+                    if (k && (k.includes('jgzistwf') || k.includes('supabase'))) {
+                        localStorage.removeItem(k)
+                    }
+                }
+            } catch {}
+        }
+    }, [])
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -232,6 +246,9 @@ export default function LoginPage() {
                             </svg>
                             Google
                         </button>
+                        <p className="text-[10px] text-zinc-600 mt-4 tracking-widest uppercase">
+                            v2.0 • arndqdrposydzyllljbv
+                        </p>
                     </form>
                 </div>
             </motion.div>
