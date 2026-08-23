@@ -61,7 +61,8 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
             })
             setHeaderImagePreview(profile?.header_image_url || null)
         }
-    }, [isOpen, profile])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen])
 
     if (!isOpen) return null
 
