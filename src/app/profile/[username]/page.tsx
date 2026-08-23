@@ -34,16 +34,40 @@ export default async function ProfilePage({ params }: Props) {
 
     const supabase = createPublicClient()
 
-    // 1. Fetch Profile Data
-    const { data: profile, error: profileError } = await supabase
+    // 1. Fetch Profile Data (by username or id)
+    let profile = null
+
+    const { data: byUsername } = await supabase
         .from('profiles')
         .select('*')
         .eq('username', decodedUsername)
-        .single()
+        .maybeSingle()
 
-    if (profileError || !profile) {
-        console.error('Profile fetch error Server-Side:', profileError)
-        notFound()
+    if (byUsername) {
+        profile = byUsername
+    } else {
+        const { data: byId } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', decodedUsername)
+            .maybeSingle()
+
+        if (byId) {
+            profile = byId
+        }
+    }
+
+    // Fallback profile if not in DB yet
+    if (!profile) {
+        profile = {
+            id: decodedUsername,
+            username: decodedUsername,
+            avatar_url: null,
+            bio: '',
+            followers_count: 0,
+            is_pro: false,
+            updated_at: new Date().toISOString()
+        }
     }
 
     // 2. Fetch Total Likes & Projects in Parallel

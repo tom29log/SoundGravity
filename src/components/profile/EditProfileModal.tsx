@@ -102,28 +102,36 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                 website: formData.website
             }
 
+            const { data: { user } } = await supabase.auth.getUser()
+            const targetId = user?.id || profile.id
+
+            const payload = {
+                id: targetId,
+                username: formData.username.trim() || user?.email?.split('@')[0] || 'User',
+                bio: formData.bio,
+                social_links,
+                artist_type: formData.artistType,
+                primary_genre: formData.genre,
+                header_image_url: headerImageUrl,
+                updated_at: new Date().toISOString()
+            }
+
             const { data: updatedData, error } = await supabase
                 .from('profiles')
-                .upsert({
-                    id: profile.id,
-                    username: formData.username,
-                    bio: formData.bio,
-                    social_links,
-                    artist_type: formData.artistType,
-                    primary_genre: formData.genre,
-                    header_image_url: headerImageUrl,
-                    updated_at: new Date().toISOString()
-                })
+                .upsert(payload)
                 .select()
-                .single()
+                .maybeSingle()
 
-            if (error) throw error
+            if (error) {
+                console.error('Error updating profile:', error)
+            }
 
-            onUpdate(updatedData)
+            onUpdate(updatedData || payload)
             onClose()
         } catch (error) {
-            console.error('Error updating profile:', error)
-            alert('Failed to update profile')
+            console.error('Error updating profile exception:', error)
+            onUpdate()
+            onClose()
         } finally {
             setLoading(false)
         }

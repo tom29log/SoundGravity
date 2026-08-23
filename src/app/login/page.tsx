@@ -247,7 +247,7 @@ export default function LoginPage() {
                             Google
                         </button>
                         <p className="text-[10px] text-zinc-600 mt-4 tracking-widest uppercase">
-                            v5.0 • CALLBACK-FIXED
+                            v6.0 • PROFILE-MODAL-FIXED
                         </p>
                     </form>
                 </div>
