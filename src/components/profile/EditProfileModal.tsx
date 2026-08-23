@@ -109,36 +109,33 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                 website: formData.website
             }
 
-            const { data: { user } } = await supabase.auth.getUser()
-            const targetId = user?.id || profile?.id
-
             const payload = {
-                id: targetId,
-                username: formData.username.trim() || user?.email?.split('@')[0] || 'User',
+                username: formData.username,
                 bio: formData.bio,
                 social_links,
                 artist_type: formData.artistType,
                 primary_genre: formData.genre,
                 header_image_url: headerImageUrl,
-                updated_at: new Date().toISOString()
             }
 
-            const { data: updatedData, error } = await supabase
-                .from('profiles')
-                .upsert(payload)
-                .select()
-                .maybeSingle()
+            const res = await fetch('/api/profile/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
 
-            if (error) {
-                console.error('Error updating profile:', error)
+            const resData = await res.json()
+
+            if (res.ok && resData.profile) {
+                onUpdate(resData.profile)
+                onClose()
+                window.location.href = `/profile/${encodeURIComponent(resData.profile.username)}`
+            } else {
+                alert(resData.error || 'Failed to save profile changes')
             }
-
-            onUpdate(updatedData || payload)
-            onClose()
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error updating profile exception:', error)
-            onUpdate()
-            onClose()
+            alert('Failed to save profile changes')
         } finally {
             setLoading(false)
         }
