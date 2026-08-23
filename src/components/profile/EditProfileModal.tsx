@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { X, Image as ImageIcon, Upload } from 'lucide-react'
+import { X, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 
 interface EditProfileModalProps {
@@ -11,12 +11,18 @@ interface EditProfileModalProps {
         id: string
         username: string | null
         bio?: string | null
-        social_links: any
-        artist_type?: string[] | null // Updated to array
-        primary_genre?: string[] | null // Updated to array
+        social_links?: any
+        artist_type?: any
+        primary_genre?: any
         header_image_url?: string | null
     }
     onUpdate: (updatedProfile?: any) => void
+}
+
+const ensureArray = (val: any): string[] => {
+    if (Array.isArray(val)) return val.map(v => String(v))
+    if (typeof val === 'string' && val.trim()) return [val.trim()]
+    return []
 }
 
 export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }: EditProfileModalProps) {
@@ -26,18 +32,18 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
     const genres = ['Hip-Hop', 'House', 'EDM', 'Electronic', 'Pop', 'R&B', 'Lo-fi', 'Jazz', 'Rock', 'Classical', 'CCM', 'Drum & Bass', 'Other']
 
     const [formData, setFormData] = useState({
-        username: profile.username || '',
-        bio: profile.bio || '',
-        instagram: profile.social_links?.instagram || '',
-        soundcloud: profile.social_links?.soundcloud || '',
-        website: profile.social_links?.website || '',
-        artistType: profile.artist_type || [], // Default to empty array
-        genre: profile.primary_genre || [], // Default to empty array
-        headerImageUrl: profile.header_image_url || ''
+        username: profile?.username || '',
+        bio: profile?.bio || '',
+        instagram: profile?.social_links?.instagram || '',
+        soundcloud: profile?.social_links?.soundcloud || '',
+        website: profile?.social_links?.website || '',
+        artistType: ensureArray(profile?.artist_type),
+        genre: ensureArray(profile?.primary_genre),
+        headerImageUrl: profile?.header_image_url || ''
     })
 
     const [headerImageFile, setHeaderImageFile] = useState<File | null>(null)
-    const [headerImagePreview, setHeaderImagePreview] = useState<string | null>(profile.header_image_url || null)
+    const [headerImagePreview, setHeaderImagePreview] = useState<string | null>(profile?.header_image_url || null)
     const headerImageInputRef = useRef<HTMLInputElement>(null)
 
     // Sync state only when modal opens
@@ -49,20 +55,20 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                 instagram: profile?.social_links?.instagram || '',
                 soundcloud: profile?.social_links?.soundcloud || '',
                 website: profile?.social_links?.website || '',
-                artistType: profile?.artist_type || [],
-                genre: profile?.primary_genre || [],
+                artistType: ensureArray(profile?.artist_type),
+                genre: ensureArray(profile?.primary_genre),
                 headerImageUrl: profile?.header_image_url || ''
             })
             setHeaderImagePreview(profile?.header_image_url || null)
         }
-    }, [isOpen])
+    }, [isOpen, profile])
 
     if (!isOpen) return null
 
     const handleHeaderImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0]
-            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+            if (file.size > 10 * 1024 * 1024) {
                 alert('File size too large (Max 10MB)')
                 return
             }
@@ -73,8 +79,8 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
 
     const uploadFile = async (file: File) => {
         const fileExt = file.name.split('.').pop()
-        const fileName = `header_${profile.id}_${Math.random().toString(36).substring(2)}.${fileExt}`
-        const filePath = `${fileName}`
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+        const filePath = `headers/${fileName}`
 
         const { error: uploadError } = await supabase.storage
             .from('assets')
@@ -93,7 +99,6 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
         try {
             let headerImageUrl = formData.headerImageUrl
 
-            // Upload new image if selected
             if (headerImageFile) {
                 headerImageUrl = await uploadFile(headerImageFile)
             }
@@ -105,7 +110,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
             }
 
             const { data: { user } } = await supabase.auth.getUser()
-            const targetId = user?.id || profile.id
+            const targetId = user?.id || profile?.id
 
             const payload = {
                 id: targetId,
@@ -139,6 +144,9 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
         }
     }
 
+    const currentArtistTypes = ensureArray(formData.artistType)
+    const currentGenres = ensureArray(formData.genre)
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -169,14 +177,14 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                                     </div>
                                 </>
                             ) : (
-                                <div className="flex flex-col items-center gap-2 text-zinc-500">
-                                    <ImageIcon size={24} />
+                                <div className="text-center text-zinc-400">
+                                    <Upload size={24} className="mx-auto mb-2 opacity-50" />
                                     <span className="text-xs">Click to upload header image</span>
                                 </div>
                             )}
                             <input
-                                type="file"
                                 ref={headerImageInputRef}
+                                type="file"
                                 className="hidden"
                                 accept="image/*"
                                 onChange={handleHeaderImageChange}
@@ -204,7 +212,10 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                         <input
                             type="text"
                             value={formData.username}
-                            onChange={e => setFormData({ ...formData, username: e.target.value })}
+                            onChange={e => {
+                                const val = e.target.value
+                                setFormData(prev => ({ ...prev, username: val }))
+                            }}
                             className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
                             placeholder="Display Name"
                         />
@@ -217,20 +228,21 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {artistTypes.map(type => {
-                                const isSelected = formData.artistType.includes(type)
+                                const isSelected = currentArtistTypes.includes(type)
                                 return (
                                     <button
                                         key={type}
                                         type="button"
                                         onClick={() => {
-                                            let newTypes = [...formData.artistType]
-                                            if (isSelected) {
-                                                newTypes = newTypes.filter(t => t !== type)
+                                            const isSel = currentArtistTypes.includes(type)
+                                            let updated: string[] = []
+                                            if (isSel) {
+                                                updated = currentArtistTypes.filter(t => t !== type)
                                             } else {
-                                                if (newTypes.length >= 2) return // Max 2
-                                                newTypes.push(type)
+                                                if (currentArtistTypes.length >= 2) return
+                                                updated = [...currentArtistTypes, type]
                                             }
-                                            setFormData({ ...formData, artistType: newTypes })
+                                            setFormData(prev => ({ ...prev, artistType: updated }))
                                         }}
                                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${isSelected
                                             ? 'bg-white text-black font-bold'
@@ -251,20 +263,21 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {genres.map(genre => {
-                                const isSelected = formData.genre.includes(genre)
+                                const isSelected = currentGenres.includes(genre)
                                 return (
                                     <button
                                         key={genre}
                                         type="button"
                                         onClick={() => {
-                                            let newGenres = [...formData.genre]
-                                            if (isSelected) {
-                                                newGenres = newGenres.filter(g => g !== genre)
+                                            const isSel = currentGenres.includes(genre)
+                                            let updated: string[] = []
+                                            if (isSel) {
+                                                updated = currentGenres.filter(g => g !== genre)
                                             } else {
-                                                if (newGenres.length >= 2) return // Max 2
-                                                newGenres.push(genre)
+                                                if (currentGenres.length >= 2) return
+                                                updated = [...currentGenres, genre]
                                             }
-                                            setFormData({ ...formData, genre: newGenres })
+                                            setFormData(prev => ({ ...prev, genre: updated }))
                                         }}
                                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${isSelected
                                             ? 'bg-white text-black font-bold'
@@ -280,64 +293,74 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
 
                     <div>
                         <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Bio</label>
-                        <input
-                            type="text"
+                        <textarea
                             value={formData.bio}
-                            onChange={e => setFormData({ ...formData, bio: e.target.value })}
-                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
-                            placeholder="한줄 소개를 입력하세요"
+                            onChange={e => {
+                                const val = e.target.value
+                                setFormData(prev => ({ ...prev, bio: val }))
+                            }}
+                            rows={3}
                             maxLength={100}
+                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors resize-none"
+                            placeholder="한줄 소개를 입력하세요"
                         />
-                        <p className="text-xs text-zinc-600 mt-1">{formData.bio.length}/100</p>
+                        <span className="text-[10px] text-zinc-500 float-right mt-1">{formData.bio.length}/100</span>
                     </div>
 
-                    <div className="space-y-3 pt-4 border-t border-zinc-800">
-                        <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider">Social Links</label>
-
-                        <div className="flex items-center gap-3">
-                            <span className="text-zinc-500 text-sm w-24">Instagram</span>
+                    <div className="pt-4 border-t border-zinc-800">
+                        <label className="block text-xs font-medium text-zinc-400 mb-3 uppercase tracking-wider">Social Links</label>
+                        <div className="space-y-3">
                             <input
                                 type="text"
                                 value={formData.instagram}
-                                onChange={e => setFormData({ ...formData, instagram: e.target.value })}
-                                className="flex-1 bg-black/50 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white transition-colors"
-                                placeholder="https://instagram.com/..."
+                                onChange={e => {
+                                    const val = e.target.value
+                                    setFormData(prev => ({ ...prev, instagram: val }))
+                                }}
+                                className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-white transition-colors"
+                                placeholder="Instagram Username (e.g. soundgravity)"
                             />
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <span className="text-zinc-500 text-sm w-24">SoundCloud</span>
                             <input
                                 type="text"
                                 value={formData.soundcloud}
-                                onChange={e => setFormData({ ...formData, soundcloud: e.target.value })}
-                                className="flex-1 bg-black/50 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white transition-colors"
-                                placeholder="https://soundcloud.com/..."
+                                onChange={e => {
+                                    const val = e.target.value
+                                    setFormData(prev => ({ ...prev, soundcloud: val }))
+                                }}
+                                className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-white transition-colors"
+                                placeholder="SoundCloud Profile URL"
                             />
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            <span className="text-zinc-500 text-sm w-24">Website</span>
                             <input
                                 type="text"
                                 value={formData.website}
-                                onChange={e => setFormData({ ...formData, website: e.target.value })}
-                                className="flex-1 bg-black/50 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-white transition-colors"
-                                placeholder="Your personal site..."
+                                onChange={e => {
+                                    const val = e.target.value
+                                    setFormData(prev => ({ ...prev, website: val }))
+                                }}
+                                className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-white transition-colors"
+                                placeholder="Personal Website URL"
                             />
                         </div>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full mt-6 bg-white text-black font-bold py-3 rounded-xl hover:bg-zinc-200 transition-colors disabled:opacity-50"
-                    >
-                        {loading ? 'Saving...' : 'Save Changes'}
-                    </button>
+                    <div className="pt-4 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="px-6 py-2 bg-white text-black font-medium text-sm rounded-full hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                        >
+                            {loading ? 'Saving...' : 'Save Changes'}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
     )
 }
-
