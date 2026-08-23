@@ -247,7 +247,7 @@ export default function LoginPage() {
                             Google
                         </button>
                         <p className="text-[10px] text-zinc-600 mt-4 tracking-widest uppercase">
-                            v3.0 • HARDCODED-ARNDQ
+                            v4.0 • vkqrnkmavdleekczllpe
                         </p>
                     </form>
                 </div>
