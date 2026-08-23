@@ -40,20 +40,22 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
     const [headerImagePreview, setHeaderImagePreview] = useState<string | null>(profile.header_image_url || null)
     const headerImageInputRef = useRef<HTMLInputElement>(null)
 
-    // Sync state with profile prop
+    // Sync state only when modal opens
     useEffect(() => {
-        setFormData({
-            username: profile.username || '',
-            bio: profile.bio || '',
-            instagram: profile.social_links?.instagram || '',
-            soundcloud: profile.social_links?.soundcloud || '',
-            website: profile.social_links?.website || '',
-            artistType: profile.artist_type || [],
-            genre: profile.primary_genre || [],
-            headerImageUrl: profile.header_image_url || ''
-        })
-        setHeaderImagePreview(profile.header_image_url || null)
-    }, [profile])
+        if (isOpen) {
+            setFormData({
+                username: profile?.username || '',
+                bio: profile?.bio || '',
+                instagram: profile?.social_links?.instagram || '',
+                soundcloud: profile?.social_links?.soundcloud || '',
+                website: profile?.social_links?.website || '',
+                artistType: profile?.artist_type || [],
+                genre: profile?.primary_genre || [],
+                headerImageUrl: profile?.header_image_url || ''
+            })
+            setHeaderImagePreview(profile?.header_image_url || null)
+        }
+    }, [isOpen])
 
     if (!isOpen) return null
 
