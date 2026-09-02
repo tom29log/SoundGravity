@@ -38,6 +38,8 @@ export interface Project {
     stems?: Record<string, string> | null
     bpm?: number
     is_hidden?: boolean
+    likes?: number
+    plays?: number
 }
 
 export interface Report {

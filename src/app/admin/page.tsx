@@ -325,11 +325,22 @@ export default function AdminPage() {
                 <EditProfileModal
                     isOpen={isEditProfileOpen}
                     onClose={() => setIsEditProfileOpen(false)}
-                    profile={profile || {
+                    profile={profile || ({
                         id: user.id,
                         username: '',
-                        social_links: {}
-                    }}
+                        social_links: {},
+                        bio: '',
+                        avatar_url: null,
+                        header_url: null,
+                        header_image_url: null,
+                        artist_type: [],
+                        primary_genre: [],
+                        followers_count: 0,
+                        is_pro: false,
+                        lemonsqueezy_customer_id: null,
+                        lemonsqueezy_subscription_id: null,
+                        updated_at: new Date().toISOString()
+                    } as any)}
                     onUpdate={handleProfileUpdate}
                 />
             )}
