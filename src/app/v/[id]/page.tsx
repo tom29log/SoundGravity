@@ -1,33 +1,18 @@
-import { createClient } from '@/lib/supabase'
+import { createPublicClient } from '@/lib/supabase-public'
 import InteractiveViewer from '@/components/InteractiveViewer'
 import ProjectDetailView from '@/components/ProjectDetailView'
 import { Metadata } from 'next'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
 
-// Helper to create server client just for fetching data
-// We can use createBrowserClient logic or just a simple fetch if public,
-// but let's stick to consistent supabase pattern.
-// Note: We need a server-side client creator.
+export const revalidate = 0
 
 async function getProject(id: string) {
-    // Create a plain client for public data fetching
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() { return [] },
-                setAll() { }
-            },
-        }
-    )
+    const supabase = createPublicClient()
 
     const { data: project, error } = await supabase
         .from('projects')
         .select('*')
         .eq('id', id)
-        .single()
+        .maybeSingle()
 
     if (error) {
         console.error("Error fetching project:", error)
@@ -44,10 +29,7 @@ type Props = {
 export async function generateMetadata(
     { params }: Props
 ): Promise<Metadata> {
-    // read route params
     const { id } = await params
-
-    // fetch data
     const project = await getProject(id)
 
     if (!project) return { title: 'Project Not Found' }
