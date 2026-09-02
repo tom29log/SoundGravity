@@ -11,28 +11,69 @@ export function useRealtimeComments(projectId: string) {
 
     useEffect(() => {
         const fetchComments = async () => {
-            const { data, error } = await supabase
-                .from('comments')
-                .select(`
-                    *,
-                    profiles (
-                        username,
-                        avatar_url
-                    )
-                `)
-                .eq('project_id', projectId)
-                .order('created_at', { ascending: true })
+            try {
+                // 1. Try relational query
+                const { data: relationalData, error } = await supabase
+                    .from('comments')
+                    .select(`
+                        *,
+                        profiles (
+                            username,
+                            avatar_url
+                        )
+                    `)
+                    .eq('project_id', projectId)
+                    .order('created_at', { ascending: true })
 
-            if (error) {
-                console.error('Error fetching comments:', error)
-            } else {
-                const formatted = (data || []).map((c: any) => ({
-                    ...c,
-                    meta: { timestamp: c.timestamp_seconds ?? c.meta?.timestamp }
-                }))
-                setComments(formatted as Comment[])
+                if (!error && relationalData && relationalData.length > 0) {
+                    const formatted = relationalData.map((c: any) => ({
+                        ...c,
+                        meta: { timestamp: c.timestamp_seconds ?? c.meta?.timestamp }
+                    }))
+                    setComments(formatted as Comment[])
+                    setLoading(false)
+                    return
+                }
+
+                // 2. Fallback query if FK relationship is pending in PostgREST
+                const { data: rawComments } = await supabase
+                    .from('comments')
+                    .select('*')
+                    .eq('project_id', projectId)
+                    .order('created_at', { ascending: true })
+
+                if (rawComments && rawComments.length > 0) {
+                    const userIds = Array.from(new Set(rawComments.map(c => c.user_id).filter(Boolean)))
+                    let profileMap: Record<string, any> = {}
+
+                    if (userIds.length > 0) {
+                        const { data: profiles } = await supabase
+                            .from('profiles')
+                            .select('id, username, avatar_url')
+                            .in('id', userIds)
+
+                        if (profiles) {
+                            profiles.forEach(p => {
+                                profileMap[p.id] = p
+                            })
+                        }
+                    }
+
+                    const formatted = rawComments.map((c: any) => ({
+                        ...c,
+                        meta: { timestamp: c.timestamp_seconds ?? c.meta?.timestamp },
+                        profiles: profileMap[c.user_id] || { username: 'User', avatar_url: null }
+                    }))
+
+                    setComments(formatted as Comment[])
+                } else {
+                    setComments([])
+                }
+            } catch (err) {
+                console.error('Error fetching comments:', err)
+            } finally {
+                setLoading(false)
             }
-            setLoading(false)
         }
 
         fetchComments()
@@ -62,7 +103,11 @@ export function useRealtimeComments(projectId: string) {
                         profiles: profile as Profile
                     }
 
-                    setComments(prev => [...prev, commentWithProfile])
+                    setComments(prev => {
+                        // Prevent duplicate if already added optimistically
+                        if (prev.some(c => c.id === newComment.id)) return prev
+                        return [...prev, commentWithProfile]
+                    })
                 }
             )
             .subscribe()
@@ -85,14 +130,38 @@ export function useRealtimeComments(projectId: string) {
             timestamp_seconds
         }
 
-        const { error } = await supabase
+        const { data: insertedComment, error } = await supabase
             .from('comments')
             .insert(payload)
+            .select('*')
+            .maybeSingle()
 
         if (error) {
             console.error('Error inserting comment:', error)
             throw error
         }
+
+        // Fetch user profile for instant display
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', user.id)
+            .maybeSingle()
+
+        const optimisticComment: Comment = {
+            id: insertedComment?.id || Math.random().toString(),
+            project_id: projectId,
+            user_id: user.id,
+            content,
+            created_at: new Date().toISOString(),
+            meta: { timestamp: timestamp_seconds },
+            profiles: profile || { username: user.email?.split('@')[0] || 'User', avatar_url: null }
+        } as any
+
+        setComments(prev => {
+            if (prev.some(c => c.id === optimisticComment.id)) return prev
+            return [...prev, optimisticComment]
+        })
     }
 
     return { comments, loading, addComment }
