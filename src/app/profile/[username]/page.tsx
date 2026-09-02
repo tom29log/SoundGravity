@@ -1,13 +1,12 @@
-import { notFound } from 'next/navigation'
-import ShareProfileButton from '@/components/profile/ShareProfileButton'
 import { Metadata } from 'next'
 import ProfileContent from '@/components/profile/ProfileContent'
 import Loading from './loading'
 import { Suspense } from 'react'
 import { getProfile } from '@/utils/data-fetchers'
 import { createPublicClient } from '@/lib/supabase-public'
+import ShareProfileButton from '@/components/profile/ShareProfileButton'
 
-export const revalidate = 60
+export const revalidate = 0
 
 interface Props {
     params: Promise<{ username: string }>
@@ -70,29 +69,26 @@ export default async function ProfilePage({ params }: Props) {
         }
     }
 
-    // 2. Fetch Total Likes & Projects in Parallel
-    const [likesResult, projectsResult] = await Promise.all([
-        supabase.rpc('get_user_total_likes', { target_user_id: profile.id }),
-        supabase.from('projects')
-            .select('id, title, image_url, created_at, views, is_ai_generated, user_id, genre, stems')
-            .eq('user_id', profile.id)
-            .order('created_at', { ascending: false })
-    ])
+    // 2. Fetch Projects and calculate Total Likes
+    const { data: projectsData } = await supabase
+        .from('projects')
+        .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false })
 
-    const totalLikes = Number(likesResult.data) || 0
-    const projects = (projectsResult.data as any) || []
+    const projects = (projectsData as any) || []
+    const totalLikes = projects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
 
     return (
         <main className="min-h-screen bg-black text-white relative">
             <ShareProfileButton />
 
-            {/* Background Aesthetic - Renders INSTANTLY (0ms Blocking) */}
+            {/* Background Aesthetic */}
             <div className="fixed inset-0 pointer-events-none">
                 <div className="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] bg-zinc-800/20 blur-[120px] rounded-full mix-blend-screen" />
                 <div className="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] bg-zinc-800/20 blur-[120px] rounded-full mix-blend-screen" />
             </div>
 
-            {/* Fully SSR'd Content - No Loading Skeleton on client-side route transitions (Next.js automatically suspends the route until this SSR completes) */}
             <Suspense fallback={<Loading />}>
                 <ProfileContent profile={profile} totalLikes={totalLikes} projects={projects} />
             </Suspense>
