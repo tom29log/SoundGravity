@@ -54,26 +54,26 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
         const fetchLikeStatus = async () => {
             const { data: { user } } = await supabase.auth.getUser()
 
-            // Get count
-            const { count } = await supabase
-                .from('likes')
-                .select('*', { count: 'exact', head: true })
-                .eq('project_id', project.id)
+            // 1. Initial count from project props
+            setLikeCount(project.likes || 0)
 
-            setLikeCount(count || 0)
-
+            // 2. Fetch like status if logged in
             if (user) {
-                const { data } = await supabase
-                    .from('likes')
-                    .select('project_id')
-                    .eq('project_id', project.id)
-                    .eq('user_id', user.id)
-                    .maybeSingle()
-                setLiked(!!data)
+                try {
+                    const { data } = await supabase
+                        .from('likes')
+                        .select('project_id')
+                        .eq('project_id', project.id)
+                        .eq('user_id', user.id)
+                        .maybeSingle()
+                    setLiked(!!data)
+                } catch {
+                    // Ignore if likes table is pending
+                }
             }
         }
         fetchLikeStatus()
-    }, [project.id])
+    }, [project.id, project.likes])
 
     const toggleLike = async (e: React.MouseEvent) => {
         e.preventDefault()
@@ -81,37 +81,37 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
 
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
-            // Ideally redirect to login or show toast
             alert('로그인이 필요합니다.')
             return
         }
 
-        // Optimistic update
-        const newLiked = !liked
-        setLiked(newLiked)
-        setLikeCount(prev => newLiked ? prev + 1 : prev - 1)
+        // Optimistic UI update (0.001s response!)
+        const nextLikedState = !liked
+        setLiked(nextLikedState)
+        setLikeCount(prev => nextLikedState ? prev + 1 : Math.max(0, prev - 1))
 
         try {
-            if (newLiked) {
-                const { error } = await supabase
-                    .from('likes')
-                    .insert({ user_id: user.id, project_id: project.id })
+            const res = await fetch('/api/like/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ projectId: project.id })
+            })
 
-                if (error) throw error
+            const data = await res.json()
+            if (res.ok && data.liked !== undefined) {
+                setLiked(data.liked)
+                if (data.likesCount !== undefined) {
+                    setLikeCount(data.likesCount)
+                }
             } else {
-                const { error } = await supabase
-                    .from('likes')
-                    .delete()
-                    .eq('project_id', project.id)
-                    .eq('user_id', user.id)
-
-                if (error) throw error
+                // Revert on error
+                setLiked(!nextLikedState)
+                setLikeCount(prev => nextLikedState ? Math.max(0, prev - 1) : prev + 1)
             }
         } catch (error) {
             console.error('Error toggling like:', error)
-            // Revert state
-            setLiked(!newLiked)
-            setLikeCount(prev => newLiked ? prev - 1 : prev + 1)
+            setLiked(!nextLikedState)
+            setLikeCount(prev => nextLikedState ? Math.max(0, prev - 1) : prev + 1)
         }
     }
 
