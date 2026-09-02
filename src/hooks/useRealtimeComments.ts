@@ -25,11 +25,12 @@ export function useRealtimeComments(projectId: string) {
 
             if (error) {
                 console.error('Error fetching comments:', error)
-                // ALERT for debugging - remove after fix
-                // alert(`Comment Error: ${error.message}`) 
-                // Only log for now, as alerts are intrusive.
             } else {
-                setComments((data as unknown) as Comment[] || [])
+                const formatted = (data || []).map((c: any) => ({
+                    ...c,
+                    meta: { timestamp: c.timestamp_seconds ?? c.meta?.timestamp }
+                }))
+                setComments(formatted as Comment[])
             }
             setLoading(false)
         }
@@ -47,16 +48,17 @@ export function useRealtimeComments(projectId: string) {
                     filter: `project_id=eq.${projectId}`
                 },
                 async (payload) => {
-                    const newComment = payload.new as Comment
+                    const newComment = payload.new as any
 
                     const { data: profile } = await supabase
                         .from('profiles')
                         .select('username, avatar_url')
                         .eq('id', newComment.user_id)
-                        .single()
+                        .maybeSingle()
 
                     const commentWithProfile = {
                         ...newComment,
+                        meta: { timestamp: newComment.timestamp_seconds ?? newComment.meta?.timestamp },
                         profiles: profile as Profile
                     }
 
@@ -74,16 +76,23 @@ export function useRealtimeComments(projectId: string) {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error('User not logged in')
 
+        const timestamp_seconds = meta?.timestamp !== undefined ? Number(meta.timestamp) : 0
+
+        const payload: any = {
+            project_id: projectId,
+            user_id: user.id,
+            content,
+            timestamp_seconds
+        }
+
         const { error } = await supabase
             .from('comments')
-            .insert({
-                project_id: projectId,
-                user_id: user.id,
-                content,
-                meta
-            })
+            .insert(payload)
 
-        if (error) throw error
+        if (error) {
+            console.error('Error inserting comment:', error)
+            throw error
+        }
     }
 
     return { comments, loading, addComment }
