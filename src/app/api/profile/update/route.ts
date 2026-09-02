@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 export async function POST(request: Request) {
     try {
         const body = await request.json()
-        const { username, bio, social_links, artist_type, primary_genre, header_image_url } = body
+        const { username, bio, avatar_url, social_links, artist_type, primary_genre, header_image_url } = body
 
         // 1. Get current logged in user from session
         const supabaseServer = await createServerSupabaseClient()
@@ -17,14 +17,22 @@ export async function POST(request: Request) {
 
         const adminSupabase = createAdminSupabaseClient()
 
+        // Fetch existing profile to preserve unchanged fields during partial updates
+        const { data: existingProfile } = await adminSupabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .maybeSingle()
+
         const payload = {
             id: user.id,
-            username: (username || user.email?.split('@')[0] || 'User').trim(),
-            bio: bio || '',
-            social_links: social_links || {},
-            artist_type: Array.isArray(artist_type) ? artist_type : [],
-            primary_genre: Array.isArray(primary_genre) ? primary_genre : [],
-            header_image_url: header_image_url || null,
+            username: (username || existingProfile?.username || user.email?.split('@')[0] || 'User').trim(),
+            avatar_url: avatar_url !== undefined ? avatar_url : (existingProfile?.avatar_url || null),
+            bio: bio !== undefined ? bio : (existingProfile?.bio || ''),
+            social_links: social_links !== undefined ? social_links : (existingProfile?.social_links || {}),
+            artist_type: artist_type !== undefined ? (Array.isArray(artist_type) ? artist_type : []) : (existingProfile?.artist_type || []),
+            primary_genre: primary_genre !== undefined ? (Array.isArray(primary_genre) ? primary_genre : []) : (existingProfile?.primary_genre || []),
+            header_image_url: header_image_url !== undefined ? header_image_url : (existingProfile?.header_image_url || null),
             updated_at: new Date().toISOString()
         }
 
@@ -37,12 +45,6 @@ export async function POST(request: Request) {
 
         if (upsertError) {
             console.error('Profile update upsert error:', upsertError)
-            if (upsertError.message.includes('schema cache') || upsertError.message.includes('profiles')) {
-                return NextResponse.json({ 
-                    error: '수파베이스 DB에 profiles 테이블 생성이 필요합니다. SQL 스크립트를 수파베이스 대시보드에서 1회 실행(Run)해 주세요.', 
-                    profile: payload 
-                }, { status: 200 })
-            }
             return NextResponse.json({ error: upsertError.message, profile: payload }, { status: 200 })
         }
 
