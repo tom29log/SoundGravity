@@ -319,21 +319,36 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
                 }
             }
 
-            // 3. Insert into DB (Same as before)
+            // 3. Insert into DB (With automatic schema fallback)
             const { data: { user } } = await supabase.auth.getUser()
 
-            const { error } = await supabase.from('projects').insert({
+            const fullPayload: any = {
                 title,
                 image_url: imageUrl,
                 audio_url: audioUrl,
-                stems: uploadedStems, // Add stems data
+                stems: uploadedStems,
                 target_url: targetUrl || null,
                 user_id: user?.id,
                 genre: genre || null,
                 is_ai_generated: isAiGenerated,
                 ai_tool_used: isAiGenerated ? aiTool : null,
                 copyright_confirmed: copyrightConfirmed
-            })
+            }
+
+            let { error } = await supabase.from('projects').insert(fullPayload)
+
+            if (error && (error.message.includes('schema cache') || error.message.includes('column'))) {
+                console.warn('Optional columns missing in projects table, executing essential insert fallback:', error.message)
+                const essentialPayload = {
+                    title,
+                    image_url: imageUrl,
+                    audio_url: audioUrl,
+                    user_id: user?.id,
+                    genre: genre || null
+                }
+                const fallbackRes = await supabase.from('projects').insert(essentialPayload)
+                error = fallbackRes.error
+            }
 
             if (error) throw error
 
