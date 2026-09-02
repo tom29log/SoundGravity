@@ -336,13 +336,15 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                 return (
                     <div
                         key={comment.id}
-                        className="absolute z-30 group"
+                        className="absolute z-50 pointer-events-auto"
                         style={{ left: `${x}%`, top: `${y}%` }}
                     >
                         {/* Pin Point */}
-                        <div
-                            className="w-5 h-5 -ml-2.5 -mt-2.5 rounded-full border-2 border-[#39FF14] bg-[#39FF14]/30 shadow-[0_0_12px_#39FF14] cursor-pointer hover:scale-125 transition-transform animate-pulse"
+                        <button
+                            type="button"
+                            className="relative -ml-3.5 -mt-3.5 w-7 h-7 rounded-full border-2 border-[#39FF14] bg-[#39FF14]/40 shadow-[0_0_20px_#39FF14] cursor-pointer hover:scale-125 transition-all flex items-center justify-center animate-bounce"
                             onClick={(e) => {
+                                e.preventDefault()
                                 e.stopPropagation()
                                 if (isActive) {
                                     setActivePinId(null)
@@ -351,13 +353,17 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                                 }
                                 if (comment.meta?.audioState) restoreAudioState(comment.meta.audioState)
                             }}
-                        />
+                        >
+                            <span className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_#ffffff]" />
+                        </button>
 
                         {/* Tooltip */}
-                        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 transition-opacity pointer-events-none ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                            <div className="bg-black/90 backdrop-blur-md border border-[#39FF14]/60 rounded-xl p-2.5 text-xs text-white shadow-2xl">
-                                <p className="font-bold text-[#39FF14] mb-1">{comment.profiles?.username || 'User'}</p>
-                                <p className="leading-relaxed">{content || 'Pin Comment'}</p>
+                        <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-52 transition-all ${isActive ? 'opacity-100 scale-100 z-50' : 'opacity-90 hover:opacity-100 z-40'}`}>
+                            <div className="bg-black/95 backdrop-blur-md border border-[#39FF14] rounded-xl p-3 text-xs text-white shadow-[0_0_20px_rgba(57,255,20,0.4)]">
+                                <p className="font-bold text-[#39FF14] mb-1 flex items-center gap-1">
+                                    📍 {comment.profiles?.username || 'User'}
+                                </p>
+                                <p className="leading-relaxed font-medium">{content || 'Pin Comment'}</p>
                             </div>
                         </div>
                     </div>
