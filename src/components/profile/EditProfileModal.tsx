@@ -79,6 +79,28 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
     }
 
     const uploadFile = async (file: File) => {
+        try {
+            const res = await fetch('/api/upload-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    contentType: file.type || 'image/jpeg'
+                })
+            })
+            if (res.ok) {
+                const { uploadUrl, publicUrl } = await res.json()
+                const upload = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: { 'Content-Type': file.type || 'image/jpeg' }
+                })
+                if (upload.ok) return publicUrl
+            }
+        } catch (r2Error) {
+            console.warn('R2 upload failed in EditProfileModal, fallback to Supabase:', r2Error)
+        }
+
         const fileExt = file.name.split('.').pop()
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
         const filePath = `headers/${fileName}`
