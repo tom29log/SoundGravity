@@ -57,39 +57,54 @@ export default function AdminPage() {
         if (!e.target.files || e.target.files.length === 0) return
 
         const file = e.target.files[0]
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
-        const filePath = `${fileName}`
 
-        const { error: uploadError } = await supabase.storage
-            .from('avatars')
-            .upload(filePath, file)
-
-        if (uploadError) {
-            alert('Error uploading avatar')
-            return
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('avatars')
-            .getPublicUrl(filePath)
-
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-            // Use upsert to create profile if it doesn't exist
-            const { data: updatedProfile, error } = await supabase
-                .from('profiles')
-                .upsert({
-                    id: user.id,
-                    avatar_url: publicUrl,
-                    updated_at: new Date().toISOString()
+        try {
+            let publicUrl = ''
+            const res = await fetch('/api/upload-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    contentType: file.type || 'image/jpeg'
                 })
-                .select()
-                .single()
+            })
 
-            if (!error && updatedProfile) {
-                setProfile(updatedProfile)
+            if (res.ok) {
+                const { uploadUrl, publicUrl: r2Url } = await res.json()
+                const upload = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: { 'Content-Type': file.type || 'image/jpeg' }
+                })
+                if (upload.ok) publicUrl = r2Url
             }
+
+            if (!publicUrl) {
+                const fileExt = file.name.split('.').pop()
+                const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+                const filePath = `${fileName}`
+
+                const { error: uploadError } = await supabase.storage
+                    .from('avatars')
+                    .upload(filePath, file)
+
+                if (uploadError) throw uploadError
+                publicUrl = supabase.storage.from('avatars').getPublicUrl(filePath).data.publicUrl
+            }
+
+            const updateRes = await fetch('/api/profile/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ avatar_url: publicUrl })
+            })
+
+            const updateData = await updateRes.json()
+            if (updateData.profile) {
+                setProfile(updateData.profile)
+            }
+        } catch (error) {
+            console.error('Error uploading avatar:', error)
+            alert('Failed to upload avatar')
         }
     }
 
