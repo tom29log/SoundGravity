@@ -317,14 +317,21 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
 
 
 
-            {/* Pins Layer (Only Visible if FileMode is TRUE) */}
-            {pinMode && comments.map((comment) => {
-                const x = comment.meta?.x
-                const y = comment.meta?.y
-                const audioState = comment.meta?.audioState
-                const isActive = activePinId === comment.id
+            {/* Pins Layer (Always visible when pin coordinates exist) */}
+            {comments.map((comment) => {
+                let x = comment.meta?.x
+                let y = comment.meta?.y
+                let content = comment.content || ''
 
-                if (x === undefined || y === undefined) return null
+                const match = content.match(/\[PIN:([\d.]+),([\d.]+)\]/)
+                if (match) {
+                    x = Number(match[1])
+                    y = Number(match[2])
+                    content = content.replace(/\[PIN:[\d.=>,]+\]/g, '').trim()
+                }
+
+                if (x === undefined || y === undefined || isNaN(x) || isNaN(y)) return null
+                const isActive = activePinId === comment.id
 
                 return (
                     <div
@@ -334,7 +341,7 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                     >
                         {/* Pin Point */}
                         <div
-                            className="w-4 h-4 -ml-2 -mt-2 rounded-full border-2 border-[#39FF14] bg-[#39FF14]/20 shadow-[0_0_10px_#39FF14] cursor-pointer hover:scale-125 transition-transform animate-pulse"
+                            className="w-5 h-5 -ml-2.5 -mt-2.5 rounded-full border-2 border-[#39FF14] bg-[#39FF14]/30 shadow-[0_0_12px_#39FF14] cursor-pointer hover:scale-125 transition-transform animate-pulse"
                             onClick={(e) => {
                                 e.stopPropagation()
                                 if (isActive) {
@@ -342,15 +349,15 @@ export default function InteractiveViewer({ project, onTimeUpdate, pinMode = fal
                                 } else {
                                     setActivePinId(comment.id)
                                 }
-                                if (audioState) restoreAudioState(audioState)
+                                if (comment.meta?.audioState) restoreAudioState(comment.meta.audioState)
                             }}
                         />
 
                         {/* Tooltip */}
                         <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 transition-opacity pointer-events-none ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                            <div className="bg-black/80 backdrop-blur-md border border-[#39FF14]/50 rounded p-2 text-xs text-white">
-                                <p className="font-bold text-[#39FF14] mb-1">{comment.profiles?.username}</p>
-                                <p>{comment.content}</p>
+                            <div className="bg-black/90 backdrop-blur-md border border-[#39FF14]/60 rounded-xl p-2.5 text-xs text-white shadow-2xl">
+                                <p className="font-bold text-[#39FF14] mb-1">{comment.profiles?.username || 'User'}</p>
+                                <p className="leading-relaxed">{content || 'Pin Comment'}</p>
                             </div>
                         </div>
                     </div>

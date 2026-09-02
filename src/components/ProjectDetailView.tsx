@@ -16,17 +16,13 @@ export default function ProjectDetailView({ project, autoPlay = true }: { projec
     const { showToast } = useToast()
 
     const handlePinCreate = async (x: number, y: number, audioState: any) => {
-        // When pin is created, we want to prompt user for comment.
-        // Simplest UX: Open Comments panel with pre-filled Meta?
-        // Or show a small popup dialog?
-        // Let's use `window.prompt` for MVP rapid prototype, or just force open the panel.
-
         const content = window.prompt("Leave a pin comment:")
-        if (content) {
+        if (content && content.trim()) {
             try {
-                await addComment(content, { x, y, audioState, timestamp: currentTime })
+                const pinContent = `[PIN:${x.toFixed(1)},${y.toFixed(1)}] ${content.trim()}`
+                await addComment(pinContent, { x, y, audioState, timestamp: currentTime })
                 showToast("Pin dropped!", "success")
-                setPinMode(false) // Exit pin mode
+                setPinMode(false)
             } catch (e: any) {
                 showToast(e.message === 'User not logged in' ? 'Please login to pin' : "Failed to pin", 'error')
             }
