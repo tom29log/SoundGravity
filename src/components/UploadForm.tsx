@@ -118,20 +118,26 @@ export default function UploadForm({ onUploadSuccess }: UploadFormProps) {
     }
 
     const uploadFile = async (file: File) => {
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
-        const filePath = `${fileName}`
+        try {
+            // Use R2 Storage first (Fast, no Supabase bucket dependency)
+            return await uploadToR2(file)
+        } catch (r2Error) {
+            console.warn('R2 upload fallback to Supabase assets bucket:', r2Error)
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
+            const filePath = `${fileName}`
 
-        const { error: uploadError } = await supabase.storage
-            .from('assets')
-            .upload(filePath, file)
+            const { error: uploadError } = await supabase.storage
+                .from('assets')
+                .upload(filePath, file)
 
-        if (uploadError) {
-            throw uploadError
+            if (uploadError) {
+                throw uploadError
+            }
+
+            const { data } = supabase.storage.from('assets').getPublicUrl(filePath)
+            return data.publicUrl
         }
-
-        const { data } = supabase.storage.from('assets').getPublicUrl(filePath)
-        return data.publicUrl
     }
 
     // Auto Stem Separation (Async Polling)

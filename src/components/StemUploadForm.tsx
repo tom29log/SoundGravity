@@ -67,6 +67,28 @@ export default function StemUploadForm({ onUploadSuccess }: StemUploadFormProps)
     }
 
     const uploadToStorage = async (file: File, bucket: string, path: string) => {
+        try {
+            const res = await fetch('/api/upload-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    contentType: file.type || 'application/octet-stream'
+                })
+            })
+            if (res.ok) {
+                const { uploadUrl, publicUrl } = await res.json()
+                const upload = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: { 'Content-Type': file.type || 'application/octet-stream' }
+                })
+                if (upload.ok) return publicUrl
+            }
+        } catch (r2Error) {
+            console.warn('R2 upload failed in StemUploadForm, falling back to Supabase storage:', r2Error)
+        }
+
         const { data, error } = await supabase.storage
             .from(bucket)
             .upload(path, file)
