@@ -1,35 +1,33 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Upload } from 'lucide-react'
+import { Profile } from '@/types'
 import { createClient } from '@/lib/supabase'
 
 interface EditProfileModalProps {
     isOpen: boolean
     onClose: () => void
-    profile: {
-        id: string
-        username: string | null
-        bio?: string | null
-        social_links?: any
-        artist_type?: any
-        primary_genre?: any
-        header_image_url?: string | null
-    }
-    onUpdate: (updatedProfile?: any) => void
+    profile: Profile | null
+    onUpdate: (updatedProfile: Profile) => void
 }
 
-const ensureArray = (val: any): string[] => {
-    if (Array.isArray(val)) return val.map(v => String(v))
-    if (typeof val === 'string' && val.trim()) return [val.trim()]
+const ensureArray = (value: any): string[] => {
+    if (Array.isArray(value)) return value
+    if (typeof value === 'string') {
+        try {
+            const parsed = JSON.parse(value)
+            return Array.isArray(parsed) ? parsed : []
+        } catch {
+            return []
+        }
+    }
     return []
 }
 
 export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }: EditProfileModalProps) {
     const supabase = createClient()
     const [loading, setLoading] = useState(false)
-    const artistTypes = ['DJ', 'Producer', 'Player', 'Singer', 'Creator', 'Celebrity', 'Other']
-    const genres = ['Hip-Hop', 'House', 'EDM', 'Electronic', 'Pop', 'R&B', 'Lo-fi', 'Jazz', 'Rock', 'Classical', 'CCM', 'Drum & Bass', 'Other']
 
     const [formData, setFormData] = useState({
         username: profile?.username || '',
@@ -42,11 +40,14 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
         headerImageUrl: profile?.header_image_url || ''
     })
 
+    const [avatarImageFile, setAvatarImageFile] = useState<File | null>(null)
+    const [avatarImagePreview, setAvatarImagePreview] = useState<string | null>(profile?.avatar_url || null)
+    const avatarImageInputRef = useRef<HTMLInputElement>(null)
+
     const [headerImageFile, setHeaderImageFile] = useState<File | null>(null)
     const [headerImagePreview, setHeaderImagePreview] = useState<string | null>(profile?.header_image_url || null)
     const headerImageInputRef = useRef<HTMLInputElement>(null)
 
-    // Sync state only when modal opens
     useEffect(() => {
         if (isOpen) {
             setFormData({
@@ -59,12 +60,25 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                 genre: ensureArray(profile?.primary_genre),
                 headerImageUrl: profile?.header_image_url || ''
             })
+            setAvatarImagePreview(profile?.avatar_url || null)
             setHeaderImagePreview(profile?.header_image_url || null)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen])
 
     if (!isOpen) return null
+
+    const handleAvatarImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0]
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size too large (Max 10MB)')
+                return
+            }
+            setAvatarImageFile(file)
+            setAvatarImagePreview(URL.createObjectURL(file))
+        }
+    }
 
     const handleHeaderImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -121,6 +135,11 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
 
         try {
             let headerImageUrl = formData.headerImageUrl
+            let avatarUrl = profile?.avatar_url || ''
+
+            if (avatarImageFile) {
+                avatarUrl = await uploadFile(avatarImageFile)
+            }
 
             if (headerImageFile) {
                 headerImageUrl = await uploadFile(headerImageFile)
@@ -135,6 +154,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
             const payload = {
                 username: formData.username,
                 bio: formData.bio,
+                avatar_url: avatarUrl,
                 social_links,
                 artist_type: formData.artistType,
                 primary_genre: formData.genre,
@@ -188,6 +208,41 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                 <h2 className="text-xl font-bold mb-6 text-white">Edit Profile</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Avatar Image Upload */}
+                    <div>
+                        <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">Profile Avatar Picture</label>
+                        <div className="flex items-center gap-4">
+                            <div
+                                onClick={() => avatarImageInputRef.current?.click()}
+                                className="w-16 h-16 rounded-full bg-zinc-800 border-2 border-dashed border-zinc-700 flex items-center justify-center cursor-pointer hover:border-zinc-500 hover:bg-zinc-800/80 transition-all relative overflow-hidden group flex-shrink-0"
+                            >
+                                {avatarImagePreview ? (
+                                    <>
+                                        <img src={avatarImagePreview} alt="Avatar Preview" className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Upload size={16} className="text-white" />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center text-zinc-400">
+                                        <Upload size={16} className="mx-auto opacity-50" />
+                                    </div>
+                                )}
+                                <input
+                                    ref={avatarImageInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleAvatarImageChange}
+                                />
+                            </div>
+                            <div className="text-xs text-zinc-400">
+                                <p className="font-semibold text-white">Upload Avatar</p>
+                                <p className="text-[11px] text-zinc-500">JPG, PNG or WEBP (Max 10MB)</p>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Header Image Upload */}
                     <div>
                         <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">Header Image</label>
@@ -218,64 +273,46 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                                 onChange={handleHeaderImageChange}
                             />
                         </div>
-                        {headerImagePreview && (
-                            <button
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    setHeaderImageFile(null)
-                                    setHeaderImagePreview(null)
-                                    setFormData(prev => ({ ...prev, headerImageUrl: '' }))
-                                    if (headerImageInputRef.current) headerImageInputRef.current.value = ''
-                                }}
-                                className="text-xs text-red-500 mt-2 hover:underline"
-                            >
-                                Remove Header Image
-                            </button>
-                        )}
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Username</label>
+                        <label className="block text-xs font-medium text-zinc-400 mb-1">Username</label>
                         <input
                             type="text"
                             value={formData.username}
-                            onChange={e => {
-                                const val = e.target.value
-                                setFormData(prev => ({ ...prev, username: val }))
-                            }}
-                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors"
-                            placeholder="Display Name"
+                            onChange={e => setFormData({ ...formData, username: e.target.value })}
+                            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500"
+                            required
                         />
                     </div>
 
-                    {/* Multi-Select for Artist Type */}
                     <div>
-                        <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">
-                            Artist Type (Max 2)
-                        </label>
+                        <label className="block text-xs font-medium text-zinc-400 mb-1">Bio</label>
+                        <textarea
+                            value={formData.bio}
+                            onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-zinc-500 h-20 resize-none"
+                            placeholder="Tell us about yourself..."
+                        />
+                    </div>
+
+                    {/* Artist Type & Genre Selection */}
+                    <div className="space-y-3 pt-2 border-t border-zinc-800">
+                        <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider">Artist Types</label>
                         <div className="flex flex-wrap gap-2">
-                            {artistTypes.map(type => {
+                            {['Producer', 'Vocalist', 'DJ', 'Instrumentalist', 'Sound Engineer'].map(type => {
                                 const isSelected = currentArtistTypes.includes(type)
                                 return (
                                     <button
                                         key={type}
                                         type="button"
                                         onClick={() => {
-                                            const isSel = currentArtistTypes.includes(type)
-                                            let updated: string[] = []
-                                            if (isSel) {
-                                                updated = currentArtistTypes.filter(t => t !== type)
-                                            } else {
-                                                if (currentArtistTypes.length >= 2) return
-                                                updated = [...currentArtistTypes, type]
-                                            }
-                                            setFormData(prev => ({ ...prev, artistType: updated }))
+                                            const updated = isSelected
+                                                ? currentArtistTypes.filter(t => t !== type)
+                                                : [...currentArtistTypes, type]
+                                            setFormData({ ...formData, artistType: updated })
                                         }}
-                                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${isSelected
-                                            ? 'bg-white text-black font-bold'
-                                            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                                            }`}
+                                        className={`px-3 py-1.5 rounded-full text-xs transition-colors ${isSelected ? 'bg-white text-black font-semibold' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
                                     >
                                         {type}
                                     </button>
@@ -284,33 +321,22 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                         </div>
                     </div>
 
-                    {/* Multi-Select for Genre */}
-                    <div>
-                        <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">
-                            Main Genre (Max 2)
-                        </label>
+                    <div className="space-y-3 pt-2">
+                        <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider">Genres</label>
                         <div className="flex flex-wrap gap-2">
-                            {genres.map(genre => {
+                            {['Electronic', 'Hip Hop', 'Pop', 'Rock', 'R&B', 'Ambient', 'House', 'Techno'].map(genre => {
                                 const isSelected = currentGenres.includes(genre)
                                 return (
                                     <button
                                         key={genre}
                                         type="button"
                                         onClick={() => {
-                                            const isSel = currentGenres.includes(genre)
-                                            let updated: string[] = []
-                                            if (isSel) {
-                                                updated = currentGenres.filter(g => g !== genre)
-                                            } else {
-                                                if (currentGenres.length >= 2) return
-                                                updated = [...currentGenres, genre]
-                                            }
-                                            setFormData(prev => ({ ...prev, genre: updated }))
+                                            const updated = isSelected
+                                                ? currentGenres.filter(g => g !== genre)
+                                                : [...currentGenres, genre]
+                                            setFormData({ ...formData, genre: updated })
                                         }}
-                                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${isSelected
-                                            ? 'bg-white text-black font-bold'
-                                            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-                                            }`}
+                                        className={`px-3 py-1.5 rounded-full text-xs transition-colors ${isSelected ? 'bg-white text-black font-semibold' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
                                     >
                                         {genre}
                                     </button>
@@ -319,70 +345,44 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Bio</label>
-                        <textarea
-                            value={formData.bio}
-                            onChange={e => {
-                                const val = e.target.value
-                                setFormData(prev => ({ ...prev, bio: val }))
-                            }}
-                            rows={3}
-                            maxLength={100}
-                            className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white transition-colors resize-none"
-                            placeholder="한줄 소개를 입력하세요"
+                    {/* Social Links */}
+                    <div className="space-y-2 pt-2 border-t border-zinc-800">
+                        <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider">Social Links</label>
+                        <input
+                            type="text"
+                            placeholder="Instagram Username"
+                            value={formData.instagram}
+                            onChange={e => setFormData({ ...formData, instagram: e.target.value })}
+                            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-zinc-500"
                         />
-                        <span className="text-[10px] text-zinc-500 float-right mt-1">{formData.bio.length}/100</span>
+                        <input
+                            type="text"
+                            placeholder="SoundCloud URL"
+                            value={formData.soundcloud}
+                            onChange={e => setFormData({ ...formData, soundcloud: e.target.value })}
+                            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-zinc-500"
+                        />
+                        <input
+                            type="text"
+                            placeholder="Website URL"
+                            value={formData.website}
+                            onChange={e => setFormData({ ...formData, website: e.target.value })}
+                            className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-zinc-500"
+                        />
                     </div>
 
-                    <div className="pt-4 border-t border-zinc-800">
-                        <label className="block text-xs font-medium text-zinc-400 mb-3 uppercase tracking-wider">Social Links</label>
-                        <div className="space-y-3">
-                            <input
-                                type="text"
-                                value={formData.instagram}
-                                onChange={e => {
-                                    const val = e.target.value
-                                    setFormData(prev => ({ ...prev, instagram: val }))
-                                }}
-                                className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-white transition-colors"
-                                placeholder="Instagram Username (e.g. soundgravity)"
-                            />
-                            <input
-                                type="text"
-                                value={formData.soundcloud}
-                                onChange={e => {
-                                    const val = e.target.value
-                                    setFormData(prev => ({ ...prev, soundcloud: val }))
-                                }}
-                                className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-white transition-colors"
-                                placeholder="SoundCloud Profile URL"
-                            />
-                            <input
-                                type="text"
-                                value={formData.website}
-                                onChange={e => {
-                                    const val = e.target.value
-                                    setFormData(prev => ({ ...prev, website: val }))
-                                }}
-                                className="w-full bg-black/50 border border-zinc-700 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-white transition-colors"
-                                placeholder="Personal Website URL"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="pt-4 flex justify-end gap-3">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-sm text-zinc-400 hover:text-white transition-colors"
+                            className="px-4 py-2 rounded-xl text-xs text-zinc-400 hover:text-white transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2 bg-white text-black font-medium text-sm rounded-full hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                            className="px-4 py-2 rounded-xl text-xs font-bold bg-white text-black hover:bg-zinc-200 transition-colors disabled:opacity-50"
                         >
                             {loading ? 'Saving...' : 'Save Changes'}
                         </button>

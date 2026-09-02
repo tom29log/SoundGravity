@@ -52,11 +52,18 @@ export default function AdminPage() {
         getProfile() // Background refresh to be safe
     }
 
+    const [isAvatarUploading, setIsAvatarUploading] = useState(false)
+
     // Upload Avatar
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return
 
         const file = e.target.files[0]
+        setIsAvatarUploading(true)
+
+        // 1. Instant local visual preview (0.001s!)
+        const localPreview = URL.createObjectURL(file)
+        setProfile((prev: any) => prev ? { ...prev, avatar_url: localPreview } : prev)
 
         try {
             let publicUrl = ''
@@ -105,6 +112,8 @@ export default function AdminPage() {
         } catch (error) {
             console.error('Error uploading avatar:', error)
             alert('Failed to upload avatar')
+        } finally {
+            setIsAvatarUploading(false)
         }
     }
 
