@@ -47,8 +47,10 @@ export default function RealtimeComments({ comments, loading, onAddComment, curr
 
     // Helper to format timestamp
     const formatTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60)
-        const secs = Math.floor(seconds % 60)
+        const num = Number(seconds)
+        if (isNaN(num) || num <= 0) return '0:00'
+        const mins = Math.floor(num / 60)
+        const secs = Math.floor(num % 60)
         return `${mins}:${secs.toString().padStart(2, '0')}`
     }
 
