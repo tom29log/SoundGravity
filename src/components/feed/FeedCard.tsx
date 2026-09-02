@@ -52,24 +52,19 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
 
     useEffect(() => {
         const fetchLikeStatus = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-
-            // 1. Initial count from project props
             setLikeCount(project.likes || 0)
 
-            // 2. Fetch like status if logged in
-            if (user) {
-                try {
-                    const { data } = await supabase
-                        .from('likes')
-                        .select('project_id')
-                        .eq('project_id', project.id)
-                        .eq('user_id', user.id)
-                        .maybeSingle()
-                    setLiked(!!data)
-                } catch {
-                    // Ignore if likes table is pending
+            try {
+                const res = await fetch(`/api/like/status?projectId=${project.id}`)
+                if (res.ok) {
+                    const data = await res.json()
+                    setLiked(!!data.liked)
+                    if (data.likesCount !== undefined) {
+                        setLikeCount(data.likesCount)
+                    }
                 }
+            } catch (err) {
+                console.error('Error fetching like status:', err)
             }
         }
         fetchLikeStatus()
