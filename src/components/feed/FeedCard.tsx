@@ -79,13 +79,7 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
         e.preventDefault()
         e.stopPropagation()
 
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-            alert('로그인이 필요합니다.')
-            return
-        }
-
-        // Optimistic UI update (0.001s response!)
+        // 1. Instant optimistic UI update (0.001s response!)
         const nextLikedState = !liked
         setLiked(nextLikedState)
         setLikeCount(prev => nextLikedState ? prev + 1 : Math.max(0, prev - 1))
@@ -98,13 +92,22 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
             })
 
             const data = await res.json()
+
+            if (res.status === 401) {
+                // Not logged in -> revert and notify
+                setLiked(!nextLikedState)
+                setLikeCount(prev => nextLikedState ? Math.max(0, prev - 1) : prev + 1)
+                alert('로그인이 필요합니다.')
+                return
+            }
+
             if (res.ok && data.liked !== undefined) {
                 setLiked(data.liked)
                 if (data.likesCount !== undefined) {
                     setLikeCount(data.likesCount)
                 }
             } else {
-                // Revert on error
+                // Revert on server error
                 setLiked(!nextLikedState)
                 setLikeCount(prev => nextLikedState ? Math.max(0, prev - 1) : prev + 1)
             }
