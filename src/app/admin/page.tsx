@@ -214,6 +214,17 @@ export default function AdminPage() {
                                     >
                                         Edit Profile
                                     </button>
+                                    {profile?.username && (
+                                        <>
+                                            <span className="text-zinc-700">•</span>
+                                            <Link
+                                                href={`/profile/${encodeURIComponent(profile.username)}`}
+                                                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                                            >
+                                                View Profile ↗
+                                            </Link>
+                                        </>
+                                    )}
                                     {profile?.is_pro ? (
                                         <button
                                             onClick={handleManageSubscription}

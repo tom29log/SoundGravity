@@ -94,17 +94,19 @@ export default async function ProfilePage({ params }: Props) {
             projects = userProjects
             const projectIds = userProjects.map((p: any) => p.id)
 
-            // Query actual total likes count from likes table for all projects uploaded by this user
+            // Sum of 'likes' column across user's projects
+            const columnSumLikes = userProjects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
+
+            // Query actual total likes count from likes table
             const { count: actualLikesCount, error: likesErr } = await supabase
                 .from('likes')
                 .select('*', { count: 'exact', head: true })
                 .in('project_id', projectIds)
 
             if (!likesErr && actualLikesCount !== null && actualLikesCount !== undefined) {
-                totalLikes = actualLikesCount
+                totalLikes = Math.max(actualLikesCount, columnSumLikes)
             } else {
-                // Fallback: sum of likes column from projects table
-                totalLikes = userProjects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
+                totalLikes = columnSumLikes
             }
         }
     }
