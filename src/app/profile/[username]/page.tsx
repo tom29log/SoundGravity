@@ -84,59 +84,30 @@ export default async function ProfilePage({ params }: Props) {
     let totalLikes = 0
 
     if (profile) {
-        // Query projects matching profile.id
-        const { data: byIdProjects } = await supabase
+        // Query projects matching profile.id (UUID)
+        const { data: byIdProjects, error: idErr } = await supabase
             .from('projects')
             .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
             .eq('user_id', profile.id)
             .order('created_at', { ascending: false })
 
-        // Query projects matching profile.username if different
-        let byNameProjects: any[] = []
-        if (profile.username && profile.username !== profile.id) {
-            const { data: byName } = await supabase
+        if (byIdProjects && byIdProjects.length > 0) {
+            projects = byIdProjects
+        } else {
+            // Fallback: query with username string
+            const { data: byNameProjects } = await supabase
                 .from('projects')
                 .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
                 .eq('user_id', profile.username)
                 .order('created_at', { ascending: false })
-            if (byName) byNameProjects = byName
-        }
 
-        // Deduplicate and combine
-        const combinedMap = new Map<string, any>()
-        ;(byIdProjects || []).forEach((p: any) => combinedMap.set(p.id, p))
-        byNameProjects.forEach((p: any) => combinedMap.set(p.id, p))
-
-        let userProjects = Array.from(combinedMap.values())
-
-        // Fallback: If still empty, fetch all projects to make sure no user project is missed
-        if (userProjects.length === 0) {
-            const { data: allProjects } = await supabase
-                .from('projects')
-                .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
-                .order('created_at', { ascending: false })
-            if (allProjects) userProjects = allProjects
-        }
-
-        if (userProjects.length > 0) {
-            projects = userProjects
-            const projectIds = userProjects.map((p: any) => p.id)
-
-            // Sum of 'likes' column across projects
-            const columnSumLikes = userProjects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
-
-            // Query actual total likes count from likes table
-            const { count: actualLikesCount, error: likesErr } = await supabase
-                .from('likes')
-                .select('*', { count: 'exact', head: true })
-                .in('project_id', projectIds)
-
-            if (!likesErr && actualLikesCount !== null && actualLikesCount !== undefined) {
-                totalLikes = Math.max(actualLikesCount, columnSumLikes)
-            } else {
-                totalLikes = columnSumLikes
+            if (byNameProjects && byNameProjects.length > 0) {
+                projects = byNameProjects
             }
         }
+
+        // Total likes = sum of projects.likes column (already synced by like/toggle API)
+        totalLikes = projects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
     }
 
     return (
