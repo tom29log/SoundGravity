@@ -106,7 +106,13 @@ export default async function ProfilePage({ params }: Props) {
         }
     }
 
-    const totalLikes = projects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
+    const { data: allProjectsData } = await supabase
+        .from('projects')
+        .select('likes')
+
+    const dbTotalLikes = (allProjectsData || []).reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
+    const calculatedLikes = projects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
+    const totalLikes = Math.max(calculatedLikes, dbTotalLikes)
 
     return (
         <main className="min-h-screen bg-black text-white relative">
