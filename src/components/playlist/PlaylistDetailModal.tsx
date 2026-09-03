@@ -39,32 +39,66 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
 
     const fetchTracks = async () => {
         setLoading(true)
-        // Join playlist_tracks with projects
-        const { data, error } = await supabase
-            .from('playlist_tracks')
-            .select(`
-                track_id,
-                position,
-                project:projects (
-                    *,
-                    profiles (
-                        username,
-                        avatar_url
+        try {
+            // Join playlist_tracks with projects explicitly using foreign key relationship
+            const { data, error } = await supabase
+                .from('playlist_tracks')
+                .select(`
+                    track_id,
+                    position,
+                    added_at,
+                    projects!track_id (
+                        *,
+                        profiles (
+                            username,
+                            avatar_url
+                        )
                     )
-                )
-            `)
-            .eq('playlist_id', playlist.id)
-            .order('position', { ascending: true })
-            .order('added_at', { ascending: false })
+                `)
+                .eq('playlist_id', playlist.id)
+                .order('position', { ascending: true })
 
-        if (error) {
-            console.error('Error fetching tracks:', error)
-        } else {
-            // Flatten the structure
-            const fetchedTracks = data.map((item: any) => item.project)
-            setTracks(fetchedTracks)
+            if (error) {
+                console.error('Error fetching tracks with explicit FK:', error)
+                // Fallback attempt without FK specifier
+                const { data: fallbackData, error: fallbackErr } = await supabase
+                    .from('playlist_tracks')
+                    .select(`
+                        track_id,
+                        position,
+                        added_at,
+                        projects (
+                            *,
+                            profiles (
+                                username,
+                                avatar_url
+                            )
+                        )
+                    `)
+                    .eq('playlist_id', playlist.id)
+                    .order('position', { ascending: true })
+
+                if (!fallbackErr && fallbackData) {
+                    const fetched = fallbackData
+                        .map((item: any) => item.projects || item.project)
+                        .filter(Boolean)
+                    setTracks(fetched)
+                } else {
+                    setTracks([])
+                }
+            } else if (data) {
+                // Flatten the structure safely filtering out any null/undefined records
+                const fetchedTracks = data
+                    .map((item: any) => item.projects || item.project)
+                    .filter(Boolean)
+                setTracks(fetchedTracks)
+            }
+        } catch (err) {
+            console.error('Unexpected error fetching playlist tracks:', err)
+            setTracks([])
+        } finally {
+            setLoading(false)
         }
-        setLoading(false)
     }
 
     const removeTrack = async (trackId: string, e: React.MouseEvent) => {
@@ -177,11 +211,11 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
                     {/* Track List */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
                         {loading ? (
-                            <div className="py-12 text-center text-zinc-500">Loading tracks...</div>
+                            <div className="py-12 text-center text-zinc-500">트랙을 불러오는 중...</div>
                         ) : tracks.length === 0 ? (
                             <div className="py-12 text-center text-zinc-500 flex flex-col items-center gap-2">
                                 <Music className="w-8 h-8 opacity-20" />
-                                <p>No tracks in this playlist yet.</p>
+                                <p>플레이리스트에 등록된 곡이 없습니다.</p>
                             </div>
                         ) : (
                             <Reorder.Group axis="y" values={tracks} onReorder={setTracks} className="space-y-2">

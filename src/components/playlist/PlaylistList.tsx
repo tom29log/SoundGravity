@@ -35,6 +35,9 @@ export default function PlaylistList() {
                 playlist_tracks(
                     position,
                     added_at,
+                    projects!track_id(
+                        image_url
+                    ),
                     project:projects(
                         image_url
                     )
@@ -73,10 +76,13 @@ export default function PlaylistList() {
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {playlists.map((playlist) => {
-                        // Attempt to grab the first track's image url (either the first returned, or conceptually the first added)
-                        const firstTrackImage = playlist.playlist_tracks && playlist.playlist_tracks.length > 0
-                            ? playlist.playlist_tracks[0]?.project?.image_url
+                        // Attempt to grab the first track's image url
+                        const firstTrackObj = playlist.playlist_tracks && playlist.playlist_tracks.length > 0
+                            ? (playlist.playlist_tracks[0]?.projects || playlist.playlist_tracks[0]?.project)
                             : null
+                        const firstTrackImage = Array.isArray(firstTrackObj)
+                            ? firstTrackObj[0]?.image_url
+                            : firstTrackObj?.image_url
 
                         return (
                             <div
