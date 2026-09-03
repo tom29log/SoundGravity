@@ -122,7 +122,7 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
         if (width >= 1280) return 4 // xl
         if (width >= 1024) return 3 // lg
         if (width >= 640) return 2 // sm
-        return 1
+        return 2 // 2 columns for mobile
     }
     const columns = getColumnCount()
 
@@ -133,113 +133,111 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
     })
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-8 pb-24">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8 pb-24">
             {/* Header */}
-            <div className="flex flex-col gap-6 mb-8 sticky top-0 bg-black/80 backdrop-blur-md z-[100] py-4 -mx-4 px-4 border-b border-zinc-900/50">
+            <div className="flex flex-col gap-3 sm:gap-6 mb-4 sm:mb-8 sticky top-0 bg-black/80 backdrop-blur-md z-[100] py-2.5 sm:py-4 -mx-3 sm:-mx-4 px-3 sm:px-4 border-b border-zinc-900/50">
 
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4">
                     {/* User Info & Navigation */}
-                    <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                    <div className="flex items-center gap-3 sm:gap-4 w-full md:w-auto justify-between md:justify-start">
                         {loadingAuth ? (
                             // Auth Loading Skeleton
                             <div className="flex items-center gap-3">
-                                <div className="w-16 h-16 rounded-full bg-zinc-800 animate-pulse" />
+                                <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-zinc-800 animate-pulse" />
                                 <div className="flex flex-col gap-2">
                                     <div className="h-4 w-20 bg-zinc-800 animate-pulse rounded" />
                                 </div>
                             </div>
                         ) : userProfile ? (
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                                 <Link href={`/profile/${userProfile.username}`} prefetch={false} className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group min-w-0">
-                                    <div className="w-16 h-16 rounded-full bg-zinc-800 overflow-hidden relative transition-colors shrink-0">
+                                    <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-zinc-800 overflow-hidden relative transition-colors shrink-0">
                                         {userProfile.avatar_url ? (
                                             <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-zinc-500 font-bold bg-zinc-900">
+                                            <div className="w-full h-full flex items-center justify-center text-zinc-500 font-bold bg-zinc-900 text-xs sm:text-base">
                                                 {userProfile.username?.[0]?.toUpperCase() || 'U'}
                                             </div>
                                         )}
                                     </div>
                                     <div className="flex flex-col min-w-0 items-center">
-                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 text-xs text-center break-words max-w-[120px]">{userProfile.username || 'User'}</span>
+                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 text-[10px] sm:text-xs text-center break-words max-w-[90px] sm:max-w-[120px] truncate">{userProfile.username || 'User'}</span>
                                     </div>
                                 </Link>
-                                <div className="h-8 w-px bg-zinc-800 mx-2 shrink-0" />
-                                <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity mr-6 md:mr-0">
+                                <div className="h-6 sm:h-8 w-px bg-zinc-800 mx-1 sm:mx-2 shrink-0" />
+                                <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity mr-3 md:mr-0">
                                     <Image
                                         src="/icons/dashboard-icon-new.png"
                                         alt="My Page"
-                                        width={60}
-                                        height={60}
-                                        className="object-contain"
+                                        width={44}
+                                        height={44}
+                                        className="object-contain w-11 h-11 sm:w-[60px] sm:h-[60px]"
                                     />
                                 </Link>
                             </div>
                         ) : (
                             <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-500">
+                                <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-500">
                                     Discovery
                                 </h1>
-                                <a href="/login" className="text-sm text-zinc-400 hover:text-white underline">Login</a>
+                                <a href="/login" className="text-xs sm:text-sm text-zinc-400 hover:text-white underline">Login</a>
                             </div>
                         )}
 
                         {/* Mobile Logo Position (Right top) */}
-                        <div className="md:hidden transform scale-[0.98] origin-right shrink-0">
+                        <div className="md:hidden transform scale-[0.85] sm:scale-[0.98] origin-right shrink-0">
                             <AnimatedLogo_v2 />
                         </div>
                     </div>
 
                     {/* Desktop Logo & Filters & View Mode */}
-                    <div className="flex flex-col md:flex-row items-end md:items-center gap-4 w-full md:w-auto">
+                    <div className="flex flex-col md:flex-row items-end md:items-center gap-3 sm:gap-4 w-full md:w-auto">
 
                         {/* Desktop Logo */}
                         <div className="hidden md:block">
                             <AnimatedLogo_v2 />
                         </div>
 
-                        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                        <div className="flex items-center gap-2 sm:gap-4 w-full md:w-auto justify-between md:justify-end">
 
-                            <div className="flex items-center gap-2 overflow-x-auto max-w-full pb-1 md:pb-0 scrollbar-hide">
+                            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto max-w-full pb-1 md:pb-0 scrollbar-hide">
                                 {/* AI Filter */}
-                                <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800 shrink-0">
+                                <div className="flex bg-zinc-900 rounded-full p-0.5 sm:p-1 border border-zinc-800 shrink-0">
                                     <button
                                         onClick={() => setAiFilter('all')}
-                                        className={`px-2 md:px-3 py-1.5 rounded-full text-[10px] md:text-[11px] font-medium transition-all w-auto md:w-auto ${aiFilter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                        className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-medium transition-all ${aiFilter === 'all' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
                                         title="All"
                                     >
-                                        <span className="md:hidden">All</span>
-                                        <span className="hidden md:inline">All</span>
+                                        All
                                     </button>
                                     <button
                                         onClick={() => setAiFilter('human')}
-                                        className={`px-2 md:px-3 py-1.5 rounded-full text-[10px] md:text-[11px] font-medium transition-all w-8 md:w-auto ${aiFilter === 'human' ? 'bg-zinc-800 text-green-400' : 'text-zinc-500 hover:text-green-400'}`}
+                                        className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-medium transition-all ${aiFilter === 'human' ? 'bg-zinc-800 text-green-400' : 'text-zinc-500 hover:text-green-400'}`}
                                         title="Human"
                                     >
-                                        <span className="md:hidden">H</span>
-                                        <span className="hidden md:inline">Human</span>
+                                        <span className="sm:hidden">H</span>
+                                        <span className="hidden sm:inline">Human</span>
                                     </button>
                                     <button
                                         onClick={() => setAiFilter('ai')}
-                                        className={`px-2 md:px-3 py-1.5 rounded-full text-[10px] md:text-[11px] font-medium transition-all w-8 md:w-auto ${aiFilter === 'ai' ? 'bg-zinc-800 text-purple-400' : 'text-zinc-500 hover:text-purple-400'}`}
+                                        className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-medium transition-all ${aiFilter === 'ai' ? 'bg-zinc-800 text-purple-400' : 'text-zinc-500 hover:text-purple-400'}`}
                                         title="AI"
                                     >
-                                        <span className="md:hidden">AI</span>
-                                        <span className="hidden md:inline">AI</span>
+                                        AI
                                     </button>
                                 </div>
 
                                 {/* Sort Filter */}
-                                <div className="flex bg-zinc-900 rounded-full p-1 border border-zinc-800 shrink-0">
+                                <div className="flex bg-zinc-900 rounded-full p-0.5 sm:p-1 border border-zinc-800 shrink-0">
                                     <button
                                         onClick={() => setFilter('latest')}
-                                        className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all ${filter === 'latest' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                        className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all ${filter === 'latest' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
                                     >
                                         Latest
                                     </button>
                                     <button
                                         onClick={() => setFilter('popular')}
-                                        className={`px-3 py-1.5 rounded-full text-[11px] md:text-xs font-medium transition-all ${filter === 'popular' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                                        className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-all ${filter === 'popular' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
                                     >
                                         Popular
                                     </button>
@@ -250,7 +248,7 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                                     <select
                                         value={genreFilter}
                                         onChange={(e) => setGenreFilter(e.target.value)}
-                                        className="bg-transparent text-[11px] md:text-xs font-medium text-white px-3 py-2 outline-none cursor-pointer appearance-none text-center"
+                                        className="bg-transparent text-[10px] sm:text-xs font-medium text-white px-2.5 sm:px-3 py-1.5 outline-none cursor-pointer appearance-none text-center"
                                         style={{ WebkitAppearance: 'none' }}
                                     >
                                         <option value="" className="bg-zinc-900">All kind</option>
@@ -269,19 +267,21 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                                 </div>
                             </div>
 
-                            {/* View Mode (Hidden on mobile usually, or keep compact) */}
-                            <div className="hidden sm:flex bg-zinc-900 rounded-lg p-1 border border-zinc-800 shrink-0">
+                            {/* View Mode (Supported on both Mobile & Desktop) */}
+                            <div className="flex bg-zinc-900 rounded-lg p-0.5 sm:p-1 border border-zinc-800 shrink-0">
                                 <button
                                     onClick={() => setViewMode('grid')}
-                                    className={`p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'text-white bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                    className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'grid' ? 'text-white bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                    title="Grid View"
                                 >
-                                    <LayoutGrid size={18} />
+                                    <LayoutGrid size={16} className="sm:w-[18px] sm:h-[18px]" />
                                 </button>
                                 <button
                                     onClick={() => setViewMode('list')}
-                                    className={`p-2 rounded-md transition-colors ${viewMode === 'list' ? 'text-white bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                    className={`p-1.5 sm:p-2 rounded-md transition-colors ${viewMode === 'list' ? 'text-white bg-zinc-800' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                    title="List View"
                                 >
-                                    <ListIcon size={18} />
+                                    <ListIcon size={16} className="sm:w-[18px] sm:h-[18px]" />
                                 </button>
                             </div>
                         </div>
@@ -292,9 +292,8 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
             {/* Content */}
             {
                 viewMode === 'list' ? (
-                    <div className="flex flex-col gap-8 max-w-2xl mx-auto">
+                    <div className="flex flex-col gap-4 sm:gap-8 max-w-md sm:max-w-2xl mx-auto">
                         {projects.map((project, index) => {
-                            // Ref on last element
                             if (projects.length === index + 1) {
                                 return <div ref={lastElementRef} key={project.id}><FeedCard project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} isPro={userProfile?.is_pro} /></div>
                             }
@@ -303,17 +302,12 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                     </div>
                 ) : (
                     // Masonry Grid
-                    <div className="flex gap-6">
+                    <div className="flex gap-3 sm:gap-6">
                         {masonryColumns.map((colProjects, colIndex) => (
-                            <div key={colIndex} className="flex-1 flex flex-col gap-6">
-                                {colProjects.map((project, index) => {
-                                    // We need to attach the ref to the actual last element in the DOM
-                                    // But finding which column has the last element is tricky.
-                                    // Actually, we can just attach ref to a dummy element at bottom of container
-                                    // OR attach to the last item rendered in the last column?
-                                    // Let's simplify: Put a sentinel div below the grid.
-                                    return <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} isPro={userProfile?.is_pro} />
-                                })}
+                            <div key={colIndex} className="flex-1 flex flex-col gap-3 sm:gap-6">
+                                {colProjects.map((project) => (
+                                    <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} isPro={userProfile?.is_pro} />
+                                ))}
                             </div>
                         ))}
                     </div>

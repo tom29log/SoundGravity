@@ -154,7 +154,7 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
     }
 
     return (
-        <div className="group relative break-inside-avoid mb-6">
+        <div className="group relative break-inside-avoid mb-3 sm:mb-6">
             {/* Report Modal */}
             {showReportModal && (
                 <ReportModal
@@ -170,13 +170,12 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
                 href={project.profiles?.username ? `/profile/${project.profiles.username}` : '#'}
                 prefetch={false}
                 onClick={(e) => e.stopPropagation()}
-                className="absolute top-3 left-3 z-[60] flex items-center justify-center rounded-full transition-opacity cursor-pointer hover:opacity-80"
+                className="absolute top-2 left-2 sm:top-3 sm:left-3 z-[60] flex items-center justify-center rounded-full transition-opacity cursor-pointer hover:opacity-80"
             >
-                {/* ... existing profile image code ... */}
                 {project.profiles?.avatar_url ? (
-                    <img src={project.profiles.avatar_url} alt="" className="w-14 h-14 rounded-full flex-shrink-0 bg-zinc-800 object-cover shadow-lg" />
+                    <img src={project.profiles.avatar_url} alt="" className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex-shrink-0 bg-zinc-800 object-cover shadow-lg border border-black/20" />
                 ) : (
-                    <div className="w-14 h-14 rounded-full bg-zinc-800 flex-shrink-0 flex items-center justify-center text-sm font-bold shadow-lg">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-zinc-800 flex-shrink-0 flex items-center justify-center text-xs sm:text-sm font-bold shadow-lg border border-black/20">
                         {project.profiles?.username?.[0]?.toUpperCase()}
                     </div>
                 )}
@@ -185,7 +184,7 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
 
 
             {/* 2. Project Link (Image) */}
-            <div className="relative rounded-2xl overflow-hidden bg-zinc-900 shadow-lg select-none group/image transition-transform active:scale-[0.98] duration-200">
+            <div className="relative rounded-xl sm:rounded-2xl overflow-hidden bg-zinc-900 shadow-lg select-none group/image transition-transform active:scale-[0.98] duration-200">
                 <Link href={`/v/${project.id}`} prefetch={false} className="block relative w-full aspect-square bg-zinc-800">
                     <Image
                         src={project.image_url}
@@ -200,9 +199,9 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
 
                     {/* Play Button Icon for Affordance */}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-opacity duration-300">
-                        <div className="bg-white/20 backdrop-blur-md p-3 rounded-full border border-white/30">
+                        <div className="bg-white/20 backdrop-blur-md p-2 sm:p-3 rounded-full border border-white/30">
                             <span className="sr-only">Play</span>
-                            <svg className="w-6 h-6 text-white fill-current" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 sm:w-6 sm:h-6 text-white fill-current" viewBox="0 0 24 24">
                                 <path d="M8 5v14l11-7z" />
                             </svg>
                         </div>
@@ -228,25 +227,25 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
             </div>
 
             {/* 3. Bottom Info (Title & Like) */}
-            <div className="mt-3 flex items-center justify-between gap-3 px-1">
+            <div className="mt-2 sm:mt-3 flex items-start sm:items-center justify-between gap-1.5 sm:gap-3 px-0.5 sm:px-1">
                 <div className="flex flex-col min-w-0 flex-1">
                     <Link href={`/v/${project.id}`} prefetch={false} className="block">
-                        <h3 className="font-semibold text-base text-zinc-100 truncate hover:text-white transition-colors tracking-tight">{project.title}</h3>
+                        <h3 className="font-semibold text-xs sm:text-sm md:text-base text-zinc-100 truncate hover:text-white transition-colors tracking-tight">{project.title}</h3>
                         {project.genre && (
-                            <p className="text-[11px] font-medium text-zinc-400 mt-0.5">{project.genre}</p>
+                            <p className="text-[10px] sm:text-[11px] font-medium text-zinc-400 mt-0.5">{project.genre}</p>
                         )}
                     </Link>
-                    <div className="flex items-center gap-3 mt-1.5">
+                    <div className="flex items-center gap-2 sm:gap-3 mt-1 sm:mt-1.5 flex-wrap">
                         {/* Stem Mode Toggle */}
                         {hasStems && (
                             <button
                                 onClick={handleStemModeToggle}
-                                className={`text-xs font-medium flex items-center gap-1.5 transition-colors ${showMixer ? 'text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                className={`text-[10px] sm:text-xs font-medium flex items-center gap-1 sm:gap-1.5 transition-colors ${showMixer ? 'text-blue-400' : 'text-zinc-500 hover:text-zinc-300'}`}
                             >
-                                <div className="flex gap-[3px] items-end h-3">
-                                    <div className={`w-[2px] bg-current rounded-full ${showMixer ? 'h-3 animate-[dance_0.5s_ease-in-out_infinite]' : 'h-2'}`} />
-                                    <div className={`w-[2px] bg-current rounded-full ${showMixer ? 'h-2 animate-[dance_0.6s_ease-in-out_infinite]' : 'h-3'}`} />
-                                    <div className={`w-[2px] bg-current rounded-full ${showMixer ? 'h-3 animate-[dance_0.4s_ease-in-out_infinite]' : 'h-1.5'}`} />
+                                <div className="flex gap-[2px] sm:gap-[3px] items-end h-2.5 sm:h-3">
+                                    <div className={`w-[2px] bg-current rounded-full ${showMixer ? 'h-2.5 sm:h-3 animate-[dance_0.5s_ease-in-out_infinite]' : 'h-1.5 sm:h-2'}`} />
+                                    <div className={`w-[2px] bg-current rounded-full ${showMixer ? 'h-2 sm:h-2.5 animate-[dance_0.6s_ease-in-out_infinite]' : 'h-2 sm:h-3'}`} />
+                                    <div className={`w-[2px] bg-current rounded-full ${showMixer ? 'h-2.5 sm:h-3 animate-[dance_0.4s_ease-in-out_infinite]' : 'h-1 sm:h-1.5'}`} />
                                 </div>
                                 Stem Mode
                             </button>
@@ -255,21 +254,21 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
                         {/* Add to Playlist Button */}
                         <button
                             onClick={() => setShowPlaylistSelector(true)}
-                            className="text-xs font-medium text-zinc-500 hover:text-zinc-300 flex items-center gap-1.5"
+                            className="text-[10px] sm:text-xs font-medium text-zinc-500 hover:text-zinc-300 flex items-center gap-1 sm:gap-1.5"
                         >
-                            <PlusCircle size={14} />
-                            Add to List
+                            <PlusCircle size={12} className="sm:w-3.5 sm:h-3.5" />
+                            <span>Add to List</span>
                         </button>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                     <button
                         onClick={toggleLike}
-                        className={`flex items-center gap-1.5 transition-colors cursor-pointer group/like ${liked ? 'text-red-500' : 'text-zinc-400 hover:text-white'}`}
+                        className={`flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer group/like ${liked ? 'text-red-500' : 'text-zinc-400 hover:text-white'}`}
                     >
-                        <Heart size={14} fill={liked ? "currentColor" : "none"} className={`transition-transform duration-200 group-active/like:scale-75 ${liked ? "text-red-500" : ""}`} />
-                        <span className="text-xs font-medium">{likeCount}</span>
+                        <Heart size={13} fill={liked ? "currentColor" : "none"} className={`sm:w-3.5 sm:h-3.5 transition-transform duration-200 group-active/like:scale-75 ${liked ? "text-red-500" : ""}`} />
+                        <span className="text-[11px] sm:text-xs font-medium">{likeCount}</span>
                     </button>
 
                     {/* More Options Button (Bottom Right) */}
