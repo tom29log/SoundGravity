@@ -324,7 +324,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onUpdate }:
                     <div className="space-y-3 pt-2">
                         <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider">Genres</label>
                         <div className="flex flex-wrap gap-2">
-                            {['Electronic', 'Hip Hop', 'Pop', 'Rock', 'R&B', 'Ambient', 'House', 'Techno'].map(genre => {
+                            {['Electronic', 'Hip Hop', 'Pop', 'Rock', 'R&B', 'Reggae', 'Ambient', 'House', 'Techno'].map(genre => {
                                 const isSelected = currentGenres.includes(genre)
                                 return (
                                     <button
