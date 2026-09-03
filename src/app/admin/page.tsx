@@ -19,7 +19,6 @@ export default function AdminPage() {
     const [profile, setProfile] = useState<{ id: string, username: string | null, avatar_url: string | null, social_links: any, is_pro?: boolean } | null>(null)
     const [user, setUser] = useState<any>(null)
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
-    const [isSubscribing, setIsSubscribing] = useState(false)
 
     // Load Profile
     const getProfile = useCallback(async () => {
@@ -121,40 +120,6 @@ export default function AdminPage() {
         router.push('/login')
     }
 
-    // Subscription handlers
-    const handleSubscribe = async () => {
-        setIsSubscribing(true)
-        try {
-            const res = await fetch('/api/lemonsqueezy/checkout', { method: 'POST' })
-            const data = await res.json()
-            if (data.url) {
-                window.location.href = data.url
-            } else {
-                alert(`Checkout Error: ${data.error || 'Failed to create checkout session'}`)
-            }
-        } catch (error) {
-            console.error('Checkout error:', error)
-            alert('Failed to start checkout')
-        } finally {
-            setIsSubscribing(false)
-        }
-    }
-
-    const handleManageSubscription = async () => {
-        try {
-            const res = await fetch('/api/lemonsqueezy/portal', { method: 'POST' })
-            const data = await res.json()
-            if (data.url) {
-                window.location.href = data.url
-            } else {
-                alert(`Failed to open portal: ${data.error} ${JSON.stringify(data.details || '')}`)
-            }
-        } catch (error) {
-            console.error('Portal error:', error)
-            alert('Failed to open portal')
-        }
-    }
-
     const [refreshKey, setRefreshKey] = useState(0)
 
     const handleRefresh = () => {
@@ -213,22 +178,6 @@ export default function AdminPage() {
                                                 View Profile ↗
                                             </Link>
                                         </>
-                                    )}
-                                    {profile?.is_pro ? (
-                                        <button
-                                            onClick={handleManageSubscription}
-                                            className="text-xs text-yellow-500 hover:text-yellow-400 transition-colors"
-                                        >
-                                            Manage Pro
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={handleSubscribe}
-                                            disabled={isSubscribing}
-                                            className="text-xs text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
-                                        >
-                                            {isSubscribing ? 'Loading...' : 'Upgrade to Pro'}
-                                        </button>
                                     )}
                                 </div>
                             </div>
