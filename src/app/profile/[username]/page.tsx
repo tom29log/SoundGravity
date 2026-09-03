@@ -83,24 +83,46 @@ export default async function ProfilePage({ params }: Props) {
     let projects: any[] = []
     let totalLikes = 0
 
-    if (profile?.id || profile?.username) {
-        // Build flexible project lookup matching either user_id == profile.id OR user_id == profile.username
-        let filterStr = `user_id.eq.${profile.id}`
-        if (profile.username && profile.username !== profile.id) {
-            filterStr += `,user_id.eq.${profile.username}`
-        }
-
-        const { data: userProjects } = await supabase
+    if (profile) {
+        // Query projects matching profile.id
+        const { data: byIdProjects } = await supabase
             .from('projects')
             .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
-            .or(filterStr)
+            .eq('user_id', profile.id)
             .order('created_at', { ascending: false })
 
-        if (userProjects && userProjects.length > 0) {
+        // Query projects matching profile.username if different
+        let byNameProjects: any[] = []
+        if (profile.username && profile.username !== profile.id) {
+            const { data: byName } = await supabase
+                .from('projects')
+                .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
+                .eq('user_id', profile.username)
+                .order('created_at', { ascending: false })
+            if (byName) byNameProjects = byName
+        }
+
+        // Deduplicate and combine
+        const combinedMap = new Map<string, any>()
+        ;(byIdProjects || []).forEach((p: any) => combinedMap.set(p.id, p))
+        byNameProjects.forEach((p: any) => combinedMap.set(p.id, p))
+
+        let userProjects = Array.from(combinedMap.values())
+
+        // Fallback: If still empty, fetch all projects to make sure no user project is missed
+        if (userProjects.length === 0) {
+            const { data: allProjects } = await supabase
+                .from('projects')
+                .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
+                .order('created_at', { ascending: false })
+            if (allProjects) userProjects = allProjects
+        }
+
+        if (userProjects.length > 0) {
             projects = userProjects
             const projectIds = userProjects.map((p: any) => p.id)
 
-            // Sum of 'likes' column across user's projects
+            // Sum of 'likes' column across projects
             const columnSumLikes = userProjects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
 
             // Query actual total likes count from likes table

@@ -22,14 +22,17 @@ export default function FollowButton({ profileId, followerCount }: FollowButtonP
                 if (user.id === profileId) {
                     setIsOwnProfile(true)
                 } else {
-                    const { data } = await supabase
-                        .from('follows')
-                        .select('*')
-                        .eq('follower_id', user.id)
-                        .eq('following_id', profileId)
-                        .single()
-
-                    if (data) setIsFollowing(true)
+                    try {
+                        const res = await fetch(`/api/follows/status?profileId=${profileId}`)
+                        if (res.ok) {
+                            const data = await res.json()
+                            if (data.following !== undefined) {
+                                setIsFollowing(data.following)
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error checking follow status:', err)
+                    }
                 }
             }
         }
@@ -46,30 +49,37 @@ export default function FollowButton({ profileId, followerCount }: FollowButtonP
         }
 
         // Optimistic Update
-        const newStatus = !isFollowing
-        setIsFollowing(newStatus)
+        const nextStatus = !isFollowing
+        setIsFollowing(nextStatus)
         setLoading(true)
 
         try {
-            if (newStatus) {
-                // Follow
-                const { error } = await supabase.from('follows').insert({
-                    follower_id: user.id,
-                    following_id: profileId
-                })
-                if (error) throw error
-            } else {
-                // Unfollow
-                const { error } = await supabase.from('follows').delete()
-                    .eq('follower_id', user.id)
-                    .eq('following_id', profileId)
-                if (error) throw error
+            const res = await fetch('/api/follows/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profileId, desiredState: nextStatus })
+            })
+
+            const data = await res.json()
+
+            if (res.status === 401) {
+                setIsFollowing(!nextStatus)
+                alert('로그인이 필요합니다.')
+                return
             }
-        } catch (error) {
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to toggle follow')
+            }
+
+            if (data.following !== undefined) {
+                setIsFollowing(data.following)
+            }
+        } catch (error: any) {
             console.error('Follow error:', error)
             // Rollback
-            setIsFollowing(!newStatus)
-            alert('팔로우 처리에 실패했습니다.')
+            setIsFollowing(!nextStatus)
+            alert('팔로우 처리에 실패했습니다: ' + (error.message || '알 수 없는 오류'))
         } finally {
             setLoading(false)
         }
