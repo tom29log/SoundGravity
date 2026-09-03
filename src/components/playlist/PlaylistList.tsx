@@ -12,9 +12,12 @@ interface Playlist {
     description: string | null
     created_at: string
     playlist_tracks?: Array<{
-        project: {
+        projects?: {
             image_url: string
-        }
+        } | Array<{ image_url: string }>
+        project?: {
+            image_url: string
+        } | Array<{ image_url: string }>
     }>
 }
 
