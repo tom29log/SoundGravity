@@ -64,16 +64,10 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
                 return
             }
 
-            // Step 2: Fetch corresponding projects with profiles directly
+            // Step 2: Fetch corresponding projects directly without FK join
             const { data: projectsData, error: projErr } = await supabase
                 .from('projects')
-                .select(`
-                    *,
-                    profiles (
-                        username,
-                        avatar_url
-                    )
-                `)
+                .select('*')
                 .in('id', trackIds)
 
             if (projErr || !projectsData) {
@@ -82,9 +76,27 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
                 return
             }
 
-            // Re-order projects according to playlist_tracks position
+            // Step 3: Fetch profiles for the project creators
+            const userIds = [...new Set(projectsData.map((p: any) => p.user_id).filter(Boolean))]
+            const profMap = new Map<string, any>()
+            if (userIds.length > 0) {
+                const { data: profs } = await supabase
+                    .from('profiles')
+                    .select('id, username, avatar_url')
+                    .in('id', userIds)
+                if (profs) {
+                    profs.forEach((pr: any) => profMap.set(pr.id, pr))
+                }
+            }
+
+            // Re-order projects according to playlist_tracks position and attach profiles
             const projectMap = new Map<string, Project>()
-            projectsData.forEach((p: any) => projectMap.set(p.id, p))
+            projectsData.forEach((p: any) => {
+                projectMap.set(p.id, {
+                    ...p,
+                    profiles: profMap.get(p.user_id) || null
+                })
+            })
 
             const orderedTracks = trackRefs
                 .map((r: any) => projectMap.get(r.track_id))

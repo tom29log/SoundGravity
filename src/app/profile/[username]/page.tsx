@@ -3,7 +3,7 @@ import ProfileContent from '@/components/profile/ProfileContent'
 import Loading from './loading'
 import { Suspense } from 'react'
 import { getProfile } from '@/utils/data-fetchers'
-import { createAdminSupabaseClient } from '@/lib/supabase-admin'
+import { createPublicClient } from '@/lib/supabase-public'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 
 export const revalidate = 0
@@ -31,7 +31,7 @@ export default async function ProfilePage({ params }: Props) {
     const { username } = await params
     const decodedUsername = decodeURIComponent(username)
 
-    const supabase = createAdminSupabaseClient()
+    const supabase = createPublicClient()
 
     // 1. Fetch Profile Data (flexible matching by username or ID)
     let profile = null
@@ -84,20 +84,20 @@ export default async function ProfilePage({ params }: Props) {
     let totalLikes = 0
 
     if (profile) {
-        // Query projects matching profile.id (UUID)
-        const { data: byIdProjects, error: idErr } = await supabase
+        // Query projects matching profile.id (UUID) - Note: 'views' column does not exist in DB
+        const { data: byIdProjects } = await supabase
             .from('projects')
-            .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
+            .select('id, title, image_url, audio_url, created_at, is_ai_generated, user_id, genre, stems, likes')
             .eq('user_id', profile.id)
             .order('created_at', { ascending: false })
 
         if (byIdProjects && byIdProjects.length > 0) {
             projects = byIdProjects
         } else {
-            // Fallback: query with username string
+            // Fallback: query with username string if user_id was stored as username
             const { data: byNameProjects } = await supabase
                 .from('projects')
-                .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
+                .select('id, title, image_url, audio_url, created_at, is_ai_generated, user_id, genre, stems, likes')
                 .eq('user_id', profile.username)
                 .order('created_at', { ascending: false })
 
