@@ -109,7 +109,7 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
             const res = await fetch('/api/like/toggle', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ projectId: project.id })
+                body: JSON.stringify({ projectId: project.id, desiredState: nextLikedState })
             })
 
             const data = await res.json()

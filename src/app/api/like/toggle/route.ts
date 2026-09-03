@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
     try {
-        const { projectId } = await request.json()
+        const { projectId, desiredState } = await request.json()
         if (!projectId) return NextResponse.json({ error: 'Missing projectId' }, { status: 400 })
 
         const supabaseServer = await createServerSupabaseClient()
@@ -16,8 +16,7 @@ export async function POST(request: Request) {
 
         const adminSupabase = createAdminSupabaseClient()
 
-        // Check if user already liked
-        let isLiked = false
+        // Check existing like
         const { data: existingLike, error: likeError } = await adminSupabase
             .from('likes')
             .select('id')
@@ -25,8 +24,8 @@ export async function POST(request: Request) {
             .eq('user_id', user.id)
             .maybeSingle()
 
+        // If likes table doesn't exist in Supabase DB (PGRST205)
         if (likeError && (likeError.message.includes('likes') || likeError.code === 'PGRST205')) {
-            // Table doesn't exist yet -> increment project.likes column directly
             const { data: proj } = await adminSupabase
                 .from('projects')
                 .select('likes')
@@ -34,30 +33,36 @@ export async function POST(request: Request) {
                 .maybeSingle()
 
             const currentLikes = proj?.likes || 0
-            const newCount = currentLikes + 1
+            const shouldLike = desiredState !== undefined ? Boolean(desiredState) : true
+            const newCount = shouldLike ? currentLikes + 1 : Math.max(0, currentLikes - 1)
 
             await adminSupabase
                 .from('projects')
                 .update({ likes: newCount })
                 .eq('id', projectId)
 
-            return NextResponse.json({ liked: true, likesCount: newCount })
+            return NextResponse.json({ liked: shouldLike, likesCount: newCount })
         }
 
-        if (existingLike) {
-            // Delete like
-            await adminSupabase
-                .from('likes')
-                .delete()
-                .eq('project_id', projectId)
-                .eq('user_id', user.id)
-            isLiked = false
-        } else {
-            // Insert like
-            await adminSupabase
-                .from('likes')
-                .insert({ project_id: projectId, user_id: user.id })
+        let isLiked = false
+        const shouldLike = desiredState !== undefined ? Boolean(desiredState) : !existingLike
+
+        if (shouldLike) {
+            if (!existingLike) {
+                await adminSupabase
+                    .from('likes')
+                    .insert({ project_id: projectId, user_id: user.id })
+            }
             isLiked = true
+        } else {
+            if (existingLike) {
+                await adminSupabase
+                    .from('likes')
+                    .delete()
+                    .eq('project_id', projectId)
+                    .eq('user_id', user.id)
+            }
+            isLiked = false
         }
 
         // Get total count
