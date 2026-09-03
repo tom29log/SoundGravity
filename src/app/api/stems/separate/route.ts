@@ -25,35 +25,15 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // 1. Check User Limits (Supabase)
+        // 1. Check User Auth
         const supabase = await createServerSupabaseClient()
         const { data: { user } } = await supabase.auth.getUser()
 
         if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+            return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
         }
 
-        // Check profile
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('is_pro, stem_separations_count')
-            .eq('id', user.id)
-            .single()
-
-        const isPro = profile?.is_pro || false
-        const count = profile?.stem_separations_count || 0
-        const FREE_LIMIT = 1
-
-        if (!isPro && count >= FREE_LIMIT) {
-            return NextResponse.json(
-                { error: 'Free tier limit reached. Upgrade to Pro for unlimited stems.' },
-                { status: 403 }
-            )
-        }
-
-        // 2. Increment Count (Optimistic or wait for success? Let's do it here to prevent abuse)
-        // We will increment ONLY if we successfully start the job
-
+        // 2. Start Replicate Demucs separation job
         const replicate = new Replicate({
             auth: token,
         })
@@ -72,12 +52,6 @@ export async function POST(request: NextRequest) {
         if (prediction?.error) {
             return NextResponse.json({ error: prediction.error }, { status: 500 })
         }
-
-        // Increment usage count
-        await supabase
-            .from('profiles')
-            .update({ stem_separations_count: count + 1 })
-            .eq('id', user.id)
 
         return NextResponse.json({
             processingId: prediction.id,
