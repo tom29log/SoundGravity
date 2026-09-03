@@ -3,7 +3,7 @@ import ProfileContent from '@/components/profile/ProfileContent'
 import Loading from './loading'
 import { Suspense } from 'react'
 import { getProfile } from '@/utils/data-fetchers'
-import { createPublicClient } from '@/lib/supabase-public'
+import { createAdminSupabaseClient } from '@/lib/supabase-admin'
 import ShareProfileButton from '@/components/profile/ShareProfileButton'
 
 export const revalidate = 0
@@ -31,7 +31,7 @@ export default async function ProfilePage({ params }: Props) {
     const { username } = await params
     const decodedUsername = decodeURIComponent(username)
 
-    const supabase = createPublicClient()
+    const supabase = createAdminSupabaseClient()
 
     // 1. Fetch Profile Data (flexible matching by username or ID)
     let profile = null
@@ -83,11 +83,17 @@ export default async function ProfilePage({ params }: Props) {
     let projects: any[] = []
     let totalLikes = 0
 
-    if (profile?.id) {
+    if (profile?.id || profile?.username) {
+        // Build flexible project lookup matching either user_id == profile.id OR user_id == profile.username
+        let filterStr = `user_id.eq.${profile.id}`
+        if (profile.username && profile.username !== profile.id) {
+            filterStr += `,user_id.eq.${profile.username}`
+        }
+
         const { data: userProjects } = await supabase
             .from('projects')
             .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
-            .eq('user_id', profile.id)
+            .or(filterStr)
             .order('created_at', { ascending: false })
 
         if (userProjects && userProjects.length > 0) {
