@@ -149,8 +149,8 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                             </div>
                         ) : userProfile ? (
                             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                                <Link href={`/profile/${userProfile.username}`} prefetch={false} className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group min-w-0">
-                                    <div className="w-10 h-10 sm:w-16 sm:h-16 rounded-full bg-zinc-800 overflow-hidden relative transition-colors shrink-0">
+                                <Link href={`/profile/${userProfile.username}`} prefetch={false} className="flex flex-col items-center gap-1.5 hover:opacity-80 transition-opacity group min-w-0 pt-1 sm:pt-0">
+                                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-zinc-800 overflow-hidden relative transition-colors shrink-0 shadow-sm">
                                         {userProfile.avatar_url ? (
                                             <img src={userProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                                         ) : (
@@ -160,10 +160,10 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                                         )}
                                     </div>
                                     <div className="flex flex-col min-w-0 items-center">
-                                        <span className="font-bold text-white leading-tight group-hover:underline decoration-zinc-500 underline-offset-4 text-[9px] sm:text-xs text-center break-words max-w-[76px] sm:max-w-[120px] line-clamp-2">{userProfile.username || 'User'}</span>
+                                        <span className="font-bold text-white leading-tight group-hover:underline decoration-zinc-500 underline-offset-4 text-[9.5px] sm:text-xs text-center break-words max-w-[80px] sm:max-w-[120px] line-clamp-2">{userProfile.username || 'User'}</span>
                                     </div>
                                 </Link>
-                                <div className="h-6 sm:h-8 w-px bg-zinc-800 mx-1.5 sm:mx-3 shrink-0" />
+                                <div className="h-8 w-px bg-zinc-800 mx-2 sm:mx-3 shrink-0" />
                                 <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity mr-3 md:mr-0">
                                     <Image
                                         src="/icons/dashboard-icon-new.png"
