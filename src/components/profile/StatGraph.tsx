@@ -10,11 +10,11 @@ export default function StatGraph({ label, value, className = '' }: StatGraphPro
     const numericValue = Number(value) || 0
 
     return (
-        <div className={`flex flex-col items-center justify-center p-3 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 min-w-[110px] shadow-lg ${className}`}>
-            <span className="text-2xl font-extrabold text-white mb-1 font-mono tracking-tight text-center drop-shadow-[0_0_12px_rgba(255,255,255,0.2)]">
+        <div className={`flex flex-col items-center justify-center py-2 px-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60 min-w-[95px] backdrop-blur-sm ${className}`}>
+            <span className="text-base font-semibold text-white font-mono tracking-tight text-center">
                 {numericValue.toLocaleString()}
             </span>
-            <span className="text-[10px] tracking-widest text-zinc-400 font-mono uppercase font-semibold">{label}</span>
+            <span className="text-[9px] tracking-widest text-zinc-400 font-mono uppercase font-medium mt-0.5">{label}</span>
         </div>
     )
 }
