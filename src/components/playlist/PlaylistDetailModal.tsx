@@ -40,59 +40,57 @@ export default function PlaylistDetailModal({ isOpen, onClose, playlist }: Playl
     const fetchTracks = async () => {
         setLoading(true)
         try {
-            // Join playlist_tracks with projects explicitly using foreign key relationship
-            const { data, error } = await supabase
+            // Step 1: Fetch playlist_tracks entries for this playlist
+            const { data: trackRefs, error: trackErr } = await supabase
                 .from('playlist_tracks')
-                .select(`
-                    track_id,
-                    position,
-                    added_at,
-                    projects!track_id (
-                        *,
-                        profiles (
-                            username,
-                            avatar_url
-                        )
-                    )
-                `)
+                .select('track_id, position, added_at')
                 .eq('playlist_id', playlist.id)
                 .order('position', { ascending: true })
 
-            if (error) {
-                console.error('Error fetching tracks with explicit FK:', error)
-                // Fallback attempt without FK specifier
-                const { data: fallbackData, error: fallbackErr } = await supabase
-                    .from('playlist_tracks')
-                    .select(`
-                        track_id,
-                        position,
-                        added_at,
-                        projects (
-                            *,
-                            profiles (
-                                username,
-                                avatar_url
-                            )
-                        )
-                    `)
-                    .eq('playlist_id', playlist.id)
-                    .order('position', { ascending: true })
-
-                if (!fallbackErr && fallbackData) {
-                    const fetched = fallbackData
-                        .map((item: any) => item.projects || item.project)
-                        .filter(Boolean)
-                    setTracks(fetched)
-                } else {
-                    setTracks([])
-                }
-            } else if (data) {
-                // Flatten the structure safely filtering out any null/undefined records
-                const fetchedTracks = data
-                    .map((item: any) => item.projects || item.project)
-                    .filter(Boolean)
-                setTracks(fetchedTracks)
+            if (trackErr) {
+                console.error('Error fetching playlist_tracks:', trackErr)
+                setTracks([])
+                return
             }
+
+            if (!trackRefs || trackRefs.length === 0) {
+                setTracks([])
+                return
+            }
+
+            const trackIds = trackRefs.map((r: any) => r.track_id).filter(Boolean)
+            if (trackIds.length === 0) {
+                setTracks([])
+                return
+            }
+
+            // Step 2: Fetch corresponding projects with profiles directly
+            const { data: projectsData, error: projErr } = await supabase
+                .from('projects')
+                .select(`
+                    *,
+                    profiles (
+                        username,
+                        avatar_url
+                    )
+                `)
+                .in('id', trackIds)
+
+            if (projErr || !projectsData) {
+                console.error('Error fetching projects by track_ids:', projErr)
+                setTracks([])
+                return
+            }
+
+            // Re-order projects according to playlist_tracks position
+            const projectMap = new Map<string, Project>()
+            projectsData.forEach((p: any) => projectMap.set(p.id, p))
+
+            const orderedTracks = trackRefs
+                .map((r: any) => projectMap.get(r.track_id))
+                .filter((p): p is Project => p !== undefined && p !== null)
+
+            setTracks(orderedTracks)
         } catch (err) {
             console.error('Unexpected error fetching playlist tracks:', err)
             setTracks([])
