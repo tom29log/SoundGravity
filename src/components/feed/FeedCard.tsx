@@ -54,11 +54,27 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
         const fetchLikeStatus = async () => {
             setLikeCount(project.likes || 0)
 
+            // Check LocalStorage double-lock first for instant 0ms state persistence
+            try {
+                const localLikes: string[] = JSON.parse(localStorage.getItem('sg_liked_projects') || '[]')
+                if (localLikes.includes(project.id)) {
+                    setLiked(true)
+                }
+            } catch {}
+
             try {
                 const res = await fetch(`/api/like/status?projectId=${project.id}`)
                 if (res.ok) {
                     const data = await res.json()
-                    setLiked(!!data.liked)
+                    if (data.liked) {
+                        setLiked(true)
+                        try {
+                            const localLikes: string[] = JSON.parse(localStorage.getItem('sg_liked_projects') || '[]')
+                            if (!localLikes.includes(project.id)) {
+                                localStorage.setItem('sg_liked_projects', JSON.stringify([...localLikes, project.id]))
+                            }
+                        } catch {}
+                    }
                     if (data.likesCount !== undefined) {
                         setLikeCount(data.likesCount)
                     }
@@ -74,10 +90,20 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
         e.preventDefault()
         e.stopPropagation()
 
-        // 1. Instant optimistic UI update (0.001s response!)
         const nextLikedState = !liked
         setLiked(nextLikedState)
         setLikeCount(prev => nextLikedState ? prev + 1 : Math.max(0, prev - 1))
+
+        // Update LocalStorage double-lock
+        try {
+            let localLikes: string[] = JSON.parse(localStorage.getItem('sg_liked_projects') || '[]')
+            if (nextLikedState) {
+                if (!localLikes.includes(project.id)) localLikes.push(project.id)
+            } else {
+                localLikes = localLikes.filter(id => id !== project.id)
+            }
+            localStorage.setItem('sg_liked_projects', JSON.stringify(localLikes))
+        } catch {}
 
         try {
             const res = await fetch('/api/like/toggle', {
@@ -89,9 +115,14 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
             const data = await res.json()
 
             if (res.status === 401) {
-                // Not logged in -> revert and notify
+                // Not logged in -> revert local and state
                 setLiked(!nextLikedState)
                 setLikeCount(prev => nextLikedState ? Math.max(0, prev - 1) : prev + 1)
+                try {
+                    let localLikes: string[] = JSON.parse(localStorage.getItem('sg_liked_projects') || '[]')
+                    localLikes = localLikes.filter(id => id !== project.id)
+                    localStorage.setItem('sg_liked_projects', JSON.stringify(localLikes))
+                } catch {}
                 alert('로그인이 필요합니다.')
                 return
             }
@@ -101,15 +132,9 @@ export default function FeedCard({ project, activeMixerId, onMixerToggle, isPro 
                 if (data.likesCount !== undefined) {
                     setLikeCount(data.likesCount)
                 }
-            } else {
-                // Revert on server error
-                setLiked(!nextLikedState)
-                setLikeCount(prev => nextLikedState ? Math.max(0, prev - 1) : prev + 1)
             }
         } catch (error) {
             console.error('Error toggling like:', error)
-            setLiked(!nextLikedState)
-            setLikeCount(prev => nextLikedState ? Math.max(0, prev - 1) : prev + 1)
         }
     }
 

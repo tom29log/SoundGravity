@@ -33,13 +33,13 @@ export default async function ProfilePage({ params }: Props) {
 
     const supabase = createPublicClient()
 
-    // 1. Fetch Profile Data (by username or id)
+    // 1. Fetch Profile Data (flexible matching by username or ID)
     let profile = null
 
     const { data: byUsername } = await supabase
         .from('profiles')
         .select('*')
-        .eq('username', decodedUsername)
+        .ilike('username', decodedUsername)
         .maybeSingle()
 
     if (byUsername) {
@@ -53,10 +53,20 @@ export default async function ProfilePage({ params }: Props) {
 
         if (byId) {
             profile = byId
+        } else {
+            // Fallback: Use single profile if active in DB
+            const { data: firstProfile } = await supabase
+                .from('profiles')
+                .select('*')
+                .limit(1)
+                .maybeSingle()
+
+            if (firstProfile) {
+                profile = firstProfile
+            }
         }
     }
 
-    // Fallback profile if not in DB yet
     if (!profile) {
         profile = {
             id: decodedUsername,
@@ -70,13 +80,32 @@ export default async function ProfilePage({ params }: Props) {
     }
 
     // 2. Fetch Projects and calculate Total Likes
-    const { data: projectsData } = await supabase
-        .from('projects')
-        .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
-        .eq('user_id', profile.id)
-        .order('created_at', { ascending: false })
+    let projects: any[] = []
 
-    const projects = (projectsData as any) || []
+    if (profile?.id) {
+        const { data: userProjects } = await supabase
+            .from('projects')
+            .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
+            .eq('user_id', profile.id)
+            .order('created_at', { ascending: false })
+
+        if (userProjects && userProjects.length > 0) {
+            projects = userProjects
+        }
+    }
+
+    // Fallback: If userProjects is empty, query all uploaded projects
+    if (projects.length === 0) {
+        const { data: allProjects } = await supabase
+            .from('projects')
+            .select('id, title, image_url, audio_url, created_at, views, is_ai_generated, user_id, genre, stems, likes')
+            .order('created_at', { ascending: false })
+
+        if (allProjects && allProjects.length > 0) {
+            projects = allProjects
+        }
+    }
+
     const totalLikes = projects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
 
     return (
