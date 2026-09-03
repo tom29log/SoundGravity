@@ -160,10 +160,10 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
                                         )}
                                     </div>
                                     <div className="flex flex-col min-w-0 items-center">
-                                        <span className="font-bold text-white leading-none group-hover:underline decoration-zinc-500 underline-offset-4 text-[10px] sm:text-xs text-center break-words max-w-[90px] sm:max-w-[120px] truncate">{userProfile.username || 'User'}</span>
+                                        <span className="font-bold text-white leading-tight group-hover:underline decoration-zinc-500 underline-offset-4 text-[9px] sm:text-xs text-center break-words max-w-[76px] sm:max-w-[120px] line-clamp-2">{userProfile.username || 'User'}</span>
                                     </div>
                                 </Link>
-                                <div className="h-6 sm:h-8 w-px bg-zinc-800 mx-1 sm:mx-2 shrink-0" />
+                                <div className="h-6 sm:h-8 w-px bg-zinc-800 mx-1.5 sm:mx-3 shrink-0" />
                                 <Link href="/admin" className="shrink-0 hover:opacity-80 transition-opacity mr-3 md:mr-0">
                                     <Image
                                         src="/icons/dashboard-icon-new.png"
