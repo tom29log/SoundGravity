@@ -15,15 +15,14 @@ import { useProjectsInfinite } from '@/hooks/useProjectsInfinite'
 // Hook for window resize to adjust columns
 function useWindowWidth() {
     const [width, setWidth] = useState(0)
-    // Client-side only
-    useState(() => {
-        if (typeof window !== 'undefined') {
-            setWidth(window.innerWidth)
-            const handleResize = () => setWidth(window.innerWidth)
-            window.addEventListener('resize', handleResize)
-            return () => window.removeEventListener('resize', handleResize)
-        }
-    })
+
+    useEffect(() => {
+        const handleResize = () => setWidth(window.innerWidth)
+        handleResize()
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
+
     return width
 }
 
@@ -293,18 +292,15 @@ export default function GlobalFeed({ initialProjects }: GlobalFeedProps) {
             {
                 viewMode === 'list' ? (
                     <div className="flex flex-col gap-4 sm:gap-8 max-w-md sm:max-w-2xl mx-auto">
-                        {projects.map((project, index) => {
-                            if (projects.length === index + 1) {
-                                return <div ref={lastElementRef} key={project.id}><FeedCard project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} isPro={userProfile?.is_pro} /></div>
-                            }
-                            return <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} isPro={userProfile?.is_pro} />
-                        })}
+                        {projects.map((project) => (
+                            <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} isPro={userProfile?.is_pro} />
+                        ))}
                     </div>
                 ) : (
                     // Masonry Grid
-                    <div className="flex gap-3 sm:gap-6">
+                    <div className="flex gap-3 sm:gap-6 overflow-hidden">
                         {masonryColumns.map((colProjects, colIndex) => (
-                            <div key={colIndex} className="flex-1 flex flex-col gap-3 sm:gap-6">
+                            <div key={colIndex} className="flex-1 min-w-0 flex flex-col gap-3 sm:gap-6">
                                 {colProjects.map((project) => (
                                     <FeedCard key={project.id} project={project} activeMixerId={activeMixerId} onMixerToggle={setActiveMixerId} isPro={userProfile?.is_pro} />
                                 ))}
