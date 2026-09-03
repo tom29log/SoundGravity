@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ProjectList from '@/components/ProjectList'
 import UploadForm from '@/components/UploadForm'
-import DevicePreview from '@/components/DevicePreview'
 import KnobButton from '@/components/ui/KnobButton'
 import EditProfileModal from '@/components/profile/EditProfileModal'
 import PlaylistList from '@/components/playlist/PlaylistList'
@@ -157,20 +156,10 @@ export default function AdminPage() {
     }
 
     const [refreshKey, setRefreshKey] = useState(0)
-    const [previewId, setPreviewId] = useState<string | null>(null)
 
     const handleRefresh = () => {
         setRefreshKey(prev => prev + 1)
     }
-
-    const handleProjectSelect = (id: string) => {
-        setPreviewId(id)
-    }
-
-    // Construct preview URL
-    // Append autoPlay=false to prevent the interactive viewer from auto-playing sound
-    // when the user is just browsing the dashboard.
-    const previewUrl = previewId ? `/v/${previewId}?autoPlay=false` : ''
 
     return (
         <div className="min-h-screen bg-black text-white p-8">
@@ -303,33 +292,11 @@ export default function AdminPage() {
                     <div className="lg:col-span-2 space-y-8">
                         {/* Projects Section */}
                         <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800">
-                            <h2 className="text-xl font-semibold mb-4">Your Projects (Click to Preview)</h2>
-                            <ProjectList
-                                key={refreshKey}
-                                onSelect={handleProjectSelect}
-                                selectedId={previewId}
-                            />
+                            <h2 className="text-xl font-semibold mb-4">Your Projects</h2>
+                            <ProjectList key={refreshKey} />
                         </div>
                     </div>
                 </div>
-
-                {/* Bottom Section: Live Preview */}
-                {previewId && (
-                    <div className="mt-8 p-6 bg-zinc-900/50 rounded-2xl border border-zinc-800">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-semibold">Live Preview</h2>
-                            <a
-                                href={previewUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-blue-400 hover:text-blue-300 underline"
-                            >
-                                Open in New Tab ↗
-                            </a>
-                        </div>
-                        <DevicePreview url={previewUrl} />
-                    </div>
-                )}
             </div>
 
             {user && (
