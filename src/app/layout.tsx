@@ -20,6 +20,16 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   title: "SoundGravity",
   description: "Experience audio in a new dimension.",
+  icons: {
+    icon: [
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+      { url: "/logo-icon.png", sizes: "1024x1024", type: "image/png" },
+    ],
+    shortcut: "/icon.png",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
   openGraph: {
     title: "SoundGravity",
     description: "Experience audio in a new dimension.",
@@ -57,6 +67,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/icon.png" type="image/png" sizes="512x512" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+        <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-precomposed.png" sizes="180x180" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

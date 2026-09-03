@@ -10,12 +10,17 @@
     "icons": [
         {
             "src": "/logo-icon.png",
-            "sizes": "192x192",
+            "sizes": "1024x1024",
             "type": "image/png"
         },
         {
-            "src": "/logo-icon.png",
+            "src": "/icon.png",
             "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
             "type": "image/png"
         }
     ]
