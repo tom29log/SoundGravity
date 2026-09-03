@@ -81,6 +81,7 @@ export default async function ProfilePage({ params }: Props) {
 
     // 2. Fetch Projects and calculate Total Likes for THIS artist only
     let projects: any[] = []
+    let totalLikes = 0
 
     if (profile?.id) {
         const { data: userProjects } = await supabase
@@ -89,13 +90,24 @@ export default async function ProfilePage({ params }: Props) {
             .eq('user_id', profile.id)
             .order('created_at', { ascending: false })
 
-        if (userProjects) {
+        if (userProjects && userProjects.length > 0) {
             projects = userProjects
+            const projectIds = userProjects.map((p: any) => p.id)
+
+            // Query actual total likes count from likes table for all projects uploaded by this user
+            const { count: actualLikesCount, error: likesErr } = await supabase
+                .from('likes')
+                .select('*', { count: 'exact', head: true })
+                .in('project_id', projectIds)
+
+            if (!likesErr && actualLikesCount !== null && actualLikesCount !== undefined) {
+                totalLikes = actualLikesCount
+            } else {
+                // Fallback: sum of likes column from projects table
+                totalLikes = userProjects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
+            }
         }
     }
-
-    // Total likes is the sum of likes across ONLY this artist's projects
-    const totalLikes = projects.reduce((acc: number, p: any) => acc + (Number(p.likes) || 0), 0)
 
     return (
         <main className="min-h-screen bg-black text-white relative">
